@@ -68,12 +68,18 @@ body {
 }
 
 .hero {
-  background: linear-gradient(180deg, var(--pink), #fff 65%);
+  background-image: linear-gradient(rgba(255, 247, 249, 0.78), rgba(255, 255, 255, 0.9)), url("https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1800&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 84px 0 72px;
 }
 
 .hero-content {
   max-width: 760px;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 16px;
+  padding: 24px;
 }
 
 .eyebrow {
@@ -217,18 +223,24 @@ h1 span {
   gap: 24px;
 }
 
-.avatar {
-  width: 100px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #f7d6de, #efd8c6);
-  color: #7c5861;
-  font-size: 2rem;
-  font-weight: 700;
+
+.section-image,
+.instructor-image {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
 }
 
+.section-image {
+  max-height: 320px;
+  margin: 0 0 24px;
+}
+
+.instructor-image {
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+}
 .voice span {
   display: block;
   margin-top: 8px;
