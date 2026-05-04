@@ -13,22 +13,34 @@
 
 * {
   box-sizing: border-box;
+  min-width: 0;
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   font-family: "Noto Sans JP", system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
   line-height: 1.75;
 }
 
+main,
+section,
 .container {
-  width: min(1100px, 92%);
+  width: 100%;
+  max-width: 100%;
+}
+
+.container {
+  width: min(1100px, calc(100% - 32px));
   margin-inline: auto;
 }
 
@@ -76,6 +88,7 @@ body {
 }
 
 .hero-content {
+  width: 100%;
   max-width: 760px;
   background: rgba(255, 255, 255, 0.72);
   border-radius: 16px;
@@ -96,7 +109,7 @@ body {
 
 h1 {
   margin: 0 0 16px;
-  font-size: clamp(2rem, 4.8vw, 3.1rem);
+  font-size: clamp(1.8rem, 4.8vw, 3.1rem);
   line-height: 1.38;
 }
 
@@ -149,7 +162,7 @@ h1 span {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -157,6 +170,8 @@ h1 span {
 .reason-item,
 .price-card,
 .faq-list details {
+  width: 100%;
+  max-width: 100%;
   background: var(--white);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -176,7 +191,7 @@ h1 span {
 
 .price-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -218,29 +233,34 @@ h1 span {
 
 .instructor-inner {
   display: grid;
-  grid-template-columns: 100px 1fr;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
   align-items: center;
   gap: 24px;
 }
 
-
+img,
 .section-image,
 .instructor-image {
   width: 100%;
+  max-width: 100%;
+  height: auto;
   object-fit: cover;
   border-radius: 14px;
   display: block;
 }
 
 .section-image {
+  aspect-ratio: 16 / 9;
   max-height: 320px;
   margin: 0 0 24px;
 }
 
 .instructor-image {
-  max-width: 280px;
+  width: min(100%, 280px);
   aspect-ratio: 1 / 1;
+  justify-self: center;
 }
+
 .voice span {
   display: block;
   margin-top: 8px;
@@ -280,29 +300,75 @@ h1 span {
   .header-nav {
     display: none;
   }
+
+  .price-grid,
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
+  .container {
+    width: calc(100% - 24px);
+  }
+
   .hero {
-    padding-top: 64px;
+    padding: 48px 0 44px;
+  }
+
+  .hero-content {
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .hero-text {
+    font-size: 0.98rem;
+    margin-bottom: 18px;
   }
 
   .section {
-    padding: 56px 0;
+    padding: 44px 0;
+  }
+
+  .section h2 {
+    margin-bottom: 20px;
+  }
+
+  .card,
+  .reason-item,
+  .price-card,
+  .faq-list details {
+    padding: 16px;
   }
 
   .instructor-inner {
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
+    gap: 14px;
+  }
+
+  .section-image {
+    max-height: 220px;
+    margin-bottom: 16px;
+  }
+
+  .instructor-image {
+    width: min(100%, 210px);
   }
 
   .btn {
     width: 100%;
     text-align: center;
+    padding: 13px 18px;
   }
 
   .btn-small {
     width: auto;
+    flex-shrink: 0;
+  }
+
+  .note {
+    font-size: 0.84rem;
   }
 }
