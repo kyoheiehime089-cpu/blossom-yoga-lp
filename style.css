@@ -1138,7 +1138,13 @@ blockquote cite {
   .versus-card,
   .split-visual,
   .pie-card {
+  .split-visual {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .donut-chart {
+    justify-self: center;
   }
 
   .bar-row {
