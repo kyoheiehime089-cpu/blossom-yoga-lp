@@ -1137,6 +1137,7 @@ blockquote cite {
   .versus-card,
   .split-visual,
   .pie-card {
+  .split-visual {
     grid-template-columns: 1fr;
   }
 
