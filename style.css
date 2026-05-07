@@ -368,7 +368,8 @@ h2 {
 .supplement-card,
 .note-box,
 .versus-card,
-.formula-card {
+.formula-card,
+.chart-card {
   border: 3px solid rgba(255, 255, 255, 0.9);
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.84);
@@ -451,6 +452,156 @@ blockquote,
 .stat-card.wide {
   width: min(760px, 100%);
   margin-top: 30px;
+}
+
+.chart-card {
+  width: min(920px, 100%);
+  margin-top: 26px;
+  padding: clamp(20px, 3vw, 32px);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.chart-card.compact {
+  margin-top: 24px;
+}
+
+.chart-title {
+  margin-bottom: 18px;
+  color: var(--ink);
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  font-weight: 900;
+}
+
+.bar-chart {
+  display: grid;
+  gap: 16px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.35fr) minmax(160px, 1fr) minmax(86px, auto);
+  align-items: center;
+  gap: 14px;
+}
+
+.bar-label {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.bar-track {
+  position: relative;
+  min-height: 34px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f3eaf1;
+}
+
+.bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--bar-width);
+  border-radius: inherit;
+  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.bar-fill.pink { background: linear-gradient(135deg, var(--pink), var(--purple)); }
+.bar-fill.red { background: linear-gradient(135deg, var(--red), var(--orange)); }
+.bar-fill.green { background: linear-gradient(135deg, var(--green), #20b486); }
+
+.bar-row strong {
+  color: var(--pink-dark);
+  font-size: clamp(1rem, 2.2vw, 1.55rem);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.split-visual {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.42fr) minmax(260px, 1fr);
+  align-items: center;
+  gap: clamp(22px, 4vw, 48px);
+  margin-top: 12px;
+}
+
+.donut-chart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(170px, 24vw, 270px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--red) 0 30%, var(--green) 30% 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.donut-chart::before {
+  position: absolute;
+  width: 58%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff7fb;
+  content: "";
+}
+
+.donut-chart span {
+  z-index: 1;
+  color: var(--red);
+  font-size: clamp(1.12rem, 2.8vw, 1.9rem);
+  font-weight: 900;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.calorie-compare {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), #fff0f2);
+}
+
+.formula-chart {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), #f5efff);
+}
+
+.range-chart {
+  display: grid;
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.range-line {
+  position: relative;
+  min-height: 50px;
+  border-radius: 999px;
+  background: #f3eaf1;
+}
+
+.range-line::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  content: "";
+}
+
+.range-line.maintenance::before {
+  width: 100%;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+}
+
+.range-line.target::before {
+  width: 68%;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+}
+
+.range-line span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding-inline: 18px;
+  color: var(--white);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 900;
+  text-shadow: 0 1px 8px rgba(45, 36, 56, 0.22);
 }
 
 .setpoint-card,
@@ -838,8 +989,18 @@ blockquote cite {
   .stat-grid,
   .macro-grid,
   .timeline-card,
-  .versus-card {
+  .versus-card,
+  .split-visual {
     grid-template-columns: 1fr;
+  }
+
+  .bar-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .donut-chart {
+    justify-self: center;
   }
 
   .vs {
