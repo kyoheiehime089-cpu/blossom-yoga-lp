@@ -368,7 +368,8 @@ h2 {
 .supplement-card,
 .note-box,
 .versus-card,
-.formula-card {
+.formula-card,
+.chart-card {
   border: 3px solid rgba(255, 255, 255, 0.9);
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.84);
@@ -451,6 +452,301 @@ blockquote,
 .stat-card.wide {
   width: min(760px, 100%);
   margin-top: 30px;
+}
+
+.chart-card {
+  width: min(920px, 100%);
+  margin-top: 26px;
+  padding: clamp(20px, 3vw, 32px);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.chart-card.compact {
+  margin-top: 24px;
+}
+
+.chart-title {
+  margin-bottom: 18px;
+  color: var(--ink);
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  font-weight: 900;
+}
+
+.bar-chart {
+  display: grid;
+  gap: 16px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.35fr) minmax(160px, 1fr) minmax(86px, auto);
+  align-items: center;
+  gap: 14px;
+}
+
+.bar-label {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.bar-track {
+  position: relative;
+  min-height: 34px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f3eaf1;
+}
+
+.bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--bar-width);
+  border-radius: inherit;
+  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.bar-fill.pink { background: linear-gradient(135deg, var(--pink), var(--purple)); }
+.bar-fill.red { background: linear-gradient(135deg, var(--red), var(--orange)); }
+.bar-fill.green { background: linear-gradient(135deg, var(--green), #20b486); }
+
+.bar-row strong {
+  color: var(--pink-dark);
+  font-size: clamp(1rem, 2.2vw, 1.55rem);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+
+.chart-caption {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.98rem, 1.8vw, 1.16rem);
+  font-weight: 800;
+}
+
+.column-chart {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  align-items: end;
+  gap: clamp(22px, 5vw, 58px);
+  min-height: 270px;
+  padding: 12px clamp(6px, 2vw, 28px) 0;
+}
+
+.column-group {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 900;
+  text-align: center;
+}
+
+.column-track {
+  position: relative;
+  display: flex;
+  align-items: end;
+  width: min(130px, 100%);
+  height: 190px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 24px 24px 14px 14px;
+  background: rgba(243, 234, 241, 0.92);
+  box-shadow: inset 0 8px 20px rgba(45, 36, 56, 0.08);
+}
+
+.column-fill {
+  width: 100%;
+  height: var(--column-height);
+  border-radius: 20px 20px 10px 10px;
+  box-shadow: inset 0 -12px 18px rgba(0, 0, 0, 0.1);
+}
+
+.column-fill.green { background: linear-gradient(180deg, var(--green), #20b486); }
+.column-fill.red { background: linear-gradient(180deg, var(--red), var(--orange)); }
+
+.column-group strong {
+  color: var(--ink);
+  font-size: clamp(1.08rem, 2.1vw, 1.35rem);
+}
+
+.column-group small {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: #fff1f7;
+  color: var(--pink-dark);
+  font-size: clamp(0.95rem, 1.9vw, 1.18rem);
+}
+
+.column-group.highlight small {
+  background: #fff0f2;
+  color: var(--red);
+}
+
+.split-visual {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.42fr) minmax(260px, 1fr);
+  align-items: center;
+  gap: clamp(22px, 4vw, 48px);
+  margin-top: 12px;
+}
+
+.pie-panel {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
+.half-pie {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(170px, 24vw, 270px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--red) 0 50%, var(--yellow) 50% 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.half-pie::before {
+  position: absolute;
+  width: 58%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff7fb;
+  content: "";
+}
+
+.half-pie span {
+  z-index: 1;
+  color: var(--red);
+  font-size: clamp(1.12rem, 2.8vw, 1.9rem);
+  font-weight: 900;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 0.94rem;
+  font-weight: 900;
+}
+
+.legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.legend-color.red { background: var(--red); }
+.legend-color.green { background: var(--green); }
+.legend-color.yellow { background: var(--yellow); }
+
+.pie-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: clamp(18px, 4vw, 44px);
+}
+
+.pie-card .chart-title {
+  margin-bottom: 8px;
+}
+
+.donut-chart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(170px, 24vw, 270px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--red) 0 30%, var(--green) 30% 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.donut-chart::before {
+  position: absolute;
+  width: 58%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff7fb;
+  content: "";
+}
+
+.donut-chart span {
+  z-index: 1;
+  color: var(--red);
+  font-size: clamp(1.12rem, 2.8vw, 1.9rem);
+  font-weight: 900;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.calorie-compare {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), #fff0f2);
+}
+
+.formula-chart {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), #f5efff);
+}
+
+.range-chart {
+  display: grid;
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.range-line {
+  position: relative;
+  min-height: 50px;
+  border-radius: 999px;
+  background: #f3eaf1;
+}
+
+.range-line::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  content: "";
+}
+
+.range-line.maintenance::before {
+  width: 100%;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+}
+
+.range-line.target::before {
+  width: 68%;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+}
+
+.range-line span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding-inline: 18px;
+  color: var(--white);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 900;
+  text-shadow: 0 1px 8px rgba(45, 36, 56, 0.22);
 }
 
 .setpoint-card,
@@ -798,6 +1094,7 @@ blockquote cite {
   transform: scale(1.1);
 }
 
+
 @media (max-width: 900px) {
   html {
     scroll-snap-type: none;
@@ -838,8 +1135,19 @@ blockquote cite {
   .stat-grid,
   .macro-grid,
   .timeline-card,
-  .versus-card {
+  .versus-card,
+  .split-visual,
+  .pie-card {
     grid-template-columns: 1fr;
+  }
+
+  .bar-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .donut-chart {
+    justify-self: center;
   }
 
   .vs {
@@ -905,4 +1213,174 @@ blockquote cite {
     flex-direction: column;
     gap: 10px;
   }
+}
+
+/* Keep chart-heavy slides compact enough to fit inside their slide frames. */
+#slide-8,
+#slide-15,
+#slide-17 {
+  justify-content: flex-start;
+  gap: clamp(10px, 1.4vw, 18px);
+  padding-block: clamp(26px, 3.5vw, 46px);
+}
+
+#slide-8 h2,
+#slide-15 h2,
+#slide-17 h2 {
+  font-size: clamp(2rem, 4.7vw, 4.15rem);
+}
+
+#slide-8 .slide-kicker,
+#slide-15 .slide-kicker,
+#slide-17 .slide-kicker {
+  margin-bottom: 8px;
+}
+
+#slide-8 .split-visual {
+  width: min(880px, 100%);
+  grid-template-columns: minmax(150px, 0.34fr) minmax(240px, 1fr);
+  gap: clamp(18px, 3vw, 34px);
+  margin-top: 0;
+}
+
+#slide-8 .donut-chart,
+#slide-15 .half-pie {
+  width: clamp(130px, 16vw, 185px);
+}
+
+#slide-8 .chart-legend,
+#slide-15 .chart-legend {
+  gap: 7px;
+}
+
+#slide-8 .chart-legend span,
+#slide-15 .chart-legend span {
+  padding: 6px 10px;
+  font-size: 0.84rem;
+}
+
+#slide-8 .giant-percent {
+  font-size: clamp(4rem, 11vw, 8.4rem);
+}
+
+#slide-8 .key-message {
+  margin-top: 14px;
+  font-size: clamp(1.2rem, 2.7vw, 2.25rem);
+}
+
+#slide-8 .formula {
+  margin-top: 14px;
+  white-space: normal;
+}
+
+#slide-8 .note-box,
+#slide-15 .note-box,
+#slide-17 .key-message {
+  margin-top: 12px;
+}
+
+#slide-15 .food-cloud {
+  max-width: 900px;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+#slide-15 .food-cloud span {
+  min-height: 36px;
+  padding: 6px 13px;
+  font-size: 0.9rem;
+}
+
+.upf-chart-card {
+  width: min(760px, 100%);
+  margin-top: 6px;
+  padding: clamp(14px, 2vw, 22px);
+}
+
+.upf-chart-card .chart-title,
+.result-chart-card .chart-title {
+  margin-bottom: 6px;
+}
+
+.upf-chart-card .chart-caption,
+.result-chart-card .chart-caption {
+  font-size: clamp(0.9rem, 1.5vw, 1.04rem);
+}
+
+.upf-chart-card.pie-card {
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, auto);
+}
+
+.result-chart-card {
+  width: min(760px, 100%);
+  margin-top: 8px;
+  padding: clamp(16px, 2.2vw, 24px);
+}
+
+.result-chart-card .column-chart {
+  min-height: 205px;
+  gap: clamp(18px, 4vw, 42px);
+  padding-top: 8px;
+}
+
+.result-chart-card .column-track {
+  width: min(112px, 100%);
+  height: 138px;
+}
+
+.chart-takeaway {
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto 0;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--red), var(--orange));
+  color: var(--white);
+  font-size: clamp(0.95rem, 1.8vw, 1.18rem);
+  font-weight: 900;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 900px) {
+  #slide-8,
+  #slide-15,
+  #slide-17 {
+    justify-content: center;
+  }
+
+  #slide-8 .split-visual,
+  .upf-chart-card.pie-card {
+    grid-template-columns: 1fr;
+  }
+
+  #slide-8 .donut-chart,
+  #slide-15 .half-pie {
+    width: clamp(126px, 38vw, 170px);
+  }
+
+  .result-chart-card .column-chart {
+    min-height: 190px;
+  }
+}
+
+/* Slide 17 needs the tightest sizing because it has heading, note, chart, and takeaway. */
+#slide-17 {
+  padding-block: clamp(24px, 3vw, 40px);
+}
+
+#slide-17 .research-note {
+  margin-top: 12px;
+}
+
+#slide-17 .key-message {
+  font-size: clamp(1.18rem, 2.4vw, 2rem);
+}
+
+#slide-17 .result-chart-card .column-chart {
+  min-height: 180px;
+}
+
+#slide-17 .result-chart-card .column-track {
+  height: 122px;
 }

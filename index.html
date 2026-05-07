@@ -69,6 +69,21 @@
           <p>元の体重へと戻ってしまう</p>
         </article>
       </div>
+      <div class="chart-card compact" role="img" aria-label="リバウンド率が1年後50%、3から5年後はほぼ全員まで上がる棒グラフ">
+        <div class="chart-title">時間が経つほど維持は難しくなる</div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <span class="bar-label">1年後</span>
+            <div class="bar-track"><span class="bar-fill pink" style="--bar-width: 50%;"></span></div>
+            <strong>50%</strong>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">3〜5年後</span>
+            <div class="bar-track"><span class="bar-fill red" style="--bar-width: 94%;"></span></div>
+            <strong>ほぼ全員</strong>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="slide" id="slide-5" data-title="事実③">
@@ -106,8 +121,21 @@
     <section class="slide warning-slide" id="slide-8" data-title="筋肉減少">
       <p class="slide-kicker">No Training Diet</p>
       <h2>筋トレしないダイエットの末路</h2>
-      <p class="giant-percent">約30%</p>
-      <p class="key-message">痩せた重量の約30%は筋肉！</p>
+      <div class="split-visual">
+        <div class="pie-panel muscle-chart" role="img" aria-label="筋トレなしで痩せた重量の約30%が筋肉、約70%が脂肪という円グラフ">
+          <div class="donut-chart">
+            <span>筋肉<br />約30%</span>
+          </div>
+          <div class="chart-legend">
+            <span><i class="legend-color red"></i>筋肉 約30%</span>
+            <span><i class="legend-color green"></i>脂肪 約70%</span>
+          </div>
+        </div>
+        <div>
+          <p class="giant-percent">約30%</p>
+          <p class="key-message">痩せた重量の約30%は筋肉！</p>
+        </div>
+      </div>
       <div class="formula">筋肉が減る ＝ 代謝が落ちる ＝ 後の地獄</div>
       <p class="note-box">3kg痩せても、1kgは大切な筋肉を捨てているのです。</p>
     </section>
@@ -165,6 +193,21 @@
       <div class="food-cloud" aria-label="超加工食品の例">
         <span>ポテチ</span><span>菓子パン</span><span>カップ麺</span><span>炭酸飲料</span><span>ピザ</span><span>チョコレート</span><span>ウインナー</span><span>ハム</span><span>コンビニ弁当</span>
       </div>
+      <div class="chart-card pie-card upf-chart-card" role="img" aria-label="若年層の1日の総摂取カロリーの50%が加工食品で、残り50%がその他の食品という円グラフ">
+        <div>
+          <div class="chart-title">若年層の摂取カロリー内訳</div>
+          <p class="chart-caption">毎日のカロリーの半分が、加工食品に偏りやすい。</p>
+        </div>
+        <div class="pie-panel upf-pie">
+          <div class="half-pie">
+            <span>加工食品<br />50%</span>
+          </div>
+          <div class="chart-legend">
+            <span><i class="legend-color red"></i>加工食品 50%</span>
+            <span><i class="legend-color yellow"></i>その他 50%</span>
+          </div>
+        </div>
+      </div>
       <p class="note-box">若年層は1日の総摂取カロリーの50%が加工食品</p>
     </section>
 
@@ -181,10 +224,22 @@
       <p class="slide-kicker">NIH / Kevin Hall 2019</p>
       <h2>加工食品を止めただけの研究結果</h2>
       <p class="research-note">加工食品か自然食かを、好きなだけ食べさせた結果</p>
-      <div class="stat-card wide danger">
-        <span>加工食品群は1日平均で…</span>
-        <strong>+500kcal</strong>
-        <p>も過食！</p>
+      <div class="chart-card calorie-compare result-chart-card" role="img" aria-label="自然食群を基準にすると、加工食品群は1日平均で500キロカロリー多く摂取した棒グラフ">
+        <div class="chart-title">同じ“好きなだけ”でも摂取量に差</div>
+        <p class="chart-caption">棒の高さで「加工食品は自然食より多く食べやすい」ことを表示</p>
+        <div class="column-chart" aria-hidden="true">
+          <div class="column-group">
+            <div class="column-track"><span class="column-fill green" style="--column-height: 22%;"></span></div>
+            <strong>自然食</strong>
+            <small>基準</small>
+          </div>
+          <div class="column-group highlight">
+            <div class="column-track"><span class="column-fill red" style="--column-height: 88%;"></span></div>
+            <strong>加工食品</strong>
+            <small>+500kcal/日</small>
+          </div>
+        </div>
+        <div class="chart-takeaway">結論：加工食品は、知らないうちに食べ過ぎる</div>
       </div>
       <p class="key-message">自然食なら、我慢なしで勝手に摂取量が減る</p>
     </section>
@@ -265,6 +320,13 @@
       <div class="slide-label">Step 3</div>
       <h2>目標カロリーの決定</h2>
       <div class="formula-card">維持カロリー × 0.6〜0.7</div>
+      <div class="chart-card formula-chart" role="img" aria-label="60キログラムの人の維持カロリー1980キロカロリーに対し、減量目標は1200から1400キロカロリーの範囲を示す棒グラフ">
+        <div class="chart-title">60kgの例：維持 → 目標の目安</div>
+        <div class="range-chart">
+          <div class="range-line maintenance"><span>維持 1,980kcal</span></div>
+          <div class="range-line target"><span>目標 1,200〜1,400kcal</span></div>
+        </div>
+      </div>
       <p class="example">例：60kgの人なら、<strong>1,200〜1,400kcal</strong> が減量目標</p>
     </section>
 
