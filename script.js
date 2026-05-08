@@ -7,11 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!slides.length || !prevButton || !nextButton || !counter || !dotsContainer) return;
 
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   let activeIndex = 0;
 
   const scrollToSlide = (index) => {
     const safeIndex = Math.min(Math.max(index, 0), slides.length - 1);
-    slides[safeIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    slides[safeIndex].scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
   };
 
   const updateNavigation = (index) => {
@@ -57,6 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
       event.preventDefault();
       scrollToSlide(activeIndex + 1);
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      scrollToSlide(0);
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      scrollToSlide(slides.length - 1);
     }
   });
 

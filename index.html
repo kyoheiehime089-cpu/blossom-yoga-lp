@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>学校では教えてくれないダイエットの神髄 | セミナースライド</title>
-  <meta name="description" content="学校では教えてくれないダイエットの神髄を、セミナーで使いやすいポップなスライド形式でまとめたページです。" />
+  <title>学校では教えてくれない ダイエットの神髄 | HTMLセミナースライド</title>
+  <meta name="description" content="初心者にも直感的に理解できる、図解・グラフ・ランキングカードで整理したダイエットセミナースライドです。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
@@ -12,375 +12,341 @@
 </head>
 <body>
   <header class="deck-header">
-    <a class="deck-logo" href="#slide-1" aria-label="スライド1へ移動">Diet Core Seminar</a>
+    <a class="deck-logo" href="#slide-1" aria-label="スライド1へ移動">Blossom Diet Seminar</a>
     <nav class="deck-nav" aria-label="スライド操作">
       <button class="nav-button" type="button" id="prevSlide">← 前へ</button>
-      <span class="slide-counter" id="slideCounter" aria-live="polite">1 / 31</span>
+      <span class="slide-counter" id="slideCounter" aria-live="polite">1 / 36</span>
       <button class="nav-button nav-button-primary" type="button" id="nextSlide">次へ →</button>
     </nav>
   </header>
 
   <main class="deck" id="deck">
     <section class="slide title-slide" id="slide-1" data-title="タイトル">
-      <div class="blob blob-pink"></div>
-      <div class="blob blob-yellow"></div>
-      <p class="slide-kicker">学校では教えてくれない</p>
-      <h1>ダイエットの<br />神髄</h1>
-      <p class="title-lead">理解して、今日から実行する！</p>
-      <div class="tag-row" aria-label="セミナーのキーワード">
-        <span>正しい知識</span>
-        <span>継続</span>
-        <span>筋トレ</span>
-        <span>パレオ</span>
+      <div class="slide-top"><p class="slide-kicker">学校では教えてくれない</p><span class="slide-no">01</span></div>
+      <div class="hero-lockup">
+        <div class="hero-badge">🌿 Body Reset</div>
+        <h1>ダイエットの<br />神髄</h1>
+        <p class="lead">我慢ではなく、体の仕組みを味方にするセミナー</p>
+        <div class="tag-row"><span>継続</span><span>筋肉</span><span>自然食</span><span>カロリー設計</span></div>
       </div>
     </section>
 
-    <section class="slide center-slide" id="slide-2" data-title="現実">
-      <p class="slide-kicker">Reality Check</p>
-      <h2>向き合うべき現実</h2>
-      <p class="big-question">これまでダイエット、<br />何回やりましたか？</p>
-      <p class="empathy">失敗したのは、あなたのせいではありません。<br />「正しい知識」が、ただ欠けていただけなのです。</p>
+    <section class="slide" id="slide-2" data-title="これまで何回？">
+      <div class="slide-top"><p class="slide-kicker">Reality Check</p><span class="slide-no">02</span></div>
+      <h2>これまでダイエット、<br />何回やりましたか？</h2>
+      <div class="question-layout">
+        <div class="question-card"><span>🤔</span><strong>1回？ 3回？ 10回以上？</strong><p>多くの人は「方法」を変え続けます。でも本当に必要なのは、体のルールを知ることです。</p></div>
+        <div class="loop-diagram"><span>始める</span><i>→</i><span>減る</span><i>→</i><span>我慢</span><i>→</i><span>戻る</span></div>
+      </div>
     </section>
 
-    <section class="slide" id="slide-3" data-title="事実①">
-      <div class="slide-label">事実 ①</div>
-      <h2>ダイエット法に差はない</h2>
-      <p class="research-note">カナダ・マギル大学 研究データ（24ヶ月追跡）</p>
+    <section class="slide" id="slide-3" data-title="あなたのせいではない">
+      <div class="slide-top"><p class="slide-kicker">Mindset</p><span class="slide-no">03</span></div>
+      <h2>失敗したのは<br />あなたのせいではありません</h2>
+      <div class="speech-grid">
+        <div class="speech-card bad">「意志が弱い」ではない</div>
+        <div class="speech-card good">「仕組みを知らなかった」だけ</div>
+      </div>
+      <div class="key-panel">正しい知識を入れると、選ぶ食事・続く運動・見る数字が変わります。</div>
+    </section>
+
+    <section class="slide" id="slide-4" data-title="方法差は小さい">
+      <div class="slide-top"><p class="slide-kicker">Diet Methods</p><span class="slide-no">04</span></div>
+      <h2>ダイエット法に<br />大きな差はない</h2>
       <div class="comparison-cards three">
-        <article><span>Low Carb</span><strong>糖質制限</strong></article>
-        <article><span>Low Fat</span><strong>脂質制限</strong></article>
-        <article><span>Mediterranean</span><strong>地中海式</strong></article>
+        <article><span>Low Carb</span><strong>糖質制限</strong><small>主食を減らす</small></article>
+        <article><span>Low Fat</span><strong>脂質制限</strong><small>油を減らす</small></article>
+        <article><span>Mediterranean</span><strong>地中海式</strong><small>魚・野菜・油</small></article>
       </div>
-      <p class="key-message">結論：やり方ではなく<br /><strong>「続かない」のが問題！</strong></p>
+      <div class="arrow-message"><span>方法より重要</span><strong>続けられる環境と体の反応</strong></div>
     </section>
 
-    <section class="slide stat-slide" id="slide-4" data-title="事実②">
-      <div class="slide-label">事実 ②</div>
+    <section class="slide" id="slide-5" data-title="維持の壁">
+      <div class="slide-top"><p class="slide-kicker">Maintenance Wall</p><span class="slide-no">05</span></div>
       <h2>維持の壁</h2>
       <div class="stat-grid">
-        <article class="stat-card">
-          <span>1年後</span>
-          <strong>50%</strong>
-          <p>リバウンド</p>
-        </article>
-        <article class="stat-card danger">
-          <span>3〜5年後</span>
-          <strong>ほぼ全員</strong>
-          <p>元の体重へと戻ってしまう</p>
-        </article>
+        <article class="stat-card"><span>1年後</span><strong>50%</strong><p>がリバウンド</p></article>
+        <article class="stat-card danger"><span>3〜5年後</span><strong>多くの人</strong><p>が元の体重に戻りやすい</p></article>
       </div>
-      <div class="chart-card compact" role="img" aria-label="リバウンド率が1年後50%、3から5年後はほぼ全員まで上がる棒グラフ">
-        <div class="chart-title">時間が経つほど維持は難しくなる</div>
-        <div class="bar-chart">
-          <div class="bar-row">
-            <span class="bar-label">1年後</span>
-            <div class="bar-track"><span class="bar-fill pink" style="--bar-width: 50%;"></span></div>
-            <strong>50%</strong>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">3〜5年後</span>
-            <div class="bar-track"><span class="bar-fill red" style="--bar-width: 94%;"></span></div>
-            <strong>ほぼ全員</strong>
-          </div>
-        </div>
+      <div class="bar-chart" aria-label="1年後50%、3〜5年後多くの人が戻りやすいグラフ">
+        <div class="bar-row"><b>1年後</b><div><i style="--w:50%"></i></div><em>50%</em></div>
+        <div class="bar-row"><b>3〜5年後</b><div><i style="--w:86%"></i></div><em>戻りやすい</em></div>
       </div>
     </section>
 
-    <section class="slide" id="slide-5" data-title="事実③">
-      <div class="slide-label">事実 ③</div>
-      <h2>セットポイント理論</h2>
-      <div class="setpoint-card">
-        <p class="mini-title">遺伝子管理システム</p>
-        <strong>「セットポイント」</strong>
-        <p>人間の体には、生まれつき太らないようにできている遺伝子レベルの管理機能が備わっています。</p>
+    <section class="slide" id="slide-6" data-title="セットポイント">
+      <div class="slide-top"><p class="slide-kicker">Set Point</p><span class="slide-no">06</span></div>
+      <h2>セットポイントとは</h2>
+      <div class="setpoint-visual">
+        <div class="gauge"><span>低すぎ</span><strong>最適体重</strong><span>高すぎ</span></div>
+        <div class="body-card"><span>🧠</span><p>脳とホルモンが「いつもの体重」に戻そうとする仕組み。</p></div>
       </div>
-      <p class="key-message">本来、体は勝手に<br /><strong>「最適な体重」</strong>を維持しようとします！</p>
+      <div class="note-box">無理に減らすほど、食欲アップ・消費ダウンで戻す力が働きやすくなります。</div>
     </section>
 
-    <section class="slide experiment-slide" id="slide-6" data-title="実験">
-      <p class="slide-kicker">Shocking Experiment</p>
-      <h2>1日 10,000kcal</h2>
-      <p class="research-note">バーモント刑務所の実験（1966）</p>
-      <div class="timeline-card">
-        <span>強制的に食べ続ける</span>
-        <span>ある地点で増量がストップ</span>
-        <span>終了後、元の体重へ</span>
+    <section class="slide" id="slide-7" data-title="10000kcal実験">
+      <div class="slide-top"><p class="slide-kicker">Experiment</p><span class="slide-no">07</span></div>
+      <h2>1日 10,000kcal 実験</h2>
+      <div class="experiment-grid">
+        <div class="kcal-card"><span>🍽️</span><strong>10,000kcal / 日</strong><p>強制的に食べ続ける過食実験</p></div>
+        <div class="timeline"><span>食べる</span><i></i><span>増える</span><i></i><span>増量が鈍る</span><i></i><span>元へ戻る</span></div>
       </div>
-      <blockquote>人間の体には勝手に体重をコントロールする仕組みが備わっています。今の科学ではこれをセットポイントと呼びます。<cite>— キール大学 マンフレッド・ミューラー博士</cite></blockquote>
+      <div class="key-panel">体には体重をコントロールしようとする強い防御システムがあります。</div>
     </section>
 
-    <section class="slide center-slide" id="slide-7" data-title="筋トレ">
-      <p class="slide-kicker">Training</p>
-      <h2>どうして筋トレが1番良いの？</h2>
-      <div class="icon-grid two">
-        <article><span aria-hidden="true">🔥</span><strong>代謝を爆上げ</strong><p>消費の土台を拡大！</p></article>
-        <article><span aria-hidden="true">🛡️</span><strong>筋肉を守る</strong><p>脂肪だけを削る武器！</p></article>
+    <section class="slide" id="slide-8" data-title="我慢だけでは続かない">
+      <div class="slide-top"><p class="slide-kicker">Willpower Trap</p><span class="slide-no">08</span></div>
+      <h2>無理な我慢だけでは<br />続かない</h2>
+      <div class="two-column compact-cards">
+        <article class="problem-card"><span>😣</span><strong>我慢だけ</strong><ul><li>空腹が強い</li><li>反動で食べる</li><li>生活が苦しくなる</li></ul></article>
+        <article class="solution-card"><span>😊</span><strong>仕組み化</strong><ul><li>満腹になる食材</li><li>筋肉を守る</li><li>加工食品を減らす</li></ul></article>
       </div>
     </section>
 
-    <section class="slide warning-slide" id="slide-8" data-title="筋肉減少">
-      <p class="slide-kicker">No Training Diet</p>
-      <h2>筋トレしないダイエットの末路</h2>
-      <div class="split-visual">
-        <div class="pie-panel" role="img" aria-label="筋トレなしで痩せた重量の約30%が筋肉、約70%が脂肪という円グラフ">
-          <div class="donut-chart">
-            <span>筋肉<br />約30%</span>
-          </div>
-          <div class="chart-legend">
-            <span><i class="legend-color red"></i>筋肉 約30%</span>
-            <span><i class="legend-color green"></i>脂肪 約70%</span>
-          </div>
-        <div class="donut-chart" role="img" aria-label="筋トレなしで痩せた重量の約30%が筋肉、約70%が脂肪という円グラフ">
-          <span>筋肉<br />約30%</span>
-        </div>
-        <div>
-          <p class="giant-percent">約30%</p>
-          <p class="key-message">痩せた重量の約30%は筋肉！</p>
-        </div>
+    <section class="slide" id="slide-9" data-title="筋トレ重要">
+      <div class="slide-top"><p class="slide-kicker">Strength Training</p><span class="slide-no">09</span></div>
+      <h2>筋トレが重要な理由</h2>
+      <div class="icon-grid three">
+        <article><span>💪</span><strong>筋肉を守る</strong><p>減量中の体型を支える。</p></article>
+        <article><span>🔥</span><strong>代謝を守る</strong><p>消費カロリーの落ち込みを抑える。</p></article>
+        <article><span>🧘</span><strong>リバウンド予防</strong><p>体を「太りにくい方向」へ。</p></article>
       </div>
-      <div class="formula">筋肉が減る ＝ 代謝が落ちる ＝ 後の地獄</div>
-      <p class="note-box">3kg痩せても、1kgは大切な筋肉を捨てているのです。</p>
     </section>
 
-    <section class="slide" id="slide-9" data-title="研究比較">
-      <p class="slide-kicker">Research</p>
+    <section class="slide" id="slide-10" data-title="筋トレなし問題">
+      <div class="slide-top"><p class="slide-kicker">Hidden Cost</p><span class="slide-no">10</span></div>
+      <h2>筋トレしない<br />ダイエットの問題</h2>
+      <div class="muscle-loss-card"><span class="big-emoji">⚠️</span><div><strong>痩せた重量の約30%は筋肉になることがある</strong><p>体重だけを見ると成功に見えても、筋肉まで失うと代謝が落ち、体型も崩れやすくなります。</p></div></div>
+      <div class="mini-chart"><span style="--p:70%">脂肪 70%</span><span style="--p:30%">筋肉 30%</span></div>
+    </section>
+
+    <section class="slide" id="slide-11" data-title="筋トレありVSなし">
+      <div class="slide-top"><p class="slide-kicker">Compare</p><span class="slide-no">11</span></div>
       <h2>筋トレあり VS なし</h2>
-      <p class="research-note">ペンシルベニア州立大学（1999）／カロリー制限下の比較</p>
-      <div class="versus-card">
-        <article class="bad"><span>なし</span><strong>筋肉を失いやすい</strong></article>
-        <div class="vs">VS</div>
-        <article class="good"><span>あり</span><strong>体を変えやすい</strong></article>
+      <div class="vs-table">
+        <article><h3>なし 😵</h3><p>体重は減るが筋肉も落ちやすい</p><p>代謝が下がり空腹も強くなる</p></article>
+        <div class="vs-badge">VS</div>
+        <article class="win"><h3>あり 💪</h3><p>筋肉を守りながら脂肪を落とす</p><p>見た目と維持力が改善しやすい</p></article>
       </div>
     </section>
 
-    <section class="slide warning-slide" id="slide-10" data-title="代謝低下">
-      <p class="slide-kicker">NIH Research</p>
+    <section class="slide" id="slide-12" data-title="代謝低下">
+      <div class="slide-top"><p class="slide-kicker">Metabolic Down</p><span class="slide-no">12</span></div>
       <h2>代謝低下の恐怖</h2>
-      <div class="calorie-chip">-500kcal</div>
-      <p class="key-message">基礎代謝が低下。</p>
-      <p class="note-box">※一度落ちた代謝は、6年後も回復しませんでした。</p>
+      <div class="stat-grid">
+        <article class="stat-card danger"><span>代謝低下</span><strong>約 -500kcal</strong><p>消費が落ちることがある</p></article>
+        <article class="food-stack"><span>🍙</span><span>🥚</span><span>🍌</span><p>500kcalは食事1回分に近い差</p></article>
+      </div>
+      <div class="bar-chart"><div class="bar-row"><b>以前</b><div><i style="--w:100%"></i></div><em>維持</em></div><div class="bar-row"><b>減量後</b><div><i style="--w:76%"></i></div><em>-500kcal</em></div></div>
     </section>
 
-    <section class="slide center-slide" id="slide-11" data-title="ゴール">
-      <p class="slide-kicker">Goal Reset</p>
-      <h2>痩せるのではなく、</h2>
-      <p class="big-answer">「体を変える」</p>
-      <p class="empathy">これが本当のゴール！</p>
+    <section class="slide" id="slide-13" data-title="ゴール">
+      <div class="slide-top"><p class="slide-kicker">Goal</p><span class="slide-no">13</span></div>
+      <h2>ゴールは<br />体重を減らすことではなく<br />体を変えること</h2>
+      <div class="goal-flow"><span>食事の質</span><i>＋</i><span>筋トレ</span><i>＋</i><span>睡眠</span><i>＝</i><strong>戻りにくい体</strong></div>
     </section>
 
-    <section class="slide center-slide" id="slide-12" data-title="問い">
-      <h2>やり方に差はない。<br />どうせリバウンドする…</h2>
-      <p class="big-question">じゃあ、どうすればいいの？</p>
-      <p class="empathy">解決策はあります。</p>
-    </section>
-
-    <section class="slide title-slide paleo-slide" id="slide-13" data-title="パレオ">
-      <p class="slide-kicker">Solution</p>
-      <h2>それが、<br />パレオダイエットです！</h2>
-      <p class="title-lead">一生太らない：人類本来の食事へ</p>
-    </section>
-
-    <section class="slide" id="slide-14" data-title="パレオ定義">
-      <p class="slide-kicker">Paleo Diet</p>
-      <h2>人類本来の食事へ</h2>
-      <div class="setpoint-card green">
-        <p>人類が数百万年かけて適応してきた「自然な食材」を食べるスタイルです。</p>
-        <strong>脳のセンサーが正常化し、勝手に痩せていく</strong>
+    <section class="slide" id="slide-14" data-title="ここまでまとめ">
+      <div class="slide-top"><p class="slide-kicker">Summary</p><span class="slide-no">14</span></div>
+      <h2>ここまでのまとめ</h2>
+      <div class="summary-grid">
+        <article><b>01</b><strong>方法差は小さい</strong><p>続けられるかが勝負。</p></article>
+        <article><b>02</b><strong>維持が難しい</strong><p>1年後50%がリバウンド。</p></article>
+        <article><b>03</b><strong>筋肉を守る</strong><p>筋トレが代謝の保険。</p></article>
+        <article><b>04</b><strong>仕組みで勝つ</strong><p>我慢だけに頼らない。</p></article>
       </div>
     </section>
 
-    <section class="slide upf-slide" id="slide-15" data-title="真犯人">
-      <p class="slide-kicker">True Enemy</p>
-      <h2>真犯人：超加工食品（UPF）</h2>
-      <div class="food-cloud" aria-label="超加工食品の例">
-        <span>ポテチ</span><span>菓子パン</span><span>カップ麺</span><span>炭酸飲料</span><span>ピザ</span><span>チョコレート</span><span>ウインナー</span><span>ハム</span><span>コンビニ弁当</span>
+    <section class="slide" id="slide-15" data-title="自然な食事">
+      <div class="slide-top"><p class="slide-kicker">Solution</p><span class="slide-no">15</span></div>
+      <h2>解決策は自然な食事</h2>
+      <div class="food-compare">
+        <article class="good-food"><h3>自然に近い食事</h3><p>🥩 🐟 🥚 🥦 🍠 🫐 🥑</p><span>満腹・栄養・加工少なめ</span></article>
+        <article class="bad-food"><h3>超加工食品</h3><p>🍟 🥐 🍜 🥤 🍕 🍫</p><span>食べすぎやすく栄養密度が低い</span></article>
       </div>
-      <div class="chart-card pie-card" role="img" aria-label="若年層の1日の総摂取カロリーの50%が加工食品で、残り50%がその他の食品という円グラフ">
-        <div>
-          <div class="chart-title">若年層の摂取カロリー内訳</div>
-          <p class="chart-caption">毎日のカロリーの半分が、加工食品に偏りやすい。</p>
-        </div>
-        <div class="pie-panel">
-          <div class="half-pie">
-            <span>加工食品<br />50%</span>
-          </div>
-          <div class="chart-legend">
-            <span><i class="legend-color red"></i>加工食品 50%</span>
-            <span><i class="legend-color yellow"></i>その他 50%</span>
-          </div>
-        </div>
-      </div>
-      <p class="note-box">若年層は1日の総摂取カロリーの50%が加工食品</p>
     </section>
 
-    <section class="slide" id="slide-16" data-title="見極め">
-      <p class="slide-kicker">Check Point</p>
+    <section class="slide" id="slide-16" data-title="パレオとは">
+      <div class="slide-top"><p class="slide-kicker">Paleo Diet</p><span class="slide-no">16</span></div>
+      <h2>パレオダイエットとは</h2>
+      <div class="paleo-plate">
+        <div class="plate"><span>🥩</span><span>🐟</span><span>🥦</span><span>🍠</span><span>🥑</span><span>🫐</span></div>
+        <div class="plate-text"><strong>狩猟採集民の食事に近づける考え方</strong><p>肉・魚・卵・野菜・芋・果物・良質な油を中心に、精製・加工を減らします。</p></div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-17" data-title="狩猟採集民研究">
+      <div class="slide-top"><p class="slide-kicker">Field Study</p><span class="slide-no">17</span></div>
+      <h2>狩猟採集民の食事研究</h2>
+      <div class="research-layout stable">
+        <article><span>🌍</span><strong>地域差は大きい</strong><p>肉中心・魚中心・芋中心など、食材構成は一つではありません。</p></article>
+        <article><span>✅</span><strong>共通点は少加工</strong><p>自然に近い食材が多く、現代的な超加工食品は少ない。</p></article>
+        <article><span>📉</span><strong>生活習慣病が少ない傾向</strong><p>食事・活動量・睡眠など生活全体が影響します。</p></article>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-18" data-title="伝統食から現代食">
+      <div class="slide-top"><p class="slide-kicker">Nutrition Shift</p><span class="slide-no">18</span></div>
+      <h2>伝統食から現代食にすると</h2>
+      <div class="before-after">
+        <article><h3>Before</h3><p>🐟 🥩 🥬 🍠</p><span>自然な食材中心</span></article>
+        <div class="arrow">→</div>
+        <article class="danger"><h3>After</h3><p>🍟 🍜 🥤 🍫</p><span>超加工食品が増える</span></article>
+      </div>
+      <div class="key-panel">摂取カロリー・血糖・中性脂肪・体脂肪が悪化しやすくなります。</div>
+    </section>
+
+    <section class="slide" id="slide-19" data-title="改善指標">
+      <div class="slide-top"><p class="slide-kicker">Health Markers</p><span class="slide-no">19</span></div>
+      <h2>パレオ型食事で<br />改善しやすい指標</h2>
+      <div class="marker-grid">
+        <article>⚖️<strong>体重</strong></article><article>📏<strong>腹囲</strong></article><article>🩸<strong>血糖</strong></article><article>💧<strong>中性脂肪</strong></article><article>❤️<strong>血圧</strong></article><article>🔥<strong>炎症</strong></article>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-20" data-title="超加工食品">
+      <div class="slide-top"><p class="slide-kicker">Real Enemy</p><span class="slide-no">20</span></div>
+      <h2>真犯人：超加工食品</h2>
+      <div class="junk-grid"><span>🍟<b>ポテチ</b></span><span>🥐<b>菓子パン</b></span><span>🍜<b>カップ麺</b></span><span>🥤<b>炭酸飲料</b></span><span>🍕<b>ピザ</b></span><span>🍫<b>チョコ</b></span></div>
+      <div class="stat-grid small"><article class="stat-card danger"><span>若年層</span><strong>約50%</strong><p>1日の総摂取カロリーが加工食品</p></article><article class="stat-card"><span>目標</span><strong>10%以内</strong><p>加工食品は食事全体の10%以内</p></article></div>
+    </section>
+
+    <section class="slide" id="slide-21" data-title="見極め方">
+      <div class="slide-top"><p class="slide-kicker">Food Check</p><span class="slide-no">21</span></div>
       <h2>加工食品の見極め方</h2>
-      <ul class="check-list">
-        <li>原材料名の「原型」が不明</li>
-        <li>カタカナの成分が並んでいる</li>
-      </ul>
-    </section>
-
-    <section class="slide stat-slide" id="slide-17" data-title="加工食品研究">
-      <p class="slide-kicker">NIH / Kevin Hall 2019</p>
-      <h2>加工食品を止めただけの研究結果</h2>
-      <p class="research-note">加工食品か自然食かを、好きなだけ食べさせた結果</p>
-      <div class="chart-card calorie-compare" role="img" aria-label="自然食群を基準にすると、加工食品群は1日平均で500キロカロリー多く摂取した棒グラフ">
-        <div class="chart-title">同じ“好きなだけ”でも摂取量に差</div>
-        <div class="column-chart" aria-hidden="true">
-          <div class="column-group">
-            <div class="column-track"><span class="column-fill green" style="--column-height: 22%;"></span></div>
-            <strong>自然食</strong>
-            <small>基準</small>
-          </div>
-          <div class="column-group highlight">
-            <div class="column-track"><span class="column-fill red" style="--column-height: 88%;"></span></div>
-            <strong>加工食品</strong>
-            <small>+500kcal/日</small>
-      <div class="chart-card calorie-compare" role="img" aria-label="自然食群を基準にすると、加工食品群は1日平均で500キロカロリー多く摂取した比較グラフ">
-        <div class="chart-title">同じ“好きなだけ”でも摂取量に差</div>
-        <div class="bar-chart">
-          <div class="bar-row">
-            <span class="bar-label">自然食</span>
-            <div class="bar-track"><span class="bar-fill green" style="--bar-width: 16%;"></span></div>
-            <strong>基準</strong>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">加工食品</span>
-            <div class="bar-track"><span class="bar-fill red" style="--bar-width: 86%;"></span></div>
-            <strong>+500kcal</strong>
-          </div>
-        </div>
+      <div class="checklist-layout">
+        <ul class="check-list"><li>原材料が長い</li><li>聞き慣れない添加物が多い</li><li>甘い・しょっぱい・油っぽいが同時に強い</li><li>袋を開けると止まらない</li></ul>
+        <div class="label-card"><span>🧾</span><strong>裏面を見る</strong><p>「食材名」より「工業的な材料名」が多いものは頻度を下げましょう。</p></div>
       </div>
-      <p class="key-message">自然食なら、我慢なしで勝手に摂取量が減る</p>
     </section>
 
-    <section class="slide" id="slide-18" data-title="サプリ1">
-      <p class="slide-kicker">Supplement 01</p>
-      <h2>腸内環境</h2>
-      <div class="supplement-card"><span>🦠</span><strong>プロバイオティクス</strong><p>アレルギー症状も緩和される可能性！<br />日本では「ビオ3Hi錠」が有名</p></div>
+    <section class="slide" id="slide-22" data-title="加工食品研究結果">
+      <div class="slide-top"><p class="slide-kicker">Study Result</p><span class="slide-no">22</span></div>
+      <h2>加工食品をやめただけの<br />研究結果</h2>
+      <div class="calorie-visual">
+        <article><h3>未加工食品群</h3><p>🥩 🥦 🍠</p><strong>自然に摂取が安定</strong></article>
+        <article class="danger"><h3>加工食品群</h3><p>🍟 🍜 🥤</p><strong>1日平均 +500kcal 過食</strong></article>
+      </div>
+      <div class="bar-chart"><div class="bar-row"><b>未加工</b><div><i style="--w:58%"></i></div><em>基準</em></div><div class="bar-row"><b>加工食品</b><div><i style="--w:88%"></i></div><em>+500kcal</em></div></div>
     </section>
 
-    <section class="slide" id="slide-19" data-title="サプリ2">
-      <p class="slide-kicker">Supplement 02</p>
-      <h2>善玉菌の最高の餌</h2>
-      <div class="supplement-card"><span>🌾</span><strong>レジスタントスターチ</strong><p>腸内環境を整え、アレルギー改善にも！<br />サプリメントで手軽に摂取可能です。</p></div>
+    <section class="slide" id="slide-23" data-title="プロバイオティクス">
+      <div class="slide-top"><p class="slide-kicker">Supplement 01</p><span class="slide-no">23</span></div>
+      <h2>おすすめサプリ：<br />プロバイオティクス</h2>
+      <div class="supplement-card"><span>🦠</span><strong>腸内環境の味方</strong><p>食欲・免疫・便通を整える土台作り。発酵食品と合わせると続けやすいです。</p><em>例：乳酸菌・ビフィズス菌</em></div>
     </section>
 
-    <section class="slide" id="slide-20" data-title="サプリ3">
-      <p class="slide-kicker">Supplement 03</p>
-      <h2>ビタミンD</h2>
-      <div class="supplement-card"><span>☀️</span><strong>現代人への必須栄養</strong><p>免疫や脳の活動を正常化。日光を浴びない現代人に不可欠です。</p><em>目安：1日 2,000〜3,000 IU</em></div>
+    <section class="slide" id="slide-24" data-title="レジスタントスターチ">
+      <div class="slide-top"><p class="slide-kicker">Supplement 02</p><span class="slide-no">24</span></div>
+      <h2>おすすめサプリ：<br />レジスタントスターチ</h2>
+      <div class="supplement-card green"><span>🌾</span><strong>腸のエサになるでんぷん</strong><p>善玉菌の栄養になり、満腹感や血糖コントロールのサポートが期待できます。</p><em>例：冷やした芋・米、専用パウダー</em></div>
     </section>
 
-    <section class="slide ranking-slide" id="slide-21" data-title="タンパク質">
-      <p class="slide-kicker">Food Ranking</p>
-      <h2>タンパク質番付 Top 4</h2>
-      <ol class="ranking-list">
-        <li>天然の魚介類</li>
-        <li>牧草育ちの反芻動物（牛、羊等）</li>
-        <li>地鶏、放牧で育った豚</li>
-        <li>養殖魚、卵</li>
-      </ol>
+    <section class="slide" id="slide-25" data-title="ビタミンD">
+      <div class="slide-top"><p class="slide-kicker">Supplement 03</p><span class="slide-no">25</span></div>
+      <h2>おすすめサプリ：<br />ビタミンD</h2>
+      <div class="supplement-card orange"><span>☀️</span><strong>日光不足の現代人に</strong><p>骨・免疫・気分のコンディションに関わる栄養素。血液検査で不足を確認できると安心です。</p><em>目安は専門家に相談</em></div>
     </section>
 
-    <section class="slide ranking-slide" id="slide-22" data-title="油">
-      <p class="slide-kicker">Food Ranking</p>
-      <h2>お勧めの油番付 Top 4</h2>
-      <ol class="ranking-list oil">
-        <li>ココナッツ、MCTオイル、パーム核油</li>
-        <li>放牧牛の牛脂、オーガニックバター、ギー</li>
-        <li>マカデミアナッツ、EVオリーブオイル</li>
-        <li>アボカドオイル、アマニ油</li>
-      </ol>
+    <section class="slide ranking-slide" id="slide-26" data-title="タンパク質Top4">
+      <div class="slide-top"><p class="slide-kicker">Food Ranking</p><span class="slide-no">26</span></div>
+      <h2>おすすめタンパク質番付 Top 4</h2>
+      <div class="ranking-board" data-theme="protein">
+        <article><span class="rank">1</span><i>🐟</i><strong>天然の魚介類</strong><p>高タンパクで脂質の質も良い。</p></article>
+        <article><span class="rank">2</span><i>🥩</i><strong>牧草育ちの反芻動物</strong><p>牛・羊など。満足感が高い。</p></article>
+        <article><span class="rank">3</span><i>🐔</i><strong>地鶏・放牧豚</strong><p>できるだけ育ち方が良いもの。</p></article>
+        <article><span class="rank">4</span><i>🥚</i><strong>養殖魚・卵</strong><p>手に入りやすく続けやすい。</p></article>
+      </div>
     </section>
 
-    <section class="slide ranking-slide" id="slide-23" data-title="炭水化物">
-      <p class="slide-kicker">Food Ranking</p>
-      <h2>炭水化物番付 Top 4</h2>
-      <ol class="ranking-list carb">
-        <li>すべての葉物野菜</li>
-        <li>サツマイモ、里芋などの芋類</li>
-        <li>にんじん、玉ねぎ等の高糖質な野菜</li>
-        <li>ベリー類などフルーツ全般</li>
-      </ol>
+    <section class="slide ranking-slide" id="slide-27" data-title="油Top4">
+      <div class="slide-top"><p class="slide-kicker">Food Ranking</p><span class="slide-no">27</span></div>
+      <h2>おすすめの油番付 Top 4</h2>
+      <div class="ranking-board" data-theme="oil">
+        <article><span class="rank">1</span><i>🥥</i><strong>ココナッツ・MCT・パーム核油</strong><p>加熱にも使いやすい。</p></article>
+        <article><span class="rank">2</span><i>🧈</i><strong>放牧牛の牛脂・バター・ギー</strong><p>自然な脂質を選ぶ。</p></article>
+        <article><span class="rank">3</span><i>🫒</i><strong>マカデミア・EVオリーブオイル</strong><p>サラダや仕上げに。</p></article>
+        <article><span class="rank">4</span><i>🥑</i><strong>アボカドオイル・アマニ油</strong><p>用途に合わせて使い分け。</p></article>
+      </div>
     </section>
 
-    <section class="slide center-slide" id="slide-24" data-title="質優先">
-      <p class="slide-kicker">First Step</p>
-      <h2>最初はカロリー無視でOK！</h2>
-      <p class="empathy">質が整えば、脳のセンサーが戻り、勝手に食べる量が適正化されます。</p>
-      <p class="big-answer small">まずは「パレオな食事」をひたすら守る</p>
+    <section class="slide ranking-slide" id="slide-28" data-title="炭水化物Top4">
+      <div class="slide-top"><p class="slide-kicker">Food Ranking</p><span class="slide-no">28</span></div>
+      <h2>おすすめ炭水化物番付 Top 4</h2>
+      <div class="ranking-board" data-theme="carb">
+        <article><span class="rank">1</span><i>🥬</i><strong>すべての葉物野菜</strong><p>まずは量を増やしたい土台。</p></article>
+        <article><span class="rank">2</span><i>🍠</i><strong>サツマイモ・里芋などの芋類</strong><p>満腹感を作りやすい。</p></article>
+        <article><span class="rank">3</span><i>🥕</i><strong>にんじん・玉ねぎ等の野菜</strong><p>甘みのある野菜も活用。</p></article>
+        <article><span class="rank">4</span><i>🫐</i><strong>ベリー類などフルーツ全般</strong><p>デザート代わりにも。</p></article>
+      </div>
     </section>
 
-    <section class="slide" id="slide-25" data-title="ステップ1">
-      <div class="slide-label">Step 1</div>
-      <h2>カロリーを調べる</h2>
-      <p class="key-message">体重が落ちなくなったら<br />初めてカロリーを調べましょう。</p>
-      <p class="note-box">次から具体的な計算方法をお伝えします。</p>
+    <section class="slide" id="slide-29" data-title="最初はカロリー無視">
+      <div class="slide-top"><p class="slide-kicker">First Step</p><span class="slide-no">29</span></div>
+      <h2>最初はカロリー無視でOK</h2>
+      <div class="step-card"><span>1</span><strong>まず食事の質を整える</strong><p>加工食品を減らし、タンパク質・野菜・芋・果物・良質な油を食べる。食欲センサーを先に戻します。</p></div>
     </section>
 
-    <section class="slide formula-slide" id="slide-26" data-title="ステップ2">
-      <div class="slide-label">Step 2</div>
-      <h2>維持カロリーの導き出し</h2>
-      <div class="formula-card">今の体重（kg） × 33</div>
-      <p class="example">例：60kgの人なら、<strong>1,980kcal</strong> が維持ベース</p>
+    <section class="slide" id="slide-30" data-title="停滞したらカロリー">
+      <div class="slide-top"><p class="slide-kicker">Next Step</p><span class="slide-no">30</span></div>
+      <h2>体重が落ちなくなったら<br />カロリーを見る</h2>
+      <div class="decision-flow"><span>質を整える</span><i>→</i><span>体重が落ちる</span><i>→</i><span>停滞する</span><i>→</i><strong>数字を確認</strong></div>
+      <div class="note-box">最初から細かく計算しすぎるより、食事の質を作ってから調整しましょう。</div>
     </section>
 
-    <section class="slide formula-slide" id="slide-27" data-title="ステップ3">
-      <div class="slide-label">Step 3</div>
-      <h2>目標カロリーの決定</h2>
+    <section class="slide formula-slide" id="slide-31" data-title="維持カロリー">
+      <div class="slide-top"><p class="slide-kicker">Formula 01</p><span class="slide-no">31</span></div>
+      <h2>維持カロリー</h2>
+      <div class="formula-card">体重kg × 33</div>
+      <div class="example-card"><strong>例：60kg</strong><span>60 × 33 = 1,980kcal</span><p>今の体重を維持しやすいざっくり目安。</p></div>
+    </section>
+
+    <section class="slide formula-slide" id="slide-32" data-title="目標カロリー">
+      <div class="slide-top"><p class="slide-kicker">Formula 02</p><span class="slide-no">32</span></div>
+      <h2>目標カロリー</h2>
       <div class="formula-card">維持カロリー × 0.6〜0.7</div>
-      <div class="chart-card formula-chart" role="img" aria-label="60キログラムの人の維持カロリー1980キロカロリーに対し、減量目標は1200から1400キロカロリーの範囲を示す棒グラフ">
-        <div class="chart-title">60kgの例：維持 → 目標の目安</div>
-        <div class="range-chart">
-          <div class="range-line maintenance"><span>維持 1,980kcal</span></div>
-          <div class="range-line target"><span>目標 1,200〜1,400kcal</span></div>
-        </div>
-      </div>
-      <p class="example">例：60kgの人なら、<strong>1,200〜1,400kcal</strong> が減量目標</p>
+      <div class="range-visual"><span>維持 100%</span><div><i></i></div><strong>目標 60〜70%</strong></div>
     </section>
 
-    <section class="slide formula-slide" id="slide-28" data-title="タンパク質量">
-      <p class="slide-kicker">Practice</p>
-      <h2>タンパク質摂取量</h2>
-      <div class="formula-card">体重（kg） × 1.8〜2.4g</div>
-      <p class="key-message">最優先の栄養素</p>
-      <p class="note-box">筋肉を守り、最強の満腹ホルモンを刺激するために、まずこれを確保します。</p>
+    <section class="slide formula-slide" id="slide-33" data-title="タンパク質">
+      <div class="slide-top"><p class="slide-kicker">Formula 03</p><span class="slide-no">33</span></div>
+      <h2>タンパク質</h2>
+      <div class="formula-card">体重kg × 1.8〜2.4g</div>
+      <div class="protein-icons"><span>🥩</span><span>🐟</span><span>🥚</span><span>🍗</span></div>
+      <div class="note-box">筋肉を守る最優先栄養素。毎食に手のひら1〜2枚分を目安に。</div>
     </section>
 
-    <section class="slide formula-slide" id="slide-29" data-title="脂質と炭水化物">
-      <p class="slide-kicker">Practice</p>
+    <section class="slide formula-slide" id="slide-34" data-title="脂質と炭水化物">
+      <div class="slide-top"><p class="slide-kicker">Formula 04</p><span class="slide-no">34</span></div>
       <h2>脂質と炭水化物</h2>
       <div class="macro-grid">
-        <article><span>脂質量</span><strong>体重 × 0.7〜2.2g</strong></article>
-        <article><span>炭水化物</span><strong>葉物野菜 → 芋 → フルーツ</strong></article>
+        <article><span>脂質</span><strong>体重kg × 0.7〜2.2g</strong><p>油の質を優先して調整。</p></article>
+        <article><span>炭水化物</span><strong>葉物野菜 → 芋 → 果物</strong><p>活動量と停滞具合で増減。</p></article>
       </div>
     </section>
 
-    <section class="slide" id="slide-30" data-title="今日から">
-      <p class="slide-kicker">Action Plan</p>
-      <h2>今日からやるプラン</h2>
-      <ul class="action-list">
-        <li><span>01</span>加工食品を食事全体の10%以内に収める</li>
-        <li><span>02</span>タンパク質を最優先で食べる</li>
-        <li><span>03</span>「パレオ」な食材を本気で選ぶ</li>
-      </ul>
+    <section class="slide" id="slide-35" data-title="3つのプラン">
+      <div class="slide-top"><p class="slide-kicker">Action Plan</p><span class="slide-no">35</span></div>
+      <h2>今日からやる3つのプラン</h2>
+      <div class="plan-grid">
+        <article><b>01</b><strong>加工食品は10%以内</strong><p>ポテチ・菓子パン・カップ麺・炭酸飲料を頻度管理。</p></article>
+        <article><b>02</b><strong>タンパク質を毎食</strong><p>体重kg × 1.8〜2.4gを目標に。</p></article>
+        <article><b>03</b><strong>週2〜3回筋トレ</strong><p>筋肉と代謝を守る。</p></article>
+      </div>
     </section>
 
-    <section class="slide title-slide final-slide" id="slide-31" data-title="締め">
-      <p class="slide-kicker">Start Today</p>
-      <h2>変わる人は、<br />「やる人」だけです。</h2>
-      <p class="title-lead">今日から、最高の自分を始めましょう！</p>
-      <p class="disclaimer">※本資料は一般的な情報提供を目的としています。持病・服薬中・妊娠中の方は医師等に相談してください。</p>
+    <section class="slide title-slide final-slide" id="slide-36" data-title="最後">
+      <div class="slide-top"><p class="slide-kicker">Final Message</p><span class="slide-no">36</span></div>
+      <div class="hero-lockup">
+        <h2>変わる人は、<br />今日の一口から変わる。</h2>
+        <p class="lead">完璧ではなく、自然な食事・筋肉・継続の仕組みを積み上げましょう。</p>
+        <div class="tag-row"><span>10%以内</span><span>タンパク質</span><span>筋トレ</span></div>
+        <p class="disclaimer">※本資料は一般的な情報提供を目的としています。持病・服薬中・妊娠中の方は医師等に相談してください。</p>
+      </div>
     </section>
   </main>
 
-  <aside class="progress-rail" aria-label="スライド一覧">
-    <div class="progress-dots" id="progressDots"></div>
-  </aside>
-
+  <aside class="progress-rail" aria-label="スライド一覧"><div class="progress-dots" id="progressDots"></div></aside>
   <script src="script.js"></script>
 </body>
 </html>
