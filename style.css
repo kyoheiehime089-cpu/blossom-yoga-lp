@@ -334,6 +334,50 @@ p { margin-bottom: 0; }
 .progress-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: rgba(20, 33, 61, 0.25); cursor: pointer; }
 .progress-dot.active { height: 22px; background: var(--orange); }
 
+.top-three-reasons {
+  display: grid;
+  gap: clamp(10px, 1.5vw, 16px);
+}
+.ranking-title {
+  width: fit-content;
+  margin-inline: auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: var(--white);
+  box-shadow: var(--shadow-soft);
+  font-weight: 900;
+}
+.ranking-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 1.6vw, 18px);
+}
+.ranking-list article {
+  display: grid;
+  gap: 8px;
+  padding: clamp(14px, 2vw, 24px);
+  border: 2px solid rgba(20, 33, 61, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.90);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+.ranking-list span {
+  justify-self: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--orange);
+  color: var(--white);
+  font-weight: 900;
+}
+.ranking-list strong {
+  display: block;
+  font-size: clamp(1.1rem, 2.2vw, 1.7rem);
+  font-weight: 900;
+}
+.title-offset-slide h2 { margin-top: clamp(18px, 2.8vw, 34px); }
+
 @media (max-width: 900px) {
   :root { --deck-header-height: 112px; }
   html { scroll-snap-type: none; }
@@ -357,6 +401,10 @@ p { margin-bottom: 0; }
   }
   h1 { font-size: clamp(2.4rem, 12vw, 4rem); }
   h2 { font-size: clamp(1.35rem, 6vw, 2.5rem); }
+  .ranking-list { grid-template-columns: 1fr; gap: 8px; }
+  .ranking-list article { gap: 4px; padding: 10px; }
+  .ranking-title { padding: 6px 12px; font-size: 0.82rem; }
+  .title-offset-slide h2 { margin-top: 28px; }
   .slide-top { top: 12px; right: 16px; left: 16px; }
   .slide-kicker { padding: 5px 9px; font-size: 0.58rem; }
   .slide-no { font-size: 1.3rem; }
@@ -393,6 +441,8 @@ p { margin-bottom: 0; }
   .question-card, .problem-card, .solution-card, .kcal-card, .stat-card, .comparison-cards article, .summary-grid article, .icon-grid article, .research-layout article, .marker-grid article, .label-card, .food-compare article, .calorie-visual article, .macro-grid article, .before-after article, .vs-table article, .plan-grid article { padding: 10px; }
   .key-panel, .note-box { padding: 10px; font-size: 0.82rem; }
   h2 { font-size: clamp(1.25rem, 5.4vw, 2rem); }
+  .ranking-list strong { font-size: 0.95rem; }
+  .ranking-list span { padding: 4px 9px; font-size: 0.76rem; }
   .lead { font-size: 0.92rem; }
   .question-card span, .kcal-card span, .icon-grid span, .supplement-card > span, .muscle-loss-card .big-emoji { font-size: 1.8rem; }
   .stat-card strong { font-size: 1.55rem; }
