@@ -3,22 +3,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevButton = document.getElementById('prevSlide');
   const nextButton = document.getElementById('nextSlide');
   const counter = document.getElementById('slideCounter');
+  const deck = document.getElementById('deck');
   const dotsContainer = document.getElementById('progressDots');
   const header = document.querySelector('.deck-header');
 
-  if (!slides.length || !prevButton || !nextButton || !counter || !dotsContainer) return;
+  if (!slides.length || !prevButton || !nextButton || !counter || !deck || !dotsContainer) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let activeIndex = 0;
 
-  const setHeaderHeight = () => {
-    if (!header) return;
-    document.documentElement.style.setProperty('--deck-header-height', `${header.offsetHeight}px`);
+  const setViewportMetrics = () => {
+    if (header) {
+      document.documentElement.style.setProperty('--deck-header-height', `${header.offsetHeight}px`);
+    }
+    document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
   };
 
-  setHeaderHeight();
-  window.addEventListener('resize', setHeaderHeight);
+  setViewportMetrics();
+  window.addEventListener('resize', setViewportMetrics);
+  window.addEventListener('orientationchange', setViewportMetrics);
 
   slides.forEach((slide, index) => {
     const number = slide.querySelector('.slide-no');
