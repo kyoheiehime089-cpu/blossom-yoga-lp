@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const nextButton = document.getElementById('nextSlide');
   const counter = document.getElementById('slideCounter');
   const dotsContainer = document.getElementById('progressDots');
+  const header = document.querySelector('.deck-header');
 
   if (!slides.length || !prevButton || !nextButton || !counter || !dotsContainer) return;
 
@@ -11,9 +12,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let activeIndex = 0;
 
+  const setHeaderHeight = () => {
+    if (!header) return;
+    document.documentElement.style.setProperty('--deck-header-height', `${header.offsetHeight}px`);
+  };
+
+  setHeaderHeight();
+  window.addEventListener('resize', setHeaderHeight);
+
+  slides.forEach((slide, index) => {
+    const number = slide.querySelector('.slide-no');
+    if (number) number.textContent = String(index + 1).padStart(2, '0');
+  });
+
   const scrollToSlide = (index) => {
     const safeIndex = Math.min(Math.max(index, 0), slides.length - 1);
-    slides[safeIndex].scrollIntoView({
+    const target = slides[safeIndex];
+    const useDeckScroll = window.matchMedia('(max-width: 900px)').matches;
+
+    if (useDeckScroll) {
+      deck.scrollTo({
+        top: target.offsetTop - deck.offsetTop,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+      return;
+    }
+
+    target.scrollIntoView({
       behavior: prefersReducedMotion ? 'auto' : 'smooth',
       block: 'start',
     });
@@ -46,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!visibleSlide) return;
     updateNavigation(slides.indexOf(visibleSlide.target));
-  }, { threshold: [0.35, 0.55, 0.75] });
+  }, { root: window.matchMedia('(max-width: 900px)').matches ? deck : null, threshold: [0.35, 0.55, 0.75] });
 
   slides.forEach((slide) => observer.observe(slide));
 
