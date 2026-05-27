@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>friendsセルフ｜管理者画面</title>
 <meta name="theme-color" content="#1f2a24">
-<link rel="stylesheet" href="./admin-style.css?v=6">
+<link rel="stylesheet" href="./admin-style.css?v=8">
 </head>
 <body>
 <div class="wrap">
@@ -30,7 +30,7 @@
   <section id="calendarTab" class="panel hidden"><p class="eyebrow">カレンダー</p><h2>予約状況</h2><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><p class="small">空き枠をタップすると、管理者側で会員予約を入れる／利用不可で埋める操作ができます。</p><div id="calendarList" class="cal-list"></div></section>
   <section id="customersTab" class="panel hidden"><p class="eyebrow">顧客管理</p><h2>会員追加・編集</h2><form id="addMember" class="mini"><input name="name" placeholder="会員名" required><input name="email" type="email" placeholder="メールアドレス" required><select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>ファミリー月4回プラン</option><option>ファミリー月8回プラン</option></select><button class="btn">会員ID/PINを生成して追加</button></form><div id="generatedLogin" class="res hidden" style="margin-top:12px"></div><div id="memberDetail" class="card hidden" style="margin-top:16px"></div><h3>会員一覧</h3><div id="members" class="list"></div></section>
   <section id="requestsTab" class="panel hidden"><p class="eyebrow">購入履歴</p><h2>枠の購入履歴</h2><p class="small">購入履歴タブ右上の数字は、即時課金対応が未完了の件数です。</p><div id="requests" class="list"></div></section>
-  <section id="settingsTab" class="panel hidden"><p class="eyebrow">利用不可設定</p><h2>手動利用不可</h2><p class="small">本来予約できる枠だけ選べます。ヨガ・セミパーソナル時間、予約済み、既に利用不可の枠は候補に出ません。</p><form id="addClosed" class="mini"><input name="date" type="date" required><select name="start" required></select><input name="reason" placeholder="理由 例：清掃"><button class="btn">利用不可にする</button></form><h3>利用不可一覧</h3><div id="closed" class="list"></div><button id="reset" class="danger" style="margin-top:14px;width:100%">デモデータ初期化</button></section>
+  <section id="settingsTab" class="panel hidden"><p class="eyebrow">利用不可設定</p><h2>手動利用不可</h2><p class="small">本来予約できる枠だけ選べます。ヨガ・セミパーソナル時間、予約済み、既に利用不可の枠は候補に出ません。</p><form id="addClosed" class="mini"><input name="date" type="date" required><select name="start" required></select><input name="reason" placeholder="理由 例：清掃"><button class="btn">利用不可にする</button></form><h3>利用不可一覧</h3><div id="closed" class="list"></div><button id="reset" class="danger hidden" style="margin-top:14px;width:100%">デモデータ初期化</button></section>
 </section>
 </main>
 <footer class="footer">friendsセルフ｜管理者専用画面</footer>
@@ -45,7 +45,7 @@
     <button class="btn">確定する</button>
   </form>
 </dialog>
-<script src="./admin-script.js?v=6"></script>
-<script src="./admin-onboarding-fix.js?v=6"></script>
+<script src="./admin-script.js?v=8"></script>
+<script src="./admin-onboarding-fix.js?v=8"></script>
 </body>
 </html>
