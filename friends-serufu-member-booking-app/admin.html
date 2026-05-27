@@ -15,7 +15,7 @@
 </header>
 <main>
 <section id="loginView" class="hero">
-  <div class="hero-copy"><p class="eyebrow">管理者画面</p><h2>通知・予約・顧客管理</h2><p>購入通知とカレンダーからの予約登録・枠止めに対応しました。</p></div>
+  <div class="hero-copy"><p class="eyebrow">管理者画面</p><h2>通知・予約・顧客管理</h2><p>会員ID/PINを自動生成して、LINE送信用の案内文をコピーできます。</p></div>
   <div class="panel"><h2>管理者ログイン</h2><p class="small">初期パスコード：1111</p><label>管理者パスコード</label><div class="row"><input id="adminPass" type="password" placeholder="パスコード"><button id="adminOpen" class="btn">開く</button></div></div>
 </section>
 <section id="adminView" class="hidden">
@@ -28,7 +28,7 @@
   </nav>
   <section id="dashboardTab" class="panel"><p class="eyebrow">ダッシュボード</p><h2>全体状況</h2><div id="summary" class="summary-grid"></div><h3>購入通知</h3><div id="billingAlerts" class="list"></div><h3>今日の予約</h3><div id="todayReservations" class="list"></div></section>
   <section id="calendarTab" class="panel hidden"><p class="eyebrow">カレンダー</p><h2>予約状況</h2><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><p class="small">空き枠をタップすると、管理者側で会員予約を入れる／利用不可で埋める操作ができます。</p><div id="calendarList" class="cal-list"></div></section>
-  <section id="customersTab" class="panel hidden"><p class="eyebrow">顧客管理</p><h2>会員追加・編集</h2><form id="addMember" class="mini"><input name="name" placeholder="会員名" required><div class="two"><input name="id" placeholder="会員番号 例：FS010" required><input name="pin" placeholder="電話番号下4桁" required></div><select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>ファミリー週1（月4回）</option><option>ファミリー週2（月8回）</option></select><button class="btn">会員を追加</button></form><div id="memberDetail" class="card hidden" style="margin-top:16px"></div><h3>会員一覧</h3><div id="members" class="list"></div></section>
+  <section id="customersTab" class="panel hidden"><p class="eyebrow">顧客管理</p><h2>会員追加・編集</h2><form id="addMember" class="mini"><input name="name" placeholder="会員名" required><input name="email" type="email" placeholder="メールアドレス" required><select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>ファミリー月4回プラン</option><option>ファミリー月8回プラン</option></select><button class="btn">会員ID/PINを生成して追加</button></form><div id="generatedLogin" class="res hidden" style="margin-top:12px"></div><div id="memberDetail" class="card hidden" style="margin-top:16px"></div><h3>会員一覧</h3><div id="members" class="list"></div></section>
   <section id="requestsTab" class="panel hidden"><p class="eyebrow">購入履歴</p><h2>枠の購入履歴</h2><p class="small">購入履歴タブ右上の数字は、即時課金対応が未完了の件数です。</p><div id="requests" class="list"></div></section>
   <section id="settingsTab" class="panel hidden"><p class="eyebrow">利用不可設定</p><h2>手動利用不可</h2><p class="small">本来予約できる枠だけ選べます。ヨガ・セミパーソナル時間、予約済み、既に利用不可の枠は候補に出ません。</p><form id="addClosed" class="mini"><input name="date" type="date" required><select name="start" required></select><input name="reason" placeholder="理由 例：清掃"><button class="btn">利用不可にする</button></form><h3>利用不可一覧</h3><div id="closed" class="list"></div><button id="reset" class="danger" style="margin-top:14px;width:100%">デモデータ初期化</button></section>
 </section>
@@ -45,6 +45,6 @@
     <button class="btn">確定する</button>
   </form>
 </dialog>
-<script src="./admin-script.js"></script>
+<script src="./admin-script.js?v=4"></script>
 </body>
 </html>
