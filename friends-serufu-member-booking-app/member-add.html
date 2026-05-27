@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>friendsセルフ｜会員追加専用</title>
+<style>
+:root{--bg:#f7f3ec;--card:#fffaf2;--text:#20251f;--muted:#756c61;--line:#e5d8c6;--dark:#1f2a24;--accent:#f4b43f;--danger:#b34432;--ok:#3b8b5e;--shadow:0 18px 50px rgba(31,42,36,.12)}*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic','Noto Sans JP',Meiryo,sans-serif;background:linear-gradient(180deg,#fff8e9,var(--bg));line-height:1.65}.wrap{width:min(760px,calc(100% - 24px));margin:auto;padding:18px 0 44px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.brand{display:flex;gap:10px;align-items:center}.mark{display:grid;place-items:center;width:48px;height:48px;border-radius:16px;background:var(--accent);font-weight:950;font-size:22px;letter-spacing:-.08em}.brand p{margin:0;color:var(--muted);font-size:12px;font-weight:900}.brand h1{margin:0;font-size:22px}.panel{border:1px solid var(--line);background:rgba(255,250,242,.96);box-shadow:var(--shadow);border-radius:22px;padding:22px;margin-bottom:16px}label{display:block;margin:14px 0 8px;font-weight:900}input,select,textarea{width:100%;border:1px solid #d8c8b4;border-radius:16px;padding:14px;background:#fffdf8;font:inherit}.btn,.ghost{border:0;border-radius:16px;cursor:pointer;font-weight:950;min-height:48px;padding:0 16px}.btn{width:100%;margin-top:16px;color:var(--dark);background:linear-gradient(135deg,var(--accent),#ffd475);box-shadow:0 14px 24px rgba(200,125,21,.22)}.ghost{border:1px solid var(--line);background:#fffaf2;color:var(--dark);text-decoration:none;display:inline-flex;align-items:center}.hidden{display:none!important}.result{border:2px solid #efcf8f;background:#fff3d5}.big{font-size:24px;font-weight:950}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.copy{background:var(--ok);color:white}.small{color:var(--muted);font-size:13px;font-weight:800}@media(max-width:640px){.row{grid-template-columns:1fr}.panel{padding:18px}.top{align-items:flex-start;gap:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><div class="brand"><div class="mark">fs</div><div><p>管理者専用</p><h1>会員追加専用</h1></div></div><a class="ghost" href="./admin.html?v=7">管理画面へ</a></header>
+<section id="login" class="panel"><h2>管理者ログイン</h2><p class="small">管理者パスコードを入力してください。</p><label>管理者パスコード</label><input id="pass" type="password" placeholder="1111"><button id="open" class="btn">開く</button></section>
+<section id="app" class="hidden">
+  <section class="panel"><h2>新規会員を追加</h2><p class="small">入力後、会員IDとPINを自動生成し、公式LINEに貼り付ける文章を表示します。</p><form id="form"><label>会員名</label><input name="name" placeholder="例：山田 太郎" required><label>メールアドレス</label><input name="email" type="email" placeholder="例：sample@example.com" required><label>プラン</label><select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>ファミリー月4回プラン</option><option>ファミリー月8回プラン</option></select><button class="btn">会員ID/PINを生成して追加</button></form></section>
+  <section id="result" class="panel result hidden"><h2>LINE送信用文面</h2><p>この文章をコピーして、公式LINEに貼り付けて送ってください。</p><div class="row"><div><p class="small">会員ID</p><div id="rid" class="big"></div></div><div><p class="small">PIN</p><div id="rpin" class="big"></div></div></div><label>送信文面</label><textarea id="message" rows="12" readonly></textarea><button id="copy" class="btn copy">このLINE文面をコピー</button></section>
+  <section class="panel"><h2>登録済み会員</h2><div id="members"></div></section>
+</section>
+</div>
+<script>
+const ADMIN='1111';
+const K='friends-serufu-gh-v2';
+const LOGIN_URL='https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/friends-serufu-member-booking-app/';
+const D={members:[{id:'FS001',pin:'1234',name:'サンプル会員A',email:'sample1@example.com',plan:'月4回プラン',extraSlots:0},{id:'FS002',pin:'5678',name:'サンプル会員B',email:'sample2@example.com',plan:'月8回プラン',extraSlots:0},{id:'FS003',pin:'9999',name:'サンプル会員C',email:'family1@example.com',plan:'ファミリー月4回プラン',extraSlots:0},{id:'FS004',pin:'1111',name:'サンプル会員D',email:'family2@example.com',plan:'ファミリー月8回プラン',extraSlots:0}],reservations:[],closed:[],purchaseRequests:[],member:null,week:0,day:0};
+let S=JSON.parse(localStorage.getItem(K)||'null')||structuredClone(D);
+function save(){localStorage.setItem(K,JSON.stringify(S))}
+function normalizePlan(p){if(p==='ファミリー週1（月4回）')return'ファミリー月4回プラン';if(p==='ファミリー週2（月8回）')return'ファミリー月8回プラン';if(p==='ファミリープラン')return'ファミリー月4回プラン';if(p==='通い放題')return'月8回プラン';return p||'月4回プラン'}
+function normalize(){S.members=(S.members||[]).map(m=>({...m,email:m.email||'',extraSlots:Number(m.extraSlots||0),plan:normalizePlan(m.plan)}));S.reservations=S.reservations||[];S.closed=S.closed||[];S.purchaseRequests=S.purchaseRequests||[];save()}
+function nextId(){let max=0;S.members.forEach(m=>{let n=Number(String(m.id||'').replace(/\D/g,''));if(n>max)max=n});return 'FS'+String(max+1).padStart(3,'0')}
+function makePin(){return String(Math.floor(1000+Math.random()*9000))}
+function message(m){return `friendsセルフの会員登録が完了しました。\n\n下記URLから予約画面にログインできます。\n\n【会員用URL】\n${LOGIN_URL}\n\n【会員ID】\n${m.id}\n\n【ログインPIN】\n${m.pin}\n\n【プラン】\n${m.plan}\n\n予約は2週間先まで可能です。\n同時に確保できる予約は最大2枠までです。`}
+function renderMembers(){document.getElementById('members').innerHTML=S.members.map(m=>`<div style="border:1px solid var(--line);border-radius:16px;padding:12px;margin:8px 0;background:#fffdf8"><strong>${m.name}</strong><br>${m.id} / PIN:${m.pin}<br>${m.email||'メール未登録'}<br>${m.plan}</div>`).join('')}
+function showResult(m){document.getElementById('result').classList.remove('hidden');document.getElementById('rid').textContent=m.id;document.getElementById('rpin').textContent=m.pin;document.getElementById('message').value=message(m);document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'})}
+document.getElementById('open').onclick=()=>{if(document.getElementById('pass').value!==ADMIN){alert('パスコードが違います');return}document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');renderMembers()};
+document.getElementById('form').onsubmit=e=>{e.preventDefault();let f=new FormData(e.currentTarget);let name=String(f.get('name')).trim(),email=String(f.get('email')).trim(),plan=normalizePlan(String(f.get('plan')).trim());if(S.members.some(m=>String(m.email||'').toLowerCase()===email.toLowerCase())){alert('同じメールアドレスの会員がいます');return}let m={id:nextId(),pin:makePin(),name,email,plan,extraSlots:0};S.members.push(m);save();e.currentTarget.reset();renderMembers();showResult(m)};
+document.getElementById('copy').onclick=async()=>{let text=document.getElementById('message').value;try{await navigator.clipboard.writeText(text);alert('コピーしました')}catch(e){prompt('コピーしてください',text)}};
+normalize();
+</script>
+</body>
+</html>
