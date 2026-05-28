@@ -23,17 +23,24 @@
       if(usageCard)usageCard.classList.toggle('hidden',name!=='usage');
       window.scrollTo({top:0,behavior:'smooth'});
     }
+    function safeLogout(){
+      const ok=confirm('本当にログアウトしますか？\n予約確認には、再度会員IDとPINが必要になります。');
+      if(!ok)return;
+      const ok2=confirm('ログアウトを確定しますか？');
+      if(!ok2)return;
+      localStorage.removeItem('fs_code');
+      localStorage.removeItem('fs_pin');
+      location.reload();
+    }
     app.addEventListener('click',e=>{
       const b=e.target.closest('[data-member-tab]');
       if(b){show(b.dataset.memberTab);return;}
-      if(e.target.closest('#memberSafeLogout')){
-        if(confirm('本当にログアウトしますか？')){
-          localStorage.removeItem('fs_code');
-          localStorage.removeItem('fs_pin');
-          location.reload();
-        }
+      if(e.target.closest('#memberSafeLogout')||e.target.closest('#logout')){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        safeLogout();
       }
-    });
+    },true);
     show('home');
   }
   document.addEventListener('DOMContentLoaded',setup);
