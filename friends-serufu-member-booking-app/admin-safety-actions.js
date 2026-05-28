@@ -41,19 +41,11 @@
     $('#adminSafetyDialog').close();
     if(typeof window.loadSnapshot==='function') await window.loadSnapshot();
   }
-  async function createInlineMember(form){
-    const fd=new FormData(form);
-    const r=await rpc('fs_admin_create_member',{p_admin_password:adminPass(),p_name:String(fd.get('name')||'').trim(),p_email:String(fd.get('email')||'').trim(),p_plan:String(fd.get('plan')||'').trim()});
-    if(!r.ok){alert(r.error||'会員を追加できませんでした。');return;}
-    toast('会員を追加しました');
-    if(typeof window.loadSnapshot==='function') await window.loadSnapshot();
-  }
   document.addEventListener('DOMContentLoaded',()=>{
     const add=document.getElementById('addMember');
     if(add){
       add.classList.remove('hidden');
       add.innerHTML=`<label>会員名<input name="name" placeholder="例：山田 太郎" required></label><label>メールアドレス<input name="email" type="email" placeholder="例：sample@example.com" required></label><label>プラン<select name="plan">${plans.map(p=>`<option>${p}</option>`).join('')}</select></label><button class="btn">この画面で会員を追加</button>`;
-      add.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();createInlineMember(add);},true);
     }
   });
   document.addEventListener('click',async e=>{
