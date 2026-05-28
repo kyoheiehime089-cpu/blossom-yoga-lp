@@ -21,7 +21,7 @@
     const snap=await snapshot(pass);
     if(!snap.ok){alert(snap.error||'管理者情報を確認できませんでした。');return;}
     const r=(snap.reservations||[]).find(x=>x.id===id);
-    if(!r){alert('予約が見つかりません。画面を更新します。');location.reload();return;}
+    if(!r){alert('予約が見つかりません。画面を更新します。');if(typeof window.loadSnapshot==='function')window.loadSnapshot();return;}
     target={id,pass};
     $('#adminCancelConfirmInfo').innerHTML=`<p><strong>会員：</strong>${r.member_name||''}</p><p><strong>日時：</strong>${full(r.date,r.start_minute)}</p><p><strong>利用人数：</strong>${r.people||'1名'}</p>`;
     $('#adminCancelConfirmAgree').checked=false;
@@ -34,7 +34,13 @@
     if(!r.ok){alert(r.error||'キャンセルできませんでした。');return;}
     $('#adminCancelConfirmDialog').close();
     alert('予約をキャンセルしました。');
-    location.reload();
+    if(typeof window.loadSnapshot==='function'){
+      await window.loadSnapshot();
+    }else{
+      const active=document.querySelector('.tab.active')?.dataset?.tab||'dashboard';
+      sessionStorage.setItem('fs_admin_return_tab',active);
+      location.reload();
+    }
   }
   document.addEventListener('click',e=>{
     const btn=e.target.closest('[data-cancel]');
