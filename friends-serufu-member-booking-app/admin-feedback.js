@@ -19,16 +19,5 @@
     clearTimeout(timer);
     timer=setTimeout(()=>t.classList.remove('show'),2200);
   }
-  document.addEventListener('click',e=>{
-    if(e.target.closest('[data-copy-login]')){
-      setTimeout(()=>show('LINE文面をコピーしました'),120);
-    }
-  });
-  document.addEventListener('submit',e=>{
-    const edit=e.target.closest('#editMember');
-    if(edit){
-      setTimeout(()=>show('会員情報を保存しました'),900);
-    }
-  });
   window.adminSoftToast=show;
 })();
