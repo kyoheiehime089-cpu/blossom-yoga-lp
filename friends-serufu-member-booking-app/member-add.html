@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="wrap">
-<header class="top"><div class="brand"><div class="mark">fs</div><div><p>管理者専用</p><h1>会員追加専用</h1></div></div><a class="ghost" href="./admin.html?v=8">管理画面へ</a></header>
+<header class="top"><div class="brand"><div class="mark">fs</div><div><p>管理者専用</p><h1>会員追加専用</h1></div></div><a class="ghost" href="./admin.html?v=9">管理画面へ</a></header>
 <section id="login" class="panel"><h2>管理者ログイン</h2><p class="small">管理者パスコードを入力してください。</p><label>管理者パスコード</label><input id="pass" type="password" placeholder="1111"><button id="open" class="btn">開く</button></section>
 <section id="app" class="hidden">
   <section class="panel"><h2>新規会員を追加</h2><p class="small">入力後、会員IDとPINを自動生成し、公式LINEに貼り付ける文章を表示します。</p><form id="form"><label>会員名</label><input name="name" placeholder="例：山田 太郎" required><label>メールアドレス</label><input name="email" type="email" placeholder="例：sample@example.com" required><label>プラン</label><select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>ファミリー月4回プラン</option><option>ファミリー月8回プラン</option></select><button class="btn">会員ID/PINを生成して追加</button></form></section>
@@ -18,25 +18,8 @@
   <section class="panel"><h2>登録済み会員</h2><div id="members"></div></section>
 </section>
 </div>
-<script>
-const ADMIN='1111';
-const K='friends-serufu-gh-v2';
-const LOGIN_URL='https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/friends-serufu-member-booking-app/';
-const D={members:[{id:'FS001',pin:'1234',name:'サンプル会員A',email:'sample1@example.com',plan:'月4回プラン',extraByMonth:{}},{id:'FS002',pin:'5678',name:'サンプル会員B',email:'sample2@example.com',plan:'月8回プラン',extraByMonth:{}}],reservations:[],closed:[],purchaseRequests:[],member:null,week:0,day:0};
-let S=JSON.parse(localStorage.getItem(K)||'null')||structuredClone(D);
-function save(){localStorage.setItem(K,JSON.stringify(S))}
-function normalizePlan(p){if(p==='ファミリー週1（月4回）'||p==='ファミリープラン')return'ファミリー月4回プラン';if(p==='ファミリー週2（月8回）')return'ファミリー月8回プラン';if(p==='通い放題')return'月8回プラン';return p||'月4回プラン'}
-function normalize(){S.members=(S.members||[]).map(m=>({...m,email:m.email||'',extraByMonth:m.extraByMonth||m.extraSlotsByMonth||{},plan:normalizePlan(m.plan)}));S.reservations=S.reservations||[];S.closed=S.closed||[];S.purchaseRequests=S.purchaseRequests||[];save()}
-function nextId(){let max=0;S.members.forEach(m=>{let n=Number(String(m.id||'').replace(/\D/g,''));if(n>max)max=n});return 'FS'+String(max+1).padStart(3,'0')}
-function makePin(){return String(Math.floor(1000+Math.random()*9000))}
-function loginUrl(m){let p=new URLSearchParams({mid:m.id,pin:m.pin,name:m.name,email:m.email||'',plan:m.plan});return LOGIN_URL+'?'+p.toString()}
-function message(m){return `friendsセルフの会員登録が完了しました。\n\n下記URLから予約画面にログインしてください。\n初回はこのURLを開くと、予約アプリにログイン情報が登録されます。\n\n【会員用URL】\n${loginUrl(m)}\n\n【会員ID】\n${m.id}\n\n【ログインPIN】\n${m.pin}\n\n【プラン】\n${m.plan}\n\n予約は2週間先まで可能です。\n同時に確保できる予約は最大2枠までです。`}
-function renderMembers(){document.getElementById('members').innerHTML=S.members.map(m=>`<div style="border:1px solid var(--line);border-radius:16px;padding:12px;margin:8px 0;background:#fffdf8"><strong>${m.name}</strong><br>${m.id} / PIN:${m.pin}<br>${m.email||'メール未登録'}<br>${m.plan}</div>`).join('')}
-function showResult(m){document.getElementById('result').classList.remove('hidden');document.getElementById('rid').textContent=m.id;document.getElementById('rpin').textContent=m.pin;document.getElementById('message').value=message(m);document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'})}
-document.getElementById('open').onclick=()=>{if(document.getElementById('pass').value!==ADMIN){alert('パスコードが違います');return}document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');renderMembers()};
-document.getElementById('form').onsubmit=e=>{e.preventDefault();let f=new FormData(e.currentTarget);let name=String(f.get('name')).trim(),email=String(f.get('email')).trim(),plan=normalizePlan(String(f.get('plan')).trim());if(S.members.some(m=>String(m.email||'').toLowerCase()===email.toLowerCase())){alert('同じメールアドレスの会員がいます');return}let m={id:nextId(),pin:makePin(),name,email,plan,extraByMonth:{}};S.members.push(m);save();e.currentTarget.reset();renderMembers();showResult(m)};
-document.getElementById('copy').onclick=async()=>{let text=document.getElementById('message').value;try{await navigator.clipboard.writeText(text);alert('コピーしました')}catch(e){prompt('コピーしてください',text)}};
-normalize();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js?v=9"></script>
+<script src="./fs-member-add-supabase.js?v=9"></script>
 </body>
 </html>
