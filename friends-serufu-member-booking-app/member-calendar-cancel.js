@@ -5,6 +5,7 @@
   const fmt=m=>{m=Number(m);return m===1440?'24:00':pad(Math.floor(m/60))+':'+pad(m%60)};
   const jp=s=>{const d=new Date(s+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`};
   const full=(d,m)=>`${jp(d)} ${fmt(m)}〜${fmt(Number(m)+50)}`;
+  const startDate=(d,m)=>{const x=new Date(d+'T00:00:00');x.setMinutes(Number(m));return x};
   let target=null;
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function ensureDialog(){
@@ -14,21 +15,36 @@
     $('#memberCalendarCancelConfirm').addEventListener('click',cancelTarget);
     $('#memberCalendarCancelDialog').addEventListener('click',e=>{if(e.target.classList.contains('close'))$('#memberCalendarCancelDialog').close()});
   }
-  async function openCancel(slot){
-    ensureDialog();
+  async function getSnapshot(){
     const code=localStorage.getItem('fs_code')||'';
     const pin=localStorage.getItem('fs_pin')||'';
-    const date=slot.dataset.d;
-    const start=Number(slot.dataset.s);
     const snap=await rpc('fs_member_snapshot',{p_member_code:code,p_pin:pin});
-    if(!snap.ok){alert(snap.error||'ログイン情報を確認できませんでした。');return;}
-    const r=(snap.reservations||[]).find(x=>x.date===date&&Number(x.start_minute)===start);
-    if(!r){alert('予約が見つかりません。画面を更新します。');location.reload();return;}
-    target={id:r.id,date,start,code,pin};
-    $('#memberCalendarCancelInfo').innerHTML=`<p><strong>日時：</strong>${full(date,start)}</p><p><strong>利用人数：</strong>${r.people||'1名'}</p>`;
+    return {snap,code,pin};
+  }
+  function showCancel(r,code,pin){
+    ensureDialog();
+    target={id:r.id,date:r.date,start:Number(r.start_minute),code,pin};
+    $('#memberCalendarCancelInfo').innerHTML=`<p><strong>日時：</strong>${full(r.date,r.start_minute)}</p><p><strong>利用人数：</strong>${r.people||'1名'}</p>`;
     $('#memberCalendarCancelAgree').checked=false;
     $('#memberCalendarCancelConfirm').disabled=true;
     $('#memberCalendarCancelDialog').showModal();
+  }
+  async function openCancelFromSlot(slot){
+    const {snap,code,pin}=await getSnapshot();
+    if(!snap.ok){alert(snap.error||'ログイン情報を確認できませんでした。');return;}
+    const date=slot.dataset.d;
+    const start=Number(slot.dataset.s);
+    const r=(snap.reservations||[]).find(x=>x.date===date&&Number(x.start_minute)===start);
+    if(!r){alert('予約が見つかりません。画面を更新します。');location.reload();return;}
+    showCancel(r,code,pin);
+  }
+  async function openCancelFromNext(){
+    const {snap,code,pin}=await getSnapshot();
+    if(!snap.ok){alert(snap.error||'ログイン情報を確認できませんでした。');return;}
+    const future=(snap.reservations||[]).filter(r=>startDate(r.date,r.start_minute)>new Date()).sort((a,b)=>startDate(a.date,a.start_minute)-startDate(b.date,b.start_minute));
+    const r=future[0];
+    if(!r){alert('キャンセルできる次回予約がありません。');return;}
+    showCancel(r,code,pin);
   }
   async function cancelTarget(){
     if(!target)return;
@@ -40,9 +56,17 @@
   }
   document.addEventListener('click',e=>{
     const slot=e.target.closest('.slot.mine');
-    if(!slot)return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    openCancel(slot);
+    if(slot){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openCancelFromSlot(slot);
+      return;
+    }
+    const next=e.target.closest('#nextReservation');
+    if(next&&next.querySelector('h3')){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openCancelFromNext();
+    }
   },true);
 })();
