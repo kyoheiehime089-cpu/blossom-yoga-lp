@@ -14,7 +14,14 @@
     if($('#bulkClosePanel'))return;
     const target=$('#settingsTab')||$('#calendarTab');
     if(!target)return;
-    target.insertAdjacentHTML('afterbegin',`<section id="bulkClosePanel" class="res important" style="margin-bottom:16px"><h3>カレンダー一括管理</h3><p class="small">1日丸ごと、または指定時間帯の予約枠をまとめて利用不可にできます。既に予約が入っている枠は変更しません。</p><form id="bulkCloseForm" class="mini"><label>日付<input name="date" type="date" required></label><label>範囲<select name="mode"><option value="day">1日丸ごと利用不可</option><option value="range">時間帯を指定</option></select></label><div id="bulkTimeFields" class="two hidden"><label>開始時刻<input name="start" type="time" value="09:00"></label><label>終了時刻<input name="end" type="time" value="18:00"></label></div><label>理由<input name="reason" placeholder="例：メンテナンス・清掃・臨時休業"></label><button class="btn">一括で利用不可にする</button></form></section>`);
+    const manual=target.querySelector('#addClosed');
+    const html=`<section id="bulkClosePanel" class="res" style="margin:18px 0"><h3>まとめて枠を埋める</h3><p class="small">通常は上の「手動利用不可」で1枠ずつ設定してください。1日休業・長時間メンテナンスの時だけ一括管理を使います。</p><button id="showBulkClose" type="button" class="ghost" style="width:100%;justify-content:center">一括管理を開く</button><form id="bulkCloseForm" class="mini hidden" style="margin-top:12px"><label>日付<input name="date" type="date" required></label><label>範囲<select name="mode"><option value="day">1日丸ごと利用不可</option><option value="range">時間帯を指定</option></select></label><div id="bulkTimeFields" class="two hidden"><label>開始時刻<input name="start" type="time" value="09:00"></label><label>終了時刻<input name="end" type="time" value="18:00"></label></div><label>理由<input name="reason" placeholder="例：メンテナンス・清掃・臨時休業"></label><button class="btn">一括で利用不可にする</button></form></section>`;
+    if(manual){manual.insertAdjacentHTML('afterend',html)}else{target.insertAdjacentHTML('beforeend',html)}
+    $('#showBulkClose').addEventListener('click',()=>{
+      const f=$('#bulkCloseForm');
+      f.classList.toggle('hidden');
+      $('#showBulkClose').textContent=f.classList.contains('hidden')?'一括管理を開く':'一括管理を閉じる';
+    });
     $('#bulkCloseForm [name="mode"]').addEventListener('change',e=>{$('#bulkTimeFields').classList.toggle('hidden',e.target.value!=='range')});
     $('#bulkCloseForm').addEventListener('submit',submit);
   }
@@ -40,6 +47,7 @@
       if(r.ok)count++; else skipped++;
     }
     toast(`${count}枠を利用不可にしました`);
+    e.currentTarget.reset();
     if(typeof window.loadSnapshot==='function')await window.loadSnapshot();
   }
   document.addEventListener('DOMContentLoaded',ensure);
