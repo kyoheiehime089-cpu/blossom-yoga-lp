@@ -35,7 +35,7 @@
     const date=slot.dataset.d;
     const start=Number(slot.dataset.s);
     const r=(snap.reservations||[]).find(x=>x.date===date&&Number(x.start_minute)===start);
-    if(!r){alert('予約が見つかりません。画面を更新します。');location.reload();return;}
+    if(!r){alert('予約が見つかりません。画面を更新します。');if(typeof window.loadSnapshot==='function') await window.loadSnapshot();return;}
     showCancel(r,code,pin);
   }
   async function openCancelFromNext(){
@@ -52,7 +52,7 @@
     if(!r.ok){alert(r.error||'キャンセルできませんでした。');return;}
     $('#memberCalendarCancelDialog').close();
     alert('予約をキャンセルしました。');
-    location.reload();
+    if(typeof window.loadSnapshot==='function') await window.loadSnapshot();
   }
   document.addEventListener('click',e=>{
     const slot=e.target.closest('.slot.mine');

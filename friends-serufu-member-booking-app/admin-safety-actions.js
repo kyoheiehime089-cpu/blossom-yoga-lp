@@ -32,21 +32,21 @@
     if(target.mode==='grant'){
       r=await rpc('fs_admin_grant_slot',{p_admin_password:adminPass(),p_member_id:target.member.id});
       if(!r.ok){alert(r.error||'付与できませんでした。');return;}
-      alert('追加枠を1枠付与しました。');
+      toast('追加枠を1枠付与しました');
     }else{
       r=await rpc('fs_admin_delete_member',{p_admin_password:adminPass(),p_member_id:target.member.id});
       if(!r.ok){alert(r.error||'削除できませんでした。');return;}
-      alert('会員を削除しました。');
+      toast('会員を削除しました');
     }
     $('#adminSafetyDialog').close();
-    location.reload();
+    if(typeof window.loadSnapshot==='function') await window.loadSnapshot();
   }
   async function createInlineMember(form){
     const fd=new FormData(form);
     const r=await rpc('fs_admin_create_member',{p_admin_password:adminPass(),p_name:String(fd.get('name')||'').trim(),p_email:String(fd.get('email')||'').trim(),p_plan:String(fd.get('plan')||'').trim()});
     if(!r.ok){alert(r.error||'会員を追加できませんでした。');return;}
-    alert(`会員を追加しました。\n会員ID：${r.member.member_code}\nPIN：${r.member.pin}`);
-    location.reload();
+    toast('会員を追加しました');
+    if(typeof window.loadSnapshot==='function') await window.loadSnapshot();
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const add=document.getElementById('addMember');

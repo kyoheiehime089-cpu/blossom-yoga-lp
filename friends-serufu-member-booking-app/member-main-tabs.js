@@ -30,7 +30,8 @@
       if(!ok2)return;
       localStorage.removeItem('fs_code');
       localStorage.removeItem('fs_pin');
-      location.reload();
+      document.getElementById('appView')?.classList.add('hidden');
+      document.getElementById('loginView')?.classList.remove('hidden');
     }
     app.addEventListener('click',e=>{
       const b=e.target.closest('[data-member-tab]');
