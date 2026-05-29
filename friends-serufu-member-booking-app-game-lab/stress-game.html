@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ストレスリセットゲーム｜friendsセルフ</title>
+<meta name="theme-color" content="#08110f">
+<link rel="stylesheet" href="./stress-game.css?v=1">
+</head>
+<body>
+<div id="gameApp" class="game-shell" aria-live="polite">
+  <section id="startScreen" class="screen overlay-screen">
+    <div class="panel start-panel">
+      <p class="eyebrow">friendsセルフ game-lab</p>
+      <h1>ストレスリセットゲーム</h1>
+      <p class="lead">1日1回、3分だけできるブロックパズルです。</p>
+      <div class="summary-grid">
+        <div><span>現在のポイント</span><strong id="startPoints">0pt</strong></div>
+        <div><span>今日の状態</span><strong id="startTodayStatus">未プレイ</strong></div>
+      </div>
+      <div id="startNotice" class="notice hidden"></div>
+      <fieldset class="stress-picker">
+        <legend>ストレス度 1〜5</legend>
+        <div class="stress-options" id="preStressOptions"></div>
+      </fieldset>
+      <button id="startButton" class="primary-btn" type="button">スタート</button>
+      <a class="secondary-btn" href="./">予約アプリに戻る</a>
+      <p class="medical-note">このゲームは医療行為ではありません。ストレスや不調が強い場合は専門家にご相談ください。</p>
+    </div>
+  </section>
+
+  <section id="playScreen" class="screen play-screen hidden">
+    <header class="hud">
+      <div><span>スコア</span><strong id="scoreValue">0</strong></div>
+      <div><span>消したライン数</span><strong id="lineValue">0</strong></div>
+      <div><span>残り時間</span><strong id="timeValue">3:00</strong></div>
+      <div><span>ポイント</span><strong id="playPoints">0pt</strong></div>
+    </header>
+    <main class="board-area">
+      <canvas id="gameCanvas" width="300" height="600" aria-label="ブロックパズル盤面"></canvas>
+      <div id="pauseOverlay" class="pause-overlay hidden">一時停止中</div>
+    </main>
+    <footer class="mobile-controls" aria-label="スマホ操作ボタン">
+      <button type="button" data-action="left">左</button>
+      <button type="button" data-action="rotate">回転</button>
+      <button type="button" data-action="right">右</button>
+      <button type="button" data-action="down">下</button>
+      <button type="button" data-action="drop">落とす</button>
+      <button type="button" data-action="pause">一時停止</button>
+    </footer>
+  </section>
+
+  <section id="resultScreen" class="screen overlay-screen hidden">
+    <div class="panel result-panel">
+      <p class="eyebrow">プレイ結果</p>
+      <h1>ブロックパズル終了</h1>
+      <div id="pendingNotice" class="notice hidden">未完了のプレイがあります。結果を確認して完了してください。</div>
+      <div id="completedNotice" class="notice success hidden">本日はプレイ済みです。明日またプレイできます。</div>
+      <div class="result-grid">
+        <div><span>スコア</span><strong id="resultScore">0</strong></div>
+        <div><span>消したライン数</span><strong id="resultLines">0</strong></div>
+        <div><span>プレイ時間</span><strong id="resultTime">0秒</strong></div>
+        <div><span>プレイ前ストレス度</span><strong id="resultPreStress">-</strong></div>
+      </div>
+      <fieldset class="stress-picker" id="postStressField">
+        <legend>プレイ後ストレス度 1〜5</legend>
+        <div class="stress-options" id="postStressOptions"></div>
+      </fieldset>
+      <button id="completeButton" class="primary-btn" type="button">完了して1pt獲得</button>
+      <a class="secondary-btn" href="./">予約アプリに戻る</a>
+    </div>
+  </section>
+</div>
+<script src="./stress-game.js?v=1"></script>
+</body>
+</html>
