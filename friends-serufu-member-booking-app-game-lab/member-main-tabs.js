@@ -1,16 +1,21 @@
 (function(){
   'use strict';
 
-  const $ = (q) => document.querySelector(q);
+  const selectors = { qs: (q) => document.querySelector(q) };
+  const { qs: $ } = selectors;
   const $$ = (q) => Array.from(document.querySelectorAll(q));
+  const EMPTY_APPS_MESSAGE = '現在利用できるアプリはありません。';
   const FALLBACK_MESSAGE = 'アプリ情報を読み込めないため、テスト用のローカル表示を出しています。';
   const LOCAL_APPS = [{
-    category_key: 'stress_reset',
-    category_name: 'ストレスリセット',
     app_key: 'stress_block_puzzle',
-    app_name: 'ブロックパズル',
-    app_url: './stress-game.html',
-    enabled: true
+    category_key: 'stress_reset',
+    category_label: 'ストレスリセット',
+    title: 'ブロックパズル',
+    description: '1日1回、3分だけできるストレスリセット用のブロックパズルです。',
+    content_type: 'game',
+    href: './stress-game.html',
+    enabled: true,
+    sort_order: 10
   }];
 
   function esc(value){
@@ -39,6 +44,20 @@
     return '本日未プレイ';
   }
 
+  function normalizeApp(app){
+    return {
+      app_key: app.app_key || '',
+      category_key: app.category_key || '',
+      category_label: app.category_label || app.category_name || '未分類',
+      title: app.title || app.app_name || app.app_key || '無題のコンテンツ',
+      description: app.description || '',
+      content_type: app.content_type || 'game',
+      href: app.href || app.app_url || './stress-game.html',
+      enabled: app.enabled !== false,
+      sort_order: Number(app.sort_order || 0)
+    };
+  }
+
   function getClient(){
     if(!window.FRIENDS_SUPABASE_READY || !window.supabase || !window.FRIENDS_SUPABASE_URL || !window.FRIENDS_SUPABASE_ANON_KEY) return null;
     if(!window.fsMemberAppsSupabaseClient){
@@ -51,15 +70,18 @@
     const client = getClient();
     const code = String(localStorage.getItem('fs_code') || '').trim();
     const pin = String(localStorage.getItem('fs_pin') || '').trim();
-    if(!client || !code || !pin) return { apps: LOCAL_APPS, fallback: true };
+    if(!client || !code || !pin) return { apps: LOCAL_APPS.map(normalizeApp), fallback: true };
     try{
       const { data, error } = await client.rpc('fs_member_apps_snapshot', { p_member_code: code, p_pin: pin });
       if(error || !data || data.ok === false) throw new Error(error?.message || data?.error || 'apps snapshot failed');
-      const apps = Array.isArray(data.apps) && data.apps.length ? data.apps : LOCAL_APPS;
+      const apps = (Array.isArray(data.apps) ? data.apps : [])
+        .map(normalizeApp)
+        .filter((app) => app.enabled)
+        .sort((a, b) => a.sort_order - b.sort_order || a.title.localeCompare(b.title, 'ja'));
       return { apps, fallback: false };
     }catch(error){
       console.warn('[member-apps] fallback apps shown', error);
-      return { apps: LOCAL_APPS, fallback: true };
+      return { apps: LOCAL_APPS.map(normalizeApp), fallback: true };
     }
   }
 
@@ -72,14 +94,8 @@
         <h2>アプリ</h2>
         <p id="appsFallbackNotice" class="notice hidden">${FALLBACK_MESSAGE}</p>
         <div class="apps-entry-grid">
-          <div class="apps-entry-card">
-            <span>ストレスリセットポイント</span>
-            <strong id="stressPointValue">0pt</strong>
-          </div>
-          <div class="apps-entry-card">
-            <span>今日の状態</span>
-            <strong id="stressTodayStatus">確認中</strong>
-          </div>
+          <div class="apps-entry-card"><span>ストレスリセットポイント</span><strong id="stressPointValue">0pt</strong></div>
+          <div class="apps-entry-card"><span>今日の状態</span><strong id="stressTodayStatus">確認中</strong></div>
         </div>
         <div id="appsList" class="apps-list"></div>
         <p class="small apps-medical-note">このゲームは医療行為ではありません。ストレスや不調が強い場合は専門家にご相談ください。</p>
@@ -101,6 +117,7 @@
         .apps-category summary{cursor:pointer;font-weight:950;font-size:18px}
         .apps-category-body{display:grid;gap:10px;margin-top:12px}
         .apps-item{display:grid;gap:8px;background:#fffaf2}
+        .apps-kind{display:inline-flex;width:max-content;padding:3px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900}
         .apps-game-link{text-decoration:none;text-align:center}
         .apps-medical-note{padding:12px;border:1px solid #efcf8f;border-radius:14px;background:#fff7e7;color:#7b520e}
         @media(max-width:640px){.member-main-tabs{overflow-x:auto;display:flex}.member-main-tabs .tab{white-space:nowrap}.apps-entry-grid{grid-template-columns:1fr}}
@@ -122,8 +139,12 @@
   function renderAppsList(apps){
     const list = $('#appsList');
     if(!list) return;
+    if(!apps.length){
+      list.innerHTML = `<article class="apps-item"><p>${EMPTY_APPS_MESSAGE}</p></article>`;
+      return;
+    }
     const groups = apps.reduce((acc, app) => {
-      const category = app.category_name || 'ストレスリセット';
+      const category = app.category_label || app.category_key || '未分類';
       acc[category] = acc[category] || [];
       acc[category].push(app);
       return acc;
@@ -134,9 +155,11 @@
         <div class="apps-category-body">
           ${group.map((app) => `
             <article class="apps-item">
-              <h3>${esc(app.app_name || 'ブロックパズル')}</h3>
-              <p class="small">1日1回、3分だけできるストレスリセット用のブロックパズルです。</p>
-              <a class="btn apps-game-link" href="${esc(app.app_url || './stress-game.html')}">ブロックパズルを開く</a>
+              <p class="eyebrow">カテゴリ：${esc(category)}</p>
+              <h3>${esc(app.title)}</h3>
+              <span class="apps-kind">種類：${esc(app.content_type)}</span>
+              <p>${esc(app.description || '説明はありません。')}</p>
+              <a class="btn apps-game-link" href="${esc(app.href)}">開く</a>
             </article>
           `).join('')}
         </div>
@@ -155,10 +178,8 @@
   }
 
   function safeLogout(){
-    const ok = confirm('本当にログアウトしますか？\n予約確認には、再度会員IDとPINが必要になります。');
-    if(!ok) return;
-    const ok2 = confirm('ログアウトを確定しますか？');
-    if(!ok2) return;
+    if(!confirm('本当にログアウトしますか？\n予約確認には、再度会員IDとPINが必要になります。')) return;
+    if(!confirm('ログアウトを確定しますか？')) return;
     localStorage.removeItem('fs_code');
     localStorage.removeItem('fs_pin');
     $('#appView')?.classList.add('hidden');
@@ -173,12 +194,8 @@
     const appsTab = $('#appsTab');
     const panels = { home: dashboard, calendar: booking, mine, usage, apps: appsTab };
     const selected = panels[name] ? name : 'home';
-    $$('#memberMainTabs .tab').forEach((button) => {
-      button.classList.toggle('active', button.dataset.memberTab === selected);
-    });
-    Object.entries(panels).forEach(([key, panel]) => {
-      if(panel) panel.classList.toggle('hidden', key !== selected);
-    });
+    $$('#memberMainTabs .tab').forEach((button) => button.classList.toggle('active', button.dataset.memberTab === selected));
+    Object.entries(panels).forEach(([key, panel]) => { if(panel) panel.classList.toggle('hidden', key !== selected); });
     if(selected === 'apps') renderApps();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -187,7 +204,6 @@
     const app = $('#appView');
     if(!app || $('#memberMainTabs')) return;
     const dashboard = app.querySelector('.dashboard');
-    const booking = $('#bookingTab');
     const mine = $('#mineTab');
     const usageCard = $('#usageSummary')?.closest('.card');
     const oldNav = app.querySelector('nav.tabs:not(#memberMainTabs)');
