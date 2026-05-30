@@ -32,6 +32,7 @@
     paused: false,
     completed: false,
     finishing: false,
+    supabaseSaving: false,
     preStress: '',
     postStress: '',
     startedAt: 0,
@@ -357,16 +358,51 @@
     return min ? `${min}分${sec}秒` : `${sec}秒`;
   }
 
-  function completePendingPlay(){
-    if(state.finishing) return;
-    const pending = getPendingPlay();
-    if(!pending || !state.postStress || alreadyCompletedToday()){
-      updateCompleteButton();
-      return;
+  function getMemberCredentials(){
+    return {
+      memberCode: String(localStorage.getItem('fs_code') || '').trim(),
+      pin: String(localStorage.getItem('fs_pin') || '').trim()
+    };
+  }
+
+  function getSupabaseClient(){
+    if(!window.FRIENDS_SUPABASE_READY || !window.supabase || !window.FRIENDS_SUPABASE_URL || !window.FRIENDS_SUPABASE_ANON_KEY) return null;
+    if(!window.fsStressSupabaseClient){
+      window.fsStressSupabaseClient = window.supabase.createClient(window.FRIENDS_SUPABASE_URL, window.FRIENDS_SUPABASE_ANON_KEY);
     }
-    state.finishing = true;
-    updateCompleteButton();
-    const points = readPoints() + 1;
+    return window.fsStressSupabaseClient;
+  }
+
+  async function saveCompletionToSupabase(pending, postStress){
+    const creds = getMemberCredentials();
+    if(!creds.memberCode || !creds.pin) return { skipped: true };
+    const client = getSupabaseClient();
+    if(!client) throw new Error('Supabase設定が見つかりません。');
+    state.supabaseSaving = true;
+    const payload = {
+      score: Number(pending.score || 0),
+      lines: Number(pending.lines || 0),
+      play_time_ms: Number(pending.playTimeMs || 0),
+      pre_stress: pending.preStress || '',
+      post_stress: postStress,
+      reason: pending.reason || '',
+      ended_at: pending.endedAt || new Date().toISOString()
+    };
+    const { data, error } = await client.rpc('fs_member_complete_app_activity', {
+      p_member_code: creds.memberCode,
+      p_pin: creds.pin,
+      p_app_key: 'stress_block_puzzle',
+      p_points: 1,
+      p_result: payload,
+      p_activity_date: today()
+    });
+    state.supabaseSaving = false;
+    if(error) throw new Error(error.message || 'Supabase保存に失敗しました。');
+    if(!data || data.ok === false) throw new Error(data?.error || 'Supabase保存に失敗しました。');
+    return data;
+  }
+
+  function saveCompletionLocally(pending, postStress, pointsToAdd){
     const logs = readLogs();
     logs.unshift({
       date: today(),
@@ -375,17 +411,43 @@
       lines: Number(pending.lines || 0),
       playTimeMs: Number(pending.playTimeMs || 0),
       preStress: pending.preStress || '',
-      postStress: state.postStress
+      postStress,
+      points: pointsToAdd
     });
-    localStorage.setItem(KEYS.points, String(points));
+    localStorage.setItem(KEYS.points, String(readPoints() + pointsToAdd));
     localStorage.setItem(KEYS.last, today());
     writeJson(KEYS.logs, logs.slice(0, 90));
     localStorage.removeItem(KEYS.pending);
-    state.finishing = false;
-    $('#completedNotice').classList.remove('hidden');
+  }
+
+  async function completePendingPlay() {
+    if(state.finishing || state.supabaseSaving) return;
+    const pending = getPendingPlay();
+    if(!pending || !state.postStress || alreadyCompletedToday()){
+      updateCompleteButton();
+      return;
+    }
+    state.finishing = true;
     $('#pendingNotice').classList.add('hidden');
-    $('#postStressField').disabled = true;
     updateCompleteButton();
+    try{
+      const saveResult = await saveCompletionToSupabase(pending, state.postStress);
+      const pointsToAdd = saveResult.already_completed ? 0 : 1;
+      saveCompletionLocally(pending, state.postStress, pointsToAdd);
+      $('#completedNotice').textContent = '本日はプレイ済みです。明日またプレイできます。';
+      $('#completedNotice').classList.remove('hidden');
+      $('#pendingNotice').classList.add('hidden');
+      $('#postStressField').disabled = true;
+    }catch(error){
+      console.warn('[stress-game] completion save failed', error);
+      $('#pendingNotice').textContent = '通信に失敗しました。再度完了ボタンを押してください。';
+      $('#pendingNotice').classList.remove('hidden');
+    }finally{
+      state.supabaseSaving = false;
+      state.finishing = false;
+      updateCompleteButton();
+      renderStart();
+    }
   }
 
   function togglePause(forcePause){
