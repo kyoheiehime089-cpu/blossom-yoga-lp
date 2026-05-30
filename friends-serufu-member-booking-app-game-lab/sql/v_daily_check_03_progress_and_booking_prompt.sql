@@ -371,12 +371,12 @@ grant execute on function public.fs_daily_monthly_themes(uuid, date) to anon, au
 
 alter table public.fs_daily_question_options add column if not exists action_text text;
 alter table public.fs_daily_question_options add column if not exists evidence_summary text;
-alter table public.fs_daily_question_options add column if not exists references jsonb not null default '[]'::jsonb;
+alter table public.fs_daily_question_options add column if not exists references_json jsonb not null default '[]'::jsonb;
 alter table public.fs_daily_question_options add column if not exists evidence_level text;
 
 alter table public.fs_member_daily_answers add column if not exists action_text text;
 alter table public.fs_member_daily_answers add column if not exists evidence_summary text;
-alter table public.fs_member_daily_answers add column if not exists references jsonb not null default '[]'::jsonb;
+alter table public.fs_member_daily_answers add column if not exists references_json jsonb not null default '[]'::jsonb;
 alter table public.fs_member_daily_answers add column if not exists evidence_level text;
 alter table public.fs_member_daily_answers add column if not exists score jsonb not null default '{}'::jsonb;
 
@@ -449,7 +449,7 @@ begin
         'feedback_text', v_answer.feedback_text,
         'evidence_summary', v_answer.evidence_summary,
         'action_text', v_answer.action_text,
-        'references', v_answer.references,
+        'references', coalesce(to_jsonb(v_answer)->'references_json', '[]'::jsonb),
         'evidence_level', v_answer.evidence_level,
         'tags', v_answer.tags,
         'score', v_answer.score
@@ -520,7 +520,7 @@ begin
       'ok', true,
       'already_answered', true,
       'error', '本日はすでに回答済みです。',
-      'answer', jsonb_build_object('feedback_text', v_answer.feedback_text, 'evidence_summary', v_answer.evidence_summary, 'action_text', v_answer.action_text, 'references', v_answer.references, 'evidence_level', v_answer.evidence_level, 'tags', v_answer.tags, 'score', v_answer.score),
+      'answer', jsonb_build_object('feedback_text', v_answer.feedback_text, 'evidence_summary', v_answer.evidence_summary, 'action_text', v_answer.action_text, 'references', coalesce(to_jsonb(v_answer)->'references_json', '[]'::jsonb), 'evidence_level', v_answer.evidence_level, 'tags', v_answer.tags, 'score', v_answer.score),
       'recent_tags', public.fs_daily_recent_tags(v_member.id),
       'monthly_tags', public.fs_daily_monthly_tags(v_member.id, current_date),
       'recent_advice', public.fs_daily_recent_advice(v_member.id),
@@ -534,14 +534,14 @@ begin
     return jsonb_build_object('ok', false, 'error', '質問または選択肢が見つかりません。');
   end if;
 
-  insert into public.fs_member_daily_answers(member_id, member_code, question_key, option_key, answered_date, question_text, option_label, feedback_text, evidence_summary, action_text, references, evidence_level, tags, score)
-  values (v_member.id, v_member.member_code, v_question.question_key, v_option.option_key, current_date, v_question.question_text, v_option.option_label, v_option.feedback_text, v_option.evidence_summary, v_option.action_text, v_option.references, v_option.evidence_level, v_option.tags, v_option.score)
+  insert into public.fs_member_daily_answers(member_id, member_code, question_key, option_key, answered_date, question_text, option_label, feedback_text, evidence_summary, action_text, references_json, evidence_level, tags, score)
+  values (v_member.id, v_member.member_code, v_question.question_key, v_option.option_key, current_date, v_question.question_text, v_option.option_label, v_option.feedback_text, v_option.evidence_summary, v_option.action_text, coalesce(to_jsonb(v_option)->'references_json', '[]'::jsonb), v_option.evidence_level, v_option.tags, v_option.score)
   returning * into v_answer;
 
   return jsonb_build_object(
     'ok', true,
     'already_answered', false,
-    'answer', jsonb_build_object('question_text', v_answer.question_text, 'option_label', v_answer.option_label, 'feedback_text', v_answer.feedback_text, 'evidence_summary', v_answer.evidence_summary, 'action_text', v_answer.action_text, 'references', v_answer.references, 'evidence_level', v_answer.evidence_level, 'tags', v_answer.tags, 'score', v_answer.score),
+    'answer', jsonb_build_object('question_text', v_answer.question_text, 'option_label', v_answer.option_label, 'feedback_text', v_answer.feedback_text, 'evidence_summary', v_answer.evidence_summary, 'action_text', v_answer.action_text, 'references', coalesce(to_jsonb(v_answer)->'references_json', '[]'::jsonb), 'evidence_level', v_answer.evidence_level, 'tags', v_answer.tags, 'score', v_answer.score),
     'recent_tags', public.fs_daily_recent_tags(v_member.id),
     'monthly_tags', public.fs_daily_monthly_tags(v_member.id, current_date),
     'recent_advice', public.fs_daily_recent_advice(v_member.id),
@@ -566,7 +566,7 @@ begin
   return jsonb_build_object(
     'ok', true,
     'answers', coalesce((
-      select jsonb_agg(jsonb_build_object('id', a.id, 'member_id', a.member_id, 'member_code', coalesce(a.member_code, m.member_code), 'member_name', m.name, 'category_label', q.category_label, 'question_key', a.question_key, 'question_text', a.question_text, 'option_label', a.option_label, 'feedback_text', a.feedback_text, 'evidence_summary', a.evidence_summary, 'action_text', a.action_text, 'references', a.references, 'evidence_level', a.evidence_level, 'tags', a.tags, 'score', a.score, 'created_at', a.created_at) order by a.created_at desc)
+      select jsonb_agg(jsonb_build_object('id', a.id, 'member_id', a.member_id, 'member_code', coalesce(a.member_code, m.member_code), 'member_name', m.name, 'category_label', q.category_label, 'question_key', a.question_key, 'question_text', a.question_text, 'option_label', a.option_label, 'feedback_text', a.feedback_text, 'evidence_summary', a.evidence_summary, 'action_text', a.action_text, 'references', coalesce(a."references_json", '[]'::jsonb), 'evidence_level', a.evidence_level, 'tags', a.tags, 'score', a.score, 'created_at', a.created_at) order by a.created_at desc)
       from (select * from public.fs_member_daily_answers order by created_at desc limit 80) a
       left join public.fs_members m on m.id = a.member_id
       left join public.fs_daily_questions q on q.question_key = a.question_key
@@ -593,7 +593,7 @@ begin
   return jsonb_build_object(
     'ok', true,
     'answers', coalesce((
-      select jsonb_agg(jsonb_build_object('id', a.id, 'category_label', q.category_label, 'question_key', a.question_key, 'option_key', a.option_key, 'question_text', a.question_text, 'option_label', a.option_label, 'feedback_text', a.feedback_text, 'evidence_summary', a.evidence_summary, 'action_text', a.action_text, 'references', a.references, 'evidence_level', a.evidence_level, 'tags', a.tags, 'score', a.score, 'answered_date', a.answered_date, 'created_at', a.created_at) order by a.created_at desc)
+      select jsonb_agg(jsonb_build_object('id', a.id, 'category_label', q.category_label, 'question_key', a.question_key, 'option_key', a.option_key, 'question_text', a.question_text, 'option_label', a.option_label, 'feedback_text', a.feedback_text, 'evidence_summary', a.evidence_summary, 'action_text', a.action_text, 'references', coalesce(a."references_json", '[]'::jsonb), 'evidence_level', a.evidence_level, 'tags', a.tags, 'score', a.score, 'answered_date', a.answered_date, 'created_at', a.created_at) order by a.created_at desc)
       from public.fs_member_daily_answers a
       left join public.fs_daily_questions q on q.question_key = a.question_key
       where a.member_id = p_member_id
