@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const SQL_NOTICE = 'コンディション回答履歴はSQL v_daily_check_01.sql 適用後に表示されます。';
+  const SQL_NOTICE = 'コンディション回答履歴はSQL v_daily_check_03_progress_and_booking_prompt.sql 適用後に表示されます。';
   const $ = (q, root = document) => root.querySelector(q);
   const $$ = (q, root = document) => Array.from(root.querySelectorAll(q));
 
@@ -98,7 +98,7 @@
         <h4>タグ傾向</h4>
         ${tags.length ? `<div class="daily-tags">${tags.map((tag) => `<span class="daily-tag">${esc(tag.tag)}：${esc(tag.count)}</span>`).join('')}</div>` : '<p class="small">今月のタグ傾向はまだありません。</p>'}
         <h4>回答履歴</h4>
-        ${answers.length ? answers.map((answer) => `<article class="res"><p class="eyebrow">${esc(answer.category_label || '')}</p><h3>${esc(answer.question_text || '')}</h3><p><strong>回答：</strong>${esc(answer.option_label || '')}</p><p>${esc(answer.feedback_text || '')}</p><p><strong>タグ：</strong>${renderTags(answer.tags)}</p><p class="small">${answer.created_at ? esc(new Date(answer.created_at).toLocaleString('ja-JP')) : '-'}</p></article>`).join('') : '<article class="res"><p>回答履歴はまだありません。</p></article>'}
+        ${answers.length ? answers.map((answer) => `<article class="res"><p class="eyebrow">${esc(answer.category_label || '')}</p><h3>${esc(answer.question_text || '')}</h3><p><strong>回答：</strong>${esc(answer.option_label || '')}</p><p><strong>あなたへのアドバイス：</strong>${esc(answer.feedback_text || '')}</p><p><strong>今日やること：</strong>${esc(answer.action_text || '')}</p><p><strong>科学的根拠の要約：</strong>${esc(answer.evidence_summary || '')}</p><p><strong>参考文献：</strong>${Array.isArray(answer.references) && answer.references.length ? answer.references.map((ref) => esc(ref)).join(' / ') : '-'}</p><p><strong>タグ：</strong>${renderTags(answer.tags)}</p><p><strong>回答日時：</strong>${answer.created_at ? esc(new Date(answer.created_at).toLocaleString('ja-JP')) : '-'}</p></article>`).join('') : '<article class="res"><p>回答履歴はまだありません。</p></article>'}
       </section>
     `;
   }
