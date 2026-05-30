@@ -33,6 +33,9 @@
     completed: false,
     finishing: false,
     supabaseSaving: false,
+    appAvailable: true,
+    appFallback: false,
+    appStatusChecked: false,
     preStress: '',
     postStress: '',
     startedAt: 0,
@@ -75,7 +78,7 @@
   function init(){
     buildStressOptions($('#preStressOptions'), 'preStress');
     buildStressOptions($('#postStressOptions'), 'postStress');
-    $('#startButton').addEventListener('click', startGame);
+    $('#startButton').addEventListener('click', () => { startGame().catch((error) => console.warn('[stress-game] start failed', error)); });
     $('#completeButton').addEventListener('click', completePendingPlay);
     $('#preStressOptions').addEventListener('change', (event) => {
       state.preStress = event.target.value;
@@ -98,7 +101,7 @@
     window.addEventListener('blur', () => {
       if(state.running && !state.paused) togglePause(true);
     });
-    renderFromStorage();
+    checkAppAvailability().finally(renderFromStorage);
   }
 
   function showScreen(name){
@@ -118,12 +121,69 @@
     showScreen('start');
   }
 
+  function getMemberCredentials(){
+    return {
+      memberCode: String(localStorage.getItem('fs_code') || '').trim(),
+      pin: String(localStorage.getItem('fs_pin') || '').trim()
+    };
+  }
+
+  function getSupabaseClient(){
+    if(!window.FRIENDS_SUPABASE_READY || !window.supabase || !window.FRIENDS_SUPABASE_URL || !window.FRIENDS_SUPABASE_ANON_KEY) return null;
+    if(!window.fsStressSupabaseClient){
+      window.fsStressSupabaseClient = window.supabase.createClient(window.FRIENDS_SUPABASE_URL, window.FRIENDS_SUPABASE_ANON_KEY);
+    }
+    return window.fsStressSupabaseClient;
+  }
+
+  async function checkAppAvailability(){
+    const creds = getMemberCredentials();
+    const client = getSupabaseClient();
+    if(!client || !creds.memberCode || !creds.pin){
+      state.appAvailable = true;
+      state.appFallback = true;
+      state.appStatusChecked = true;
+      return true;
+    }
+    try{
+      const { data, error } = await client.rpc('fs_member_apps_snapshot', { p_member_code: creds.memberCode, p_pin: creds.pin });
+      if(error || !data || data.ok === false) throw new Error(error?.message || data?.error || 'apps snapshot failed');
+      const apps = Array.isArray(data.apps) ? data.apps : [];
+      state.appAvailable = apps.some((app) => app.app_key === 'stress_block_puzzle' && app.enabled === true);
+      state.appFallback = false;
+      state.appStatusChecked = true;
+      return state.appAvailable;
+    }catch(error){
+      console.warn('[stress-game] app availability fallback', error);
+      state.appAvailable = true;
+      state.appFallback = true;
+      state.appStatusChecked = true;
+      return true;
+    }
+  }
+
+  async function refreshAppAvailability(showFallbackNotice){
+    const available = await checkAppAvailability();
+    if(showFallbackNotice && state.appFallback){
+      const notice = $('#startNotice');
+      notice.textContent = 'アプリ情報を確認できないため、テスト表示で開いています。';
+      notice.classList.remove('hidden');
+    }
+    return available;
+  }
+
   function renderStart(){
     const completed = alreadyCompletedToday();
     $('#startPoints').textContent = `${readPoints()}pt`;
     $('#startTodayStatus').textContent = completed ? 'プレイ済み' : '未プレイ';
     const notice = $('#startNotice');
-    if(completed){
+    if(!state.appAvailable){
+      notice.textContent = '現在このアプリは利用できません。';
+      notice.classList.remove('hidden');
+    }else if(state.appFallback){
+      notice.textContent = 'アプリ情報を確認できないため、テスト表示で開いています。';
+      notice.classList.remove('hidden');
+    }else if(completed){
       notice.textContent = '本日はプレイ済みです。明日またプレイできます。';
       notice.classList.remove('hidden');
     }else{
@@ -138,7 +198,10 @@
     const button = $('#startButton');
     let disabled = false;
     let text = 'スタート';
-    if(pending){
+    if(!state.appAvailable){
+      disabled = true;
+      text = '現在このアプリは利用できません。';
+    }else if(pending){
       disabled = true;
       text = '未完了のプレイがあります';
     }else if(alreadyCompletedToday()){
@@ -156,8 +219,10 @@
     const button = $('#completeButton');
     const pending = getPendingPlay();
     const completed = alreadyCompletedToday();
-    button.disabled = state.finishing || completed || !pending || !state.postStress;
-    if(completed){
+    button.disabled = state.finishing || completed || !pending || !state.postStress || !state.appAvailable;
+    if(!state.appAvailable){
+      button.textContent = '現在このアプリは利用できません。';
+    }else if(completed){
       button.textContent = '本日はプレイ済みです。明日またプレイできます。';
     }else if(!state.postStress){
       button.textContent = 'プレイ後ストレス度を選んで完了';
@@ -166,8 +231,10 @@
     }
   }
 
-  function startGame(){
-    if(getPendingPlay() || alreadyCompletedToday() || !state.preStress) return;
+  async function startGame(){
+    const available = await refreshAppAvailability(true);
+    renderStart();
+    if(!available || getPendingPlay() || alreadyCompletedToday() || !state.preStress) return;
     state.board = emptyBoard();
     state.score = 0;
     state.lines = 0;
@@ -343,9 +410,12 @@
     $('#resultLines').textContent = String(pending.lines || 0);
     $('#resultTime').textContent = formatPlayTime(pending.playTimeMs || 0);
     $('#resultPreStress').textContent = pending.preStress ? `${pending.preStress}` : '-';
-    $('#pendingNotice').classList.toggle('hidden', !resumed);
-    if(resumed) $('#pendingNotice').textContent = '未完了のプレイがあります。結果を確認して完了してください。';
-    $('#completedNotice').classList.toggle('hidden', !alreadyCompletedToday());
+    const pendingNotice = $('#pendingNotice');
+    pendingNotice.textContent = resumed ? '未完了のプレイがあります。プレイ後のストレス度を選んで完了してください。' : 'あと1ステップです。プレイ後のストレス度を選んで「完了して1pt獲得」を押してください。';
+    pendingNotice.classList.remove('hidden');
+    const completedNotice = $('#completedNotice');
+    completedNotice.textContent = alreadyCompletedToday() ? '本日はプレイ済みです。明日またプレイできます。' : '';
+    completedNotice.classList.toggle('hidden', !alreadyCompletedToday());
     state.postStress = '';
     document.querySelectorAll('input[name="postStress"]').forEach((input) => { input.checked = false; });
     updateCompleteButton();
@@ -356,21 +426,6 @@
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
     return min ? `${min}分${sec}秒` : `${sec}秒`;
-  }
-
-  function getMemberCredentials(){
-    return {
-      memberCode: String(localStorage.getItem('fs_code') || '').trim(),
-      pin: String(localStorage.getItem('fs_pin') || '').trim()
-    };
-  }
-
-  function getSupabaseClient(){
-    if(!window.FRIENDS_SUPABASE_READY || !window.supabase || !window.FRIENDS_SUPABASE_URL || !window.FRIENDS_SUPABASE_ANON_KEY) return null;
-    if(!window.fsStressSupabaseClient){
-      window.fsStressSupabaseClient = window.supabase.createClient(window.FRIENDS_SUPABASE_URL, window.FRIENDS_SUPABASE_ANON_KEY);
-    }
-    return window.fsStressSupabaseClient;
   }
 
   async function saveCompletionToSupabase(pending, postStress){
@@ -431,10 +486,16 @@
     $('#pendingNotice').classList.add('hidden');
     updateCompleteButton();
     try{
+      const available = await refreshAppAvailability(false);
+      if(!available){
+        $('#pendingNotice').textContent = '現在このアプリは利用できません。';
+        $('#pendingNotice').classList.remove('hidden');
+        return;
+      }
       const saveResult = await saveCompletionToSupabase(pending, state.postStress);
       const pointsToAdd = saveResult.already_completed ? 0 : 1;
       saveCompletionLocally(pending, state.postStress, pointsToAdd);
-      $('#completedNotice').textContent = '本日はプレイ済みです。明日またプレイできます。';
+      $('#completedNotice').textContent = '保存しました。管理者画面のアプリ利用履歴に反映されます。';
       $('#completedNotice').classList.remove('hidden');
       $('#pendingNotice').classList.add('hidden');
       $('#postStressField').disabled = true;

@@ -32,7 +32,7 @@
   <section id="customersTab" class="panel hidden"><p class="eyebrow">顧客管理</p><h2>会員追加・編集</h2><form id="addMember" class="mini"><label>会員名<input name="name" placeholder="例：山田 太郎" required></label><label>メールアドレス<input name="email" type="email" placeholder="例：sample@example.com" required></label><label>プラン<select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>ファミリー月4回プラン</option><option>ファミリー月8回プラン</option></select></label><button class="btn">この画面で会員を追加</button></form><div id="generatedLogin" class="res hidden" style="margin-top:12px"></div><h3>会員一覧</h3><div id="members" class="list"></div></section>
   <section id="requestsTab" class="panel hidden"><p class="eyebrow">購入履歴</p><h2>枠の購入履歴</h2><p class="small">購入履歴タブ右上の数字は、即時課金対応が未完了の件数です。</p><div id="requests" class="list"></div></section>
   <section id="settingsTab" class="panel hidden"><p class="eyebrow">利用不可設定</p><h2>手動利用不可</h2><p class="small">基本はここで1枠ずつ埋めます。1日休業や長時間メンテナンスの時だけ、下の一括管理を使ってください。</p><form id="addClosed" class="mini"><input name="date" type="date" required><select name="start" required></select><input name="reason" placeholder="理由 例：清掃"><button class="btn">この枠を埋める</button></form><h3>利用不可一覧</h3><div id="closed" class="list"></div><button id="reset" class="danger hidden" style="margin-top:14px;width:100%">デモデータ初期化</button></section>
-  <section id="appsTab" class="panel hidden"><p class="eyebrow">アプリ管理</p><h2>アプリ一覧</h2><div id="adminAppsMessage" class="notice hidden"></div><div id="adminAppsList" class="list"></div><h3>直近のアプリ利用履歴</h3><div id="adminAppActivityLogs" class="list"></div></section>
+  <section id="appsTab" class="panel hidden"><p class="eyebrow">コンテンツ管理</p><h2>コンテンツ一覧</h2><div id="adminAppsMessage" class="notice hidden"></div><div id="adminAppsList" class="list"></div><h3>直近のアプリ利用履歴</h3><div id="adminAppActivityLogs" class="list"></div></section>
 </section>
 </main>
 <footer class="footer">friendsセルフ｜管理者専用画面</footer>
@@ -46,6 +46,6 @@
 <script src="./admin-feedback.js?v=25"></script>
 <script src="./admin-bulk-close.js?v=25"></script>
 <script src="./admin-override-v19.js?v=25"></script>
-<script src="./admin-app-hub.js?v=1"></script>
+<script src="./admin-app-hub.js?v=3"></script>
 </body>
 </html>

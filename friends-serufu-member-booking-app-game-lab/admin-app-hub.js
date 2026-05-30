@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const SQL_MESSAGE = 'SQL v_app_hub_01.sql をSupabaseに適用後に利用できます。';
+  const SQL_MESSAGE = 'SQL v_app_hub_02_content_hub.sql をSupabaseに適用後に利用できます。';
   const $ = (q) => document.querySelector(q);
 
   function esc(value){
@@ -31,8 +31,8 @@
     showMessage(message);
     const list = $('#adminAppsList');
     const logs = $('#adminAppActivityLogs');
-    if(list) list.innerHTML = '<article class="res"><p>SQL v_app_hub_01.sql をSupabaseに適用後に利用できます。</p></article>';
-    if(logs) logs.innerHTML = '<article class="res"><p>直近のアプリ利用履歴はSQL適用後に表示されます。</p></article>';
+    if(list) list.innerHTML = `<article class="res"><p>${SQL_MESSAGE}</p></article>`;
+    if(logs) logs.innerHTML = '<article class="res"><p>直近の利用履歴はSQL適用後に表示されます。</p></article>';
   }
 
   async function rpc(name, args){
@@ -44,17 +44,14 @@
     return data;
   }
 
-  function renderApps(apps){
-    const list = $('#adminAppsList');
-    if(!list) return;
-    list.innerHTML = apps.length ? apps.map((app) => `
-      <article class="res">
-        <h3>${esc(app.app_name || app.app_key)}</h3>
-        <p>カテゴリ：${esc(app.category_name || app.category_key || '-')}</p>
-        <p>状態：<strong>${app.enabled ? 'ON' : 'OFF'}</strong></p>
-        <button class="${app.enabled ? 'danger' : 'ok'}" data-admin-app-toggle="${esc(app.app_key)}" data-current-enabled="${app.enabled ? '1' : '0'}">${app.enabled ? 'OFFにする' : 'ONにする'}</button>
-      </article>
-    `).join('') : '<article class="res"><p>アプリは登録されていません。</p></article>';
+  function normalizeApp(app){
+    return {
+      app_key: app.app_key || '',
+      title: app.title || app.app_name || app.app_key || '無題のコンテンツ',
+      category: app.category_label || app.category_name || app.category_key || '-',
+      content_type: app.content_type || 'game',
+      enabled: app.enabled === true
+    };
   }
 
   function resultText(result){
@@ -65,17 +62,34 @@
     return [stress, score, lines].filter(Boolean).join(' / ') || '-';
   }
 
+  function renderApps(apps){
+    const list = $('#adminAppsList');
+    if(!list) return;
+    const normalized = apps.map(normalizeApp);
+    list.innerHTML = normalized.length ? normalized.map((app) => `
+      <article class="res">
+        <h3>${esc(app.title)}</h3>
+        <p>カテゴリ：${esc(app.category)}</p>
+        <p>種類：${esc(app.content_type)}</p>
+        <p>ON/OFF状態：<strong>${app.enabled ? 'ON' : 'OFF'}</strong></p>
+        <button class="${app.enabled ? 'danger' : 'ok'}" data-admin-app-toggle="${esc(app.app_key)}" data-app-title="${esc(app.title)}" data-current-enabled="${app.enabled ? '1' : '0'}">${app.enabled ? 'OFFにする' : 'ONにする'}</button>
+      </article>
+    `).join('') : '<article class="res"><p>コンテンツは登録されていません。</p></article>';
+  }
+
   function renderLogs(logs){
     const box = $('#adminAppActivityLogs');
     if(!box) return;
     box.innerHTML = logs.length ? logs.map((log) => `
       <article class="res">
         <h3>${esc(log.member_name || '-')} / ${esc(log.member_code || log.member_id || '-')}</h3>
-        <p>${esc(log.app_name || log.app_key || '-')} / ${new Date(log.created_at || log.activity_at || Date.now()).toLocaleString('ja-JP')}</p>
+        <p>${esc(log.title || log.app_name || log.app_key || '-')} / ${new Date(log.created_at || log.activity_at || Date.now()).toLocaleString('ja-JP')}</p>
+        <p>カテゴリ：${esc(log.category_label || log.category_name || '-')}</p>
+        <p>種類：${esc(log.content_type || 'game')}</p>
         <p>ポイント：${esc(log.points || 0)}pt</p>
         <p>結果：${resultText(log.result)}</p>
       </article>
-    `).join('') : '<article class="res"><p>直近のアプリ利用履歴はありません。</p></article>';
+    `).join('') : '<article class="res"><p>直近の利用履歴はありません。</p></article>';
   }
 
   async function loadAdminApps(){
@@ -119,7 +133,8 @@
       const result = log.result || {};
       return `<article class="res">
         <p>${new Date(log.created_at || log.activity_at || Date.now()).toLocaleString('ja-JP')}</p>
-        <h3>${esc(log.category_name || 'ストレスリセット')} / ${esc(log.app_name || 'ブロックパズル')}</h3>
+        <h3>${esc(log.category_label || log.category_name || 'ストレスリセット')} / ${esc(log.title || log.app_name || 'ブロックパズル')}</h3>
+        <p>種類：${esc(log.content_type || 'game')}</p>
         <p>利用時間：${formatPlayTime(result.play_time_ms || result.playTimeMs)}</p>
         <p>${esc(log.points || 0)}pt獲得</p>
         <p>ストレス度：${esc(result.pre_stress || result.preStress || '-')} → ${esc(result.post_stress || result.postStress || '-')}</p>
@@ -139,21 +154,31 @@
       renderMemberLogs(memberId, logs);
     }catch(error){
       console.warn('[admin-app-hub] member app history unavailable', error);
-      box.innerHTML = '<article class="res"><p>アプリ利用履歴はSQL適用後に表示されます。</p></article>';
+      box.innerHTML = '<article class="res"><p>アプリ利用履歴はSQL v_app_hub_02_content_hub.sql 適用後に表示されます。</p></article>';
     }
   }
 
   function setup(){
     if(!$('#appsTab')) return;
+    const logsTitle = $('#adminAppActivityLogs')?.previousElementSibling;
+    if(logsTitle) logsTitle.textContent = '直近の利用履歴';
     document.addEventListener('click', (event) => {
       const tab = event.target.closest('[data-tab="apps"]');
       if(tab) setTimeout(loadAdminApps, 0);
+
+      const reload = event.target.closest('[data-admin-app-reload]');
+      if(reload){
+        event.preventDefault();
+        loadAdminApps();
+      }
+
       const toggle = event.target.closest('[data-admin-app-toggle]');
       if(toggle){
         event.preventDefault();
         const next = toggle.dataset.currentEnabled !== '1';
-        const label = next ? 'ON' : 'OFF';
-        if(confirm(`このアプリを${label}に切り替えますか？`)){
+        const title = toggle.dataset.appTitle || 'このコンテンツ';
+        const message = next ? `${title}を表示しますか？` : `${title}を非表示にしますか？`;
+        if(confirm(message)){
           setEnabled(toggle.dataset.adminAppToggle, next).catch((error) => {
             console.warn('[admin-app-hub] toggle failed', error);
             fallback(SQL_MESSAGE);
@@ -165,6 +190,10 @@
       const memberId = event.detail?.memberId;
       if(memberId) loadMemberHistory(memberId);
     });
+    const logs = $('#adminAppActivityLogs');
+    if(logs && !$('#adminAppReload')){
+      logs.insertAdjacentHTML('beforebegin', '<button id="adminAppReload" type="button" class="ghost" data-admin-app-reload>利用履歴を再読み込み</button>');
+    }
     fallback(SQL_MESSAGE);
   }
 
