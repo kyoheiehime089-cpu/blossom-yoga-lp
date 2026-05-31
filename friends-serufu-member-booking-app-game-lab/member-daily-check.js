@@ -1,7 +1,9 @@
 (function(){
   'use strict';
 
-  const SQL_NOTICE = 'コンディションチェックはSQL適用後に利用できます。';
+  const PREPARING_TITLE = 'コンディションチェックは現在準備中です。';
+  const PREPARING_MESSAGE = '科学的根拠と参考文献を確認した質問から順番に公開します。';
+  const SQL_NOTICE = PREPARING_TITLE;
   const $ = (q, root = document) => root.querySelector(q);
   const $$ = (q, root = document) => Array.from(root.querySelectorAll(q));
 
@@ -37,36 +39,33 @@
     return $('#dailyCheckCard');
   }
 
-  function renderTags(tags){
-    const list = Array.isArray(tags) ? tags : [];
-    return list.length ? `<div class="daily-tags">${list.slice(0,5).map((tag) => `<span class="daily-tag">${esc(tag.tag || tag)}</span>`).join('')}</div>` : '<p class="small">回答が増えると表示されます。</p>';
+  function referenceLabel(ref){
+    if(ref && typeof ref === 'object'){
+      return [ref.title, ref.source_name, ref.year].filter(Boolean).join(' / ');
+    }
+    return ref;
   }
 
   function renderReferences(references){
     const list = Array.isArray(references) ? references : [];
-    return list.length ? `<ul>${list.map((ref) => `<li>${esc(ref)}</li>`).join('')}</ul>` : '<p class="small">参考文献は回答後に表示されます。</p>';
+    if(!list.length) return '';
+    return `<h3>参考文献</h3><ul>${list.map((ref) => `<li>${esc(referenceLabel(ref))}</li>`).join('')}</ul>`;
   }
 
   function renderAdvice(answer){
-    return `
-      <div class="daily-advice">
-        <h3>あなたへのアドバイス</h3>
-        <p>${esc(answer.feedback_text || '回答後に表示されます。')}</p>
-        <h3>今日やること</h3>
-        <p>${esc(answer.action_text || '回答後に表示されます。')}</p>
-        <h3>科学的根拠の要約</h3>
-        <p>${esc(answer.evidence_summary || '回答後に表示されます。')}</p>
-        <h3>参考文献</h3>
-        ${renderReferences(answer.references)}
-      </div>
-    `;
+    const blocks = [];
+    if(answer.feedback_text) blocks.push(`<h3>あなたへのアドバイス</h3><p>${esc(answer.feedback_text)}</p>`);
+    if(answer.action_text) blocks.push(`<h3>今日やること</h3><p>${esc(answer.action_text)}</p>`);
+    if(answer.evidence_summary) blocks.push(`<h3>科学的根拠の要約</h3><p>${esc(answer.evidence_summary)}</p>`);
+    const refs = renderReferences(answer.references);
+    if(refs) blocks.push(refs);
+    return blocks.length ? `<div class="daily-advice">${blocks.join('')}</div>` : '';
   }
 
   function renderRecent(payload){
     return `
       <div class="daily-trends">
         <h3>最近のコンディション傾向</h3>
-        ${renderTags(payload.recent_tags)}
         <h3>今週のおすすめアドバイス</h3>
         <p>${esc(payload.recent_advice || '回答が増えると、直近の傾向に合わせたアドバイスが表示されます。')}</p>
       </div>
@@ -79,7 +78,12 @@
     return `<div class="daily-themes"><h3>今月のおすすめテーマ</h3><ol>${list.slice(0,3).map((theme) => `<li>${esc(theme.label || theme.theme || theme)}</li>`).join('')}</ol><p class="small">断定ではなく、今月見直したいポイントとしてご活用ください。</p></div>`;
   }
 
+  function renderPreparing(payload){
+    return `<h2>今日の1問</h2><div class="res done"><p class="notice">${esc(payload?.message || `${PREPARING_TITLE}${PREPARING_MESSAGE}`)}</p></div>`;
+  }
+
   function renderAnswered(payload){
+    if(payload.status === 'preparing' || !payload.answer) return renderPreparing(payload);
     const answer = payload.answer || {};
     return `
       <h2>今日の1問</h2>
@@ -98,8 +102,8 @@
   function renderQuestion(payload){
     const q = payload.question || {};
     const options = Array.isArray(q.options) ? q.options : [];
-    if(!q.question_key || !options.length){
-      return `<h2>今日の1問</h2><p class="notice">表示できる質問がまだありません。</p>${renderRecent(payload)}${renderThemes(payload.monthly_themes)}`;
+    if(payload.status === 'preparing' || !q.question_key || !options.length){
+      return renderPreparing(payload);
     }
     return `
       <h2>今日の1問</h2>
@@ -136,11 +140,11 @@
     try{
       const payload = await callRpc('fs_member_daily_check_snapshot', { p_member_code: memberCode, p_pin: pin });
       if(!payload.ok) throw new Error(payload.error || SQL_NOTICE);
-      content.innerHTML = payload.answered_today ? renderAnswered(payload) : renderQuestion(payload);
+      content.innerHTML = (payload.status === 'preparing' || !payload.question && !payload.answer) ? renderPreparing(payload) : (payload.answered_today ? renderAnswered(payload) : renderQuestion(payload));
       return payload;
     }catch(error){
       console.warn('[daily-check] unavailable', error);
-      renderError(content, SQL_NOTICE);
+      renderError(content, PREPARING_TITLE);
       return null;
     }
   }
@@ -180,7 +184,7 @@
       await refreshDailyCheckViews();
     }catch(error){
       console.warn('[daily-check] submit failed', error);
-      renderError(form.closest('[data-daily-check-content]'), SQL_NOTICE);
+      renderError(form.closest('[data-daily-check-content]'), error.message || PREPARING_TITLE);
     }
   }
 
