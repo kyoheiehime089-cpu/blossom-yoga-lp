@@ -62,7 +62,7 @@
     const tabs = $('#adminView .tabs');
     const apps = $('#appsTab');
     if(tabs) tabs.insertAdjacentHTML('beforeend', '<button class="tab" data-tab="condition">コンディション管理</button>');
-    if(apps) apps.insertAdjacentHTML('afterend', '<section id="conditionTab" class="panel hidden"><p class="eyebrow">コンディション管理</p><h2>コンディション管理</h2><div id="adminDailyCheckContent" class="list"><article class="res"><p>読み込み中...</p></article></div></section>');
+    if(apps) apps.insertAdjacentHTML('afterend', '<section id="conditionTab" class="panel hidden admin-condition-panel"><p class="eyebrow">コンディション管理</p><h2>コンディション管理</h2><div id="adminDailyCheckContent" class="list admin-daily-check-list"><article class="res admin-daily-card"><p>読み込み中...</p></article></div></section>');
   }
 
   function renderSnapshot(payload){
@@ -71,10 +71,10 @@
     const verifiedQuestions = questions.filter((q) => q.verified);
     const unverifiedQuestions = questions.filter((q) => !q.verified);
     $('#adminDailyCheckContent').innerHTML = `
-      <article class="res"><p class="notice">会員画面には、verified=true かつ確認済み参考文献が紐づいた質問だけが表示されます。</p><p class="small">検証済み質問: ${verifiedQuestions.length}件 / 未検証質問: ${unverifiedQuestions.length}件</p></article>
+      <article class="res admin-daily-card admin-daily-notice-card"><p class="notice">会員画面には、verified=true かつ確認済み参考文献が紐づいた質問だけが表示されます。</p><p class="small">検証済み質問: ${verifiedQuestions.length}件 / 未検証質問: ${unverifiedQuestions.length}件</p></article>
       <h3>直近の回答履歴</h3>
       ${answers.length ? answers.map((answer) => `
-        <article class="res">
+        <article class="res admin-daily-card admin-daily-answer-card">
           <h3>${esc(answer.member_name || '-')} <span class="small">${esc(answer.member_code || '')}</span></h3>
           <p><strong>会員ID：</strong>${esc(answer.member_id || '')}</p>
           <p><strong>質問カテゴリ：</strong>${esc(answer.category_label || '')}</p>
@@ -86,7 +86,7 @@
       `).join('') : '<article class="res"><p>回答履歴はまだありません。</p></article>'}
       <h3>質問一覧</h3>
       ${questions.length ? questions.map((q) => `
-        <article class="res">
+        <article class="res admin-daily-card admin-daily-question-card">
           <p class="eyebrow">${esc(q.category_label)} / sort_order: ${esc(q.sort_order)}</p>
           <h3>${esc(q.question_text)}</h3>
           <p class="small">${esc(q.question_key)}</p>
@@ -120,7 +120,7 @@
     const answers = Array.isArray(payload.answers) ? payload.answers : [];
     const tags = Array.isArray(payload.monthly_tags) ? payload.monthly_tags : [];
     return `
-      <section class="res admin-member-daily-check" data-daily-member-section>
+      <section class="res admin-member-daily-check admin-daily-card" data-daily-member-section>
         <p class="eyebrow">コンディション回答履歴</p>
         <h3>コンディション回答履歴</h3>
         <h4>月間おすすめテーマ</h4>
@@ -128,7 +128,7 @@
         <h4>タグ傾向</h4>
         ${tags.length ? `<div class="daily-tags">${tags.map((tag) => `<span class="daily-tag">${esc(tag.tag)}：${esc(tag.count)}</span>`).join('')}</div>` : '<p class="small">今月のタグ傾向はまだありません。</p>'}
         <h4>回答履歴</h4>
-        ${answers.length ? answers.map((answer) => `<article class="res"><p class="eyebrow">${esc(answer.category_label || '')}</p><h3>${esc(answer.question_text || '')}</h3><p><strong>回答：</strong>${esc(answer.option_label || '')}</p><p><strong>あなたへのアドバイス：</strong>${esc(answer.feedback_text || '')}</p><p><strong>今日やること：</strong>${esc(answer.action_text || '')}</p><p><strong>科学的根拠の要約：</strong>${esc(answer.evidence_summary || '')}</p><div><strong>参考文献：</strong>${renderReferenceDetails(answer.references)}</div><p><strong>タグ：</strong>${renderTags(answer.tags)}</p><p><strong>回答日時：</strong>${answer.created_at ? esc(new Date(answer.created_at).toLocaleString('ja-JP')) : '-'}</p></article>`).join('') : '<article class="res"><p>回答履歴はまだありません。</p></article>'}
+        ${answers.length ? answers.map((answer) => `<article class="res admin-daily-card admin-daily-answer-card"><p class="eyebrow">${esc(answer.category_label || '')}</p><h3>${esc(answer.question_text || '')}</h3><p><strong>回答：</strong>${esc(answer.option_label || '')}</p><p><strong>あなたへのアドバイス：</strong>${esc(answer.feedback_text || '')}</p><p><strong>今日やること：</strong>${esc(answer.action_text || '')}</p><p><strong>科学的根拠の要約：</strong>${esc(answer.evidence_summary || '')}</p><div><strong>参考文献：</strong>${renderReferenceDetails(answer.references)}</div><p><strong>タグ：</strong>${renderTags(answer.tags)}</p><p><strong>回答日時：</strong>${answer.created_at ? esc(new Date(answer.created_at).toLocaleString('ja-JP')) : '-'}</p></article>`).join('') : '<article class="res"><p>回答履歴はまだありません。</p></article>'}
       </section>
     `;
   }
@@ -149,7 +149,27 @@
 
   function installStyles(){
     if($('#adminDailyCheckStyles')) return;
-    document.head.insertAdjacentHTML('beforeend', '<style id="adminDailyCheckStyles">.daily-tags{display:flex;flex-wrap:wrap;gap:8px}.daily-tag,.daily-status{display:inline-flex;padding:4px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900}.daily-status-ng{background:#fff2e5;color:#7a3f00}.admin-member-daily-check{display:grid;gap:8px}.daily-reference-list{margin:8px 0 0 1.2em;padding:0}.daily-reference-list li{margin:6px 0}</style>');
+    document.head.insertAdjacentHTML('beforeend', `
+      <style id="adminDailyCheckStyles">
+        #conditionTab,#conditionTab *,[data-daily-member-section],[data-daily-member-section] *{box-sizing:border-box;max-width:100%}
+        #conditionTab{width:100%;max-width:100%;overflow:hidden}
+        .admin-condition-panel{display:block;overflow-wrap:anywhere;word-break:break-word}
+        .admin-daily-check-list{display:grid;gap:14px;width:100%;max-width:100%;min-width:0}
+        .admin-daily-check-list>h3{margin:6px 0 0;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}
+        .admin-daily-card{width:100%;max-width:100%;min-width:0;margin:0;padding:16px;line-height:1.75;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
+        .admin-daily-card p,.admin-daily-card h3,.admin-daily-card h4,.admin-daily-card li,.admin-daily-card span,.admin-daily-card strong{max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+        .admin-daily-card p{margin:8px 0}.admin-daily-card h3{margin:6px 0 8px;line-height:1.4}.admin-daily-card h4{margin:12px 0 6px;line-height:1.4}
+        .admin-daily-notice-card{background:#fff7e7;border-color:#efcf8f}
+        .admin-member-daily-check{display:grid;gap:10px}
+        .admin-member-daily-check>.res{margin:0}
+        .daily-tags{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+        .daily-tag,.daily-status{display:inline-flex;max-width:100%;padding:4px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+        .daily-status-ng{background:#fff2e5;color:#7a3f00}
+        .daily-reference-list{display:grid;gap:8px;margin:8px 0 0;padding:0;list-style-position:inside;min-width:0}
+        .daily-reference-list li{margin:0;padding:10px;border:1px solid var(--line);border-radius:14px;background:#fffdf8;line-height:1.65;overflow-wrap:anywhere;word-break:break-word}
+        @media(max-width:640px){#conditionTab{padding:16px}.admin-daily-check-list{gap:12px}.admin-daily-card{padding:12px;border-radius:14px}.daily-reference-list li{padding:9px}.admin-daily-card h3{font-size:17px}}
+      </style>
+    `);
   }
 
   function hookSnapshot(){

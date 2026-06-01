@@ -31,11 +31,12 @@
   function ensureMount(){
     let mount = $('#dailyCheckCard');
     if(mount) return mount;
-    const dashboard = $('.dashboard');
-    const usage = $('#usageSummary')?.closest('.card');
-    const html = '<section id="dailyCheckCard" class="card fs-daily-check-card" style="margin-bottom:18px"><p class="eyebrow">コンディションチェック</p><div id="dailyCheckContent" data-daily-check-content class="res"><p>読み込み中...</p></div></section>';
-    if(usage) usage.insertAdjacentHTML('beforebegin', html);
-    else if(dashboard) dashboard.insertAdjacentHTML('afterend', html);
+    const appsTab = $('#appsTab');
+    if(!appsTab) return null;
+    const appsList = $('#appsList', appsTab);
+    const html = '<section id="dailyCheckCard" class="fs-daily-check-card apps-daily-check-card"><p class="eyebrow">コンディションチェックアプリ</p><div id="dailyCheckContent" data-daily-check-content class="res"><p>読み込み中...</p></div></section>';
+    if(appsList) appsList.insertAdjacentHTML('beforebegin', html);
+    else appsTab.insertAdjacentHTML('beforeend', html);
     return $('#dailyCheckCard');
   }
 
@@ -125,7 +126,9 @@
   }
 
   function renderError(target, message){
-    const content = target || $('#dailyCheckContent') || ensureMount().querySelector('#dailyCheckContent');
+    const mount = target ? null : ensureMount();
+    const content = target || $('#dailyCheckContent') || mount?.querySelector('#dailyCheckContent');
+    if(!content) return;
     content.innerHTML = `<h2>今日の1問</h2><p class="notice">${esc(message || SQL_NOTICE)}</p>`;
   }
 
@@ -151,8 +154,8 @@
 
   async function loadDailyCheck(){
     const mount = ensureMount();
-    const content = mount.querySelector('#dailyCheckContent');
-    if($('#appView')?.classList.contains('hidden')) return null;
+    const content = mount?.querySelector('#dailyCheckContent');
+    if(!content || $('#appView')?.classList.contains('hidden')) return null;
     return renderInto(content);
   }
 
@@ -192,7 +195,7 @@
     if($('#dailyCheckStyles')) return;
     document.head.insertAdjacentHTML('beforeend', `
       <style id="dailyCheckStyles">
-        .fs-daily-check-card h2{margin:4px 0 10px}.daily-check-form{display:grid;gap:10px;margin-top:12px}.daily-option{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fffaf2;font-weight:850}.daily-option input{width:auto;margin:0}.daily-themes,.daily-trends,.daily-advice{margin-top:14px;padding:12px;border:1px solid #d9eadf;border-radius:16px;background:#f5fbf6}.daily-themes ol{margin:8px 0 0 1.2em;padding:0}.daily-themes li{margin:4px 0;font-weight:850}.daily-tags{display:flex;flex-wrap:wrap;gap:8px}.daily-tag{display:inline-flex;padding:4px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900}
+        .fs-daily-check-card{box-sizing:border-box;width:100%;max-width:100%;padding:15px;border:1px solid var(--line);border-radius:18px;background:#fffdf8;overflow-wrap:anywhere;word-break:break-word}.fs-daily-check-card h2{margin:4px 0 10px}.apps-daily-check-card{display:grid;gap:10px}.daily-check-form{display:grid;gap:10px;margin-top:12px}.daily-option{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fffaf2;font-weight:850}.daily-option input{width:auto;margin:0}.daily-themes,.daily-trends,.daily-advice{box-sizing:border-box;width:100%;max-width:100%;margin-top:14px;padding:12px;border:1px solid #d9eadf;border-radius:16px;background:#f5fbf6;line-height:1.75;overflow-wrap:anywhere;word-break:break-word}.daily-themes ol{margin:8px 0 0 1.2em;padding:0}.daily-themes li{margin:4px 0;font-weight:850}.daily-tags{display:flex;flex-wrap:wrap;gap:8px}.daily-tag{display:inline-flex;max-width:100%;padding:4px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900;overflow-wrap:anywhere;word-break:break-word}
       </style>
     `);
   }
