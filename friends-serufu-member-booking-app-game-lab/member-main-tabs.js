@@ -108,6 +108,7 @@
     if($('#appsEntryStyles')) return;
     document.head.insertAdjacentHTML('beforeend', `
       <style id="appsEntryStyles">
+        .apps-entry-panel,.apps-entry-panel *{box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
         .apps-entry-panel{display:grid;gap:14px}
         .apps-entry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
         .apps-entry-card,.apps-category,.apps-item{padding:15px;border:1px solid var(--line);border-radius:18px;background:#fffdf8}
@@ -118,11 +119,33 @@
         .apps-category-body{display:grid;gap:10px;margin-top:12px}
         .apps-item{display:grid;gap:8px;background:#fffaf2}
         .apps-kind{display:inline-flex;width:max-content;padding:3px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900}
-        .apps-game-link{text-decoration:none;text-align:center}
+        .apps-game-link{text-decoration:none;text-align:center}.apps-item-actions{display:grid;grid-template-columns:1fr;gap:8px}.apps-explain-toggle{min-height:44px;border:1px solid #b8ddc3;border-radius:14px;background:#f3fbf5;color:#27533a;font-weight:950;cursor:pointer}.apps-stress-explanation{padding:14px;border:1px solid #d9eadf;border-radius:18px;background:#f5fbf6;line-height:1.8;color:#264431;box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;word-break:break-word}.apps-stress-explanation h4{margin:0 0 10px;line-height:1.5}.apps-stress-explanation p{margin:0 0 12px}
         .apps-medical-note{padding:12px;border:1px solid #efcf8f;border-radius:14px;background:#fff7e7;color:#7b520e}
         @media(max-width:640px){.member-main-tabs{overflow-x:auto;display:flex}.member-main-tabs .tab{white-space:nowrap}.apps-entry-grid{grid-template-columns:1fr}}
       </style>
     `);
+  }
+
+
+  function stressResetExplanationHtml(){
+    return `
+      <div class="apps-stress-explanation hidden" data-stress-reset-explanation>
+        <h4>なぜブロックパズルがストレスリセットになるの？</h4>
+        <p>ストレスが強い時は、頭の中で同じ考えがぐるぐる続いたり、不安なイメージが離れにくくなることがあります。</p>
+        <p>ブロックパズルのようなシンプルな視覚パズルは、色や形、置く場所を考えるために、自然と注意を目の前の作業へ向けやすくなります。</p>
+        <p>つまり、悩みを無理に消そうとするのではなく、頭の使い方を一度切り替えるイメージです。</p>
+        <p>短時間でも「今はこのブロックをどこに置くか」に集中できると、気持ちが少し落ち着いたり、考えすぎから抜け出すきっかけになります。</p>
+        <p>また、小さくクリアできる感覚や、手を動かして進める感覚は、気分転換にもつながりやすいです。</p>
+        <p>大切なのは、長くやりすぎないことです。</p>
+        <p>このアプリでは、気分転換として使いやすいように、1日1回・3分だけにしています。</p>
+        <p>これは医療行為ではありません。</p>
+        <p>ストレスや不調が強い時は、無理せず専門家に相談してください。</p>
+      </div>
+    `;
+  }
+
+  function isStressBlockPuzzle(app){
+    return app.app_key === 'stress_block_puzzle' || app.category_key === 'stress_reset' || app.title === 'ブロックパズル';
   }
 
   function ensureSafeLogout(dashboard){
@@ -159,7 +182,11 @@
               <h3>${esc(app.title)}</h3>
               <span class="apps-kind">種類：${esc(app.content_type)}</span>
               <p>${esc(app.description || '説明はありません。')}</p>
-              <a class="btn apps-game-link" href="${esc(app.href)}">開く</a>
+              <div class="apps-item-actions">
+                ${isStressBlockPuzzle(app) ? '<button class="apps-explain-toggle" type="button" data-stress-reset-toggle aria-expanded="false">なぜストレスリセットになるの？</button>' : ''}
+                <a class="btn apps-game-link" href="${esc(app.href)}">開く</a>
+              </div>
+              ${isStressBlockPuzzle(app) ? stressResetExplanationHtml() : ''}
             </article>
           `).join('')}
         </div>
@@ -227,6 +254,17 @@
         event.preventDefault();
         event.stopImmediatePropagation();
         show(tab.dataset.memberTab);
+        return;
+      }
+      const explainToggle = event.target.closest('[data-stress-reset-toggle]');
+      if(explainToggle){
+        event.preventDefault();
+        const item = explainToggle.closest('.apps-item');
+        const explanation = item?.querySelector('[data-stress-reset-explanation]');
+        const willOpen = explanation?.classList.contains('hidden');
+        if(explanation) explanation.classList.toggle('hidden', !willOpen);
+        explainToggle.setAttribute('aria-expanded', String(Boolean(willOpen)));
+        explainToggle.textContent = willOpen ? '説明を閉じる' : 'なぜストレスリセットになるの？';
         return;
       }
       if(event.target.closest('#memberSafeLogout') || event.target.closest('#logout')){

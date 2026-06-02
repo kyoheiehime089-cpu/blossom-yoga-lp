@@ -35,8 +35,8 @@
       <p class="eyebrow">ログイン中</p><h2 id="memberName"></h2>
       <div class="meta"><span id="memberPlan"></span><span id="memberQuota"></span><span id="extraSlots"></span></div>
       <div style="margin-top:18px"><div style="display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:800"><span>今月の予約回数</span><strong id="usageText"></strong></div><div class="bar"><div id="usageBar"></div></div></div>
-      <div class="rules"><p><strong>同時予約</strong>：最大2枠まで。</p><p><strong>同日予約</strong>：最大2枠まで。</p><p><strong>追加枠</strong>：1回の購入につき、今月分が1枠だけ追加されます。</p></div>
-      <button id="buySlot" class="btn">枠を購入する（1枠 3,000円）</button>
+      <div class="rules"><p><strong>同時予約</strong>：最大2枠まで。</p><p><strong>同日予約</strong>：最大2枠まで。</p><p><strong>追加で予約したい方へ</strong><br>1枠3,000円で、今月分の予約枠を1つ追加できます。</p><p>購入した追加枠は、今月中の予約に利用できます。</p></div>
+      <button id="buySlot" class="btn">予約枠を追加する（1枠 3,000円）</button>
     </section>
     <section class="card"><p class="eyebrow">次回予約</p><div id="nextReservation" class="res"><p>現在、予約はありません。</p></div></section>
   </div>
@@ -49,7 +49,7 @@
 <footer class="footer">friendsセルフ｜会員専用予約アプリ</footer>
 </div>
 <dialog id="dialog" class="modal"><form id="bookingForm"><button class="close" type="button">×</button><p class="eyebrow">予約内容確認</p><h2 id="dialogTitle"></h2><div id="dialogSummary" class="res"></div><label>利用人数</label><input type="number" name="people" min="1" inputmode="numeric" value="1" required><label>メモ</label><textarea name="note" rows="3"></textarea><button class="btn">この枠を予約する</button></form></dialog>
-<dialog id="purchaseDialog" class="modal"><div class="modal-inner"><button class="close" type="button">×</button><p class="eyebrow">追加枠購入</p><h2>1枠を購入しますか？</h2><div class="agree-box"><p><strong>追加枠：1枠 3,000円</strong></p><ul><li>1回の購入につき、今月利用できる予約枠が1枠だけ追加されます。</li><li>複数回購入した場合も、購入1回ごとに1枠ずつ追加されます。</li><li>登録しているクレジットカードへの請求対象となります。</li><li>会員数や予約枠の埋まり具合により、追加枠の購入を停止する場合があります。</li><li>同時に確保できる予約は最大2枠までで、購入後もこのルールは変わりません。</li><li>同日に確保できる予約は最大2枠までで、購入後もこのルールは変わりません。</li></ul></div><label style="display:flex;gap:8px;align-items:flex-start"><input id="purchaseAgree" type="checkbox" style="width:auto;margin-top:7px"> 上記内容に同意して、1枠3,000円で追加枠を購入します。</label><button id="confirmPurchase" class="btn" disabled>同意して購入する</button></div></dialog>
+<dialog id="purchaseDialog" class="modal"><div class="modal-inner"><button class="close" type="button">×</button><p class="eyebrow">追加枠購入</p><h2>1枠を購入しますか？</h2><div class="agree-box"><p><strong>追加で予約したい方へ</strong></p><p>1枠3,000円で、今月分の予約枠を1つ追加できます。</p><ul><li>購入した追加枠は、今月中の予約に利用できます。</li><li>複数回購入した場合も、購入1回ごとに1枠ずつ追加されます。</li><li>登録しているクレジットカードへの請求対象となります。</li><li>会員数や予約枠の埋まり具合により、追加枠の購入を停止する場合があります。</li><li>同時に確保できる予約は最大2枠までで、購入後もこのルールは変わりません。</li><li>同日に確保できる予約は最大2枠までで、購入後もこのルールは変わりません。</li></ul></div><label style="display:flex;gap:8px;align-items:flex-start"><input id="purchaseAgree" type="checkbox" style="width:auto;margin-top:7px"> 上記内容に同意して、1枠3,000円で追加枠を購入します。</label><button id="confirmPurchase" class="btn" disabled>同意して購入する</button></div></dialog>
 <dialog id="purchaseCompleteDialog" class="modal"><div class="modal-inner"><button class="close" type="button">×</button><p class="eyebrow">購入完了</p><h2>追加枠が1枠追加されました</h2><div class="success-box"><p>今月利用できる予約枠に、追加枠が1枠反映されました。</p><p id="purchaseCompleteMessage"></p></div><button id="closePurchaseComplete" class="btn">予約画面に戻る</button></div></dialog>
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

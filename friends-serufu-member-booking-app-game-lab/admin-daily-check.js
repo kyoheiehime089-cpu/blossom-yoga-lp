@@ -30,6 +30,19 @@
     return sessionStorage.getItem('fs_admin_pass') || $('#adminPass')?.value || '';
   }
 
+
+  function compactMemberId(memberId){
+    const value = String(memberId || '');
+    if(value.length <= 18) return value;
+    return `${value.slice(0, 8)}…${value.slice(-5)}`;
+  }
+
+  function memberIdHtml(memberId){
+    const value = String(memberId || '');
+    if(!value) return '-';
+    return `<span class="admin-member-id-short" title="${esc(value)}">${esc(compactMemberId(value))}</span>`;
+  }
+
   function renderTags(tags){
     const list = Array.isArray(tags) ? tags : [];
     return list.length ? list.map((tag) => `<span class="daily-tag">${esc(tag.tag || tag)}</span>`).join('') : '<span class="small">-</span>';
@@ -76,7 +89,7 @@
       ${answers.length ? answers.map((answer) => `
         <article class="res admin-daily-card admin-daily-answer-card">
           <h3>${esc(answer.member_name || '-')} <span class="small">${esc(answer.member_code || '')}</span></h3>
-          <p><strong>会員ID：</strong>${esc(answer.member_id || '')}</p>
+          <p><strong>会員ID：</strong>${memberIdHtml(answer.member_id)}</p>
           <p><strong>質問カテゴリ：</strong>${esc(answer.category_label || '')}</p>
           <p><strong>質問：</strong>${esc(answer.question_text || '')}</p>
           <p><strong>回答：</strong>${esc(answer.option_label || '')}</p>
@@ -158,6 +171,7 @@
         .admin-daily-check-list>h3{margin:6px 0 0;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}
         .admin-daily-card{width:100%;max-width:100%;min-width:0;margin:0;padding:16px;line-height:1.75;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
         .admin-daily-card p,.admin-daily-card h3,.admin-daily-card h4,.admin-daily-card li,.admin-daily-card span,.admin-daily-card strong{max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+        .admin-member-id-short{display:inline-block;vertical-align:baseline;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
         .admin-daily-card p{margin:8px 0}.admin-daily-card h3{margin:6px 0 8px;line-height:1.4}.admin-daily-card h4{margin:12px 0 6px;line-height:1.4}
         .admin-daily-notice-card{background:#fff7e7;border-color:#efcf8f}
         .admin-member-daily-check{display:grid;gap:10px}

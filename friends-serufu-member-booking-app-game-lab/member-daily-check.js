@@ -50,7 +50,7 @@
   function renderReferences(references){
     const list = Array.isArray(references) ? references : [];
     if(!list.length) return '';
-    return `<h3>参考文献</h3><ul>${list.map((ref) => `<li>${esc(referenceLabel(ref))}</li>`).join('')}</ul>`;
+    return `<div class="daily-references"><h3>参考文献</h3><ul>${list.map((ref) => `<li>${esc(referenceLabel(ref))}</li>`).join('')}</ul></div>`;
   }
 
   function renderAdvice(answer){
@@ -80,15 +80,19 @@
   }
 
   function renderPreparing(payload){
-    return `<h2>今日の1問</h2><div class="res done"><p class="notice">${esc(payload?.message || `${PREPARING_TITLE}${PREPARING_MESSAGE}`)}</p></div>`;
+    return `<div class="daily-check-hero"><p class="eyebrow">今日の1問</p><h2>30秒でできるコンディションチェック</h2><p>回答すると、あなたの状態に合わせたアドバイスが表示されます。</p></div><div class="res done"><p class="notice">${esc(payload?.message || `${PREPARING_TITLE}${PREPARING_MESSAGE}`)}</p></div>`;
   }
 
   function renderAnswered(payload){
     if(payload.status === 'preparing' || !payload.answer) return renderPreparing(payload);
     const answer = payload.answer || {};
     return `
-      <h2>今日の1問</h2>
-      <p class="notice">本日は回答済みです。同じ日に再回答はできません。</p>
+      <div class="daily-check-hero">
+        <p class="eyebrow">今日の1問</p>
+        <h2>30秒でできるコンディションチェック</h2>
+        <p>回答すると、あなたの状態に合わせたアドバイスが表示されます。</p>
+      </div>
+      <p class="notice">今日はすでに回答済みです。</p>
       <div class="res done">
         <p class="eyebrow">${esc(answer.category_label || '回答済み')}</p>
         <h3>${esc(answer.question_text || '')}</h3>
@@ -107,7 +111,11 @@
       return renderPreparing(payload);
     }
     return `
-      <h2>今日の1問</h2>
+      <div class="daily-check-hero">
+        <p class="eyebrow">今日の1問</p>
+        <h2>30秒でできるコンディションチェック</h2>
+        <p>回答すると、あなたの状態に合わせたアドバイスが表示されます。</p>
+      </div>
       <p class="eyebrow">${esc(q.category_label || '')}</p>
       <h3>${esc(q.question_text || '')}</h3>
       <form class="daily-check-form" data-daily-check-form data-question-key="${esc(q.question_key)}">
@@ -117,7 +125,7 @@
             <span>${esc(option.option_label)}</span>
           </label>
         `).join('')}
-        <button class="btn" type="submit">回答する</button>
+        <button class="btn" type="submit">今日の1問に回答する</button>
       </form>
       <div data-daily-check-feedback></div>
       ${renderRecent(payload)}
@@ -129,7 +137,7 @@
     const mount = target ? null : ensureMount();
     const content = target || $('#dailyCheckContent') || mount?.querySelector('#dailyCheckContent');
     if(!content) return;
-    content.innerHTML = `<h2>今日の1問</h2><p class="notice">${esc(message || SQL_NOTICE)}</p>`;
+    content.innerHTML = `<div class="daily-check-hero"><p class="eyebrow">今日の1問</p><h2>30秒でできるコンディションチェック</h2><p>回答すると、あなたの状態に合わせたアドバイスが表示されます。</p></div><p class="notice">${esc(message || SQL_NOTICE)}</p>`;
   }
 
   async function renderInto(target){
@@ -195,7 +203,7 @@
     if($('#dailyCheckStyles')) return;
     document.head.insertAdjacentHTML('beforeend', `
       <style id="dailyCheckStyles">
-        .fs-daily-check-card{box-sizing:border-box;width:100%;max-width:100%;padding:15px;border:1px solid var(--line);border-radius:18px;background:#fffdf8;overflow-wrap:anywhere;word-break:break-word}.fs-daily-check-card h2{margin:4px 0 10px}.apps-daily-check-card{display:grid;gap:10px}.daily-check-form{display:grid;gap:10px;margin-top:12px}.daily-option{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fffaf2;font-weight:850}.daily-option input{width:auto;margin:0}.daily-themes,.daily-trends,.daily-advice{box-sizing:border-box;width:100%;max-width:100%;margin-top:14px;padding:12px;border:1px solid #d9eadf;border-radius:16px;background:#f5fbf6;line-height:1.75;overflow-wrap:anywhere;word-break:break-word}.daily-themes ol{margin:8px 0 0 1.2em;padding:0}.daily-themes li{margin:4px 0;font-weight:850}.daily-tags{display:flex;flex-wrap:wrap;gap:8px}.daily-tag{display:inline-flex;max-width:100%;padding:4px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900;overflow-wrap:anywhere;word-break:break-word}
+        .fs-daily-check-card{box-sizing:border-box;width:100%;max-width:100%;padding:18px;border:2px solid #b8ddc3;border-radius:22px;background:linear-gradient(180deg,#f3fbf5 0%,#fffdf8 100%);box-shadow:0 12px 30px rgba(42,96,61,.10);overflow-wrap:anywhere;word-break:break-word}.fs-daily-check-card h2{margin:4px 0 10px}.daily-check-hero{box-sizing:border-box;max-width:100%;padding:14px;border-radius:18px;background:#ffffff;border:1px solid #d9eadf;overflow-wrap:anywhere;word-break:break-word}.daily-check-hero h2{font-size:22px}.daily-check-hero p{margin:6px 0 0;line-height:1.75}.apps-daily-check-card{display:grid;gap:10px}.daily-check-form{display:grid;gap:10px;margin-top:12px}.daily-option{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fffaf2;font-weight:850}.daily-option input{width:auto;margin:0}.daily-themes,.daily-trends,.daily-advice,.daily-references,.daily-references ul,.daily-references li{box-sizing:border-box;width:100%;max-width:100%;overflow-wrap:anywhere;word-break:break-word}.daily-themes,.daily-trends,.daily-advice{margin-top:14px;padding:12px;border:1px solid #d9eadf;border-radius:16px;background:#f5fbf6;line-height:1.75}.daily-references{margin-top:12px}.daily-references ul{display:grid;gap:8px;margin:8px 0 0;padding-left:1.2em}.daily-references li{line-height:1.7}.daily-themes ol{margin:8px 0 0 1.2em;padding:0}.daily-themes li{margin:4px 0;font-weight:850}.daily-tags{display:flex;flex-wrap:wrap;gap:8px}.daily-tag{display:inline-flex;max-width:100%;padding:4px 9px;border-radius:999px;background:#eaf7ee;color:#27533a;font-size:12px;font-weight:900;overflow-wrap:anywhere;word-break:break-word}
       </style>
     `);
   }

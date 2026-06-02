@@ -22,6 +22,8 @@ body{
   width:100%;
 }
 button,a{font:inherit;touch-action:none}
+.game-close-btn{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:50;width:48px;height:48px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(247,255,249,.94);color:#10201d;text-decoration:none;display:grid;place-items:center;font-size:30px;font-weight:1000;line-height:1;box-shadow:0 12px 28px rgba(0,0,0,.28)}
+.game-close-btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .game-shell,.screen{height:100%;width:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
 .screen{position:relative}
 .hidden{display:none!important}
