@@ -4,7 +4,13 @@
   const $ = (q, root = document) => root.querySelector(q);
   const pad = (n) => String(n).padStart(2, '0');
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  const fmt = (minute) => Number(minute) === 1440 ? '24:00' : `${pad(Math.floor(Number(minute) / 60))}:${pad(Number(minute) % 60)}`;
+  const USE_MINUTES = 50;
+  const fmt = (minute) => {
+    minute = Number(minute);
+    const prefix = minute >= 1440 ? '翌' : '';
+    minute = ((minute % 1440) + 1440) % 1440;
+    return `${prefix}${pad(Math.floor(minute / 60))}:${pad(minute % 60)}`;
+  };
   const dateKey = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const jp = (key) => { const d = new Date(`${key}T00:00:00`); return `${d.getMonth() + 1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`; };
   const startDate = (key, minute) => { const d = new Date(`${key}T00:00:00`); d.setMinutes(Number(minute)); return d; };
@@ -137,7 +143,7 @@
     content.innerHTML = `
       ${next ? '<p>予約しやすい候補を表示しています。</p>' : '<p>次回予約はまだありません。<br>予約しやすい候補を表示しています。</p>'}
       ${remainingText()}
-      ${list.length ? `<h3>あなたにおすすめの空き枠</h3><div class="recommended-slot-list">${list.map((slot, index) => `<article class="res recommended-slot"><h3>${index + 1}. ${jp(slot.date)} ${fmt(slot.start_minute)}〜</h3><p class="small">スコア：${slot.score} / 実際に予約可能な空き枠のみ表示</p><button class="ghost" data-recommended-date="${esc(slot.date)}" data-recommended-start="${esc(slot.start_minute)}">この枠を見る</button></article>`).join('')}</div>` : '<p class="notice">現在おすすめできる空き枠はありません。カレンダーから空き枠をご確認ください。</p>'}
+      ${list.length ? `<h3>あなたにおすすめの空き枠</h3><div class="recommended-slot-list">${list.map((slot, index) => `<article class="res recommended-slot"><h3>${index + 1}. ${jp(slot.date)} ${fmt(slot.start_minute)}〜${fmt(Number(slot.start_minute) + USE_MINUTES)}</h3><p class="small">スコア：${slot.score} / 実際に予約可能な空き枠のみ表示</p><button class="ghost" data-recommended-date="${esc(slot.date)}" data-recommended-start="${esc(slot.start_minute)}">この枠を見る</button></article>`).join('')}</div>` : '<p class="notice">現在おすすめできる空き枠はありません。カレンダーから空き枠をご確認ください。</p>'}
     `;
   }
 
@@ -147,6 +153,7 @@
     const diff = Math.floor((target.setHours(0,0,0,0) - new Date(now.setHours(0,0,0,0))) / 86400000);
     if(typeof week !== 'undefined') week = diff >= 7 ? 1 : 0;
     if(typeof day !== 'undefined') day = Math.max(0, Math.min(6, diff - (week * 7)));
+    if(typeof window.fsSelectOvernightStart === 'function') window.fsSelectOvernightStart(date, minute);
     document.querySelectorAll('.tab[data-tab]').forEach((button) => button.classList.toggle('active', button.dataset.tab === 'booking'));
     $('#bookingTab')?.classList.remove('hidden');
     $('#mineTab')?.classList.add('hidden');
