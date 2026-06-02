@@ -45,8 +45,8 @@
     return ownReservations().filter((r) => r.date === date);
   }
 
-  function allStarts(){
-    if(typeof starts === 'function') return starts();
+  function allStarts(date){
+    if(typeof starts === 'function') return starts(date);
     const list = [];
     for(let m = 490; m < 1440; m += 50) list.push(m);
     for(let m = 440; m >= 0; m -= 50) list.unshift(m);
@@ -110,7 +110,7 @@
       const date = new Date(today);
       date.setDate(today.getDate() + offset);
       const key = dateKey(date);
-      allStarts().forEach((minute) => {
+      allStarts(key).forEach((minute) => {
         if(isActuallyBookable(key, minute)){
           list.push({ date:key, start_minute:minute, score:scoreSlot(key, minute, profile), offset });
         }

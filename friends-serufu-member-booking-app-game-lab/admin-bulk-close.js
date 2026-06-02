@@ -7,9 +7,14 @@
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function pass(){return document.getElementById('adminPass')?.value||sessionStorage.getItem('fs_admin_pass')||'';}
   function toast(msg){if(window.adminSoftToast)window.adminSoftToast(msg);else alert(msg)}
-  function starts(){let a=[],anchor=490;for(let m=anchor;m<1440;m+=50)a.push(m);for(let m=anchor-50;m>=0;m-=50)a.unshift(m);return a.filter(m=>m+50<=1440)}
-  function blocks(d){let day=new Date(d+'T00:00:00').getDay();if(day===6)return[[490,530],[600,790]];if(day===0||HOL.includes(d))return[[540,580],[600,790]];return[[720,760],[1110,1300]]}
-  function blockedByProgram(d,m){let a=Number(m),b=a+50;return blocks(d).some(([s,e])=>a<e&&s<b)}
+  function fixedStarts(){let a=[],anchor=490;for(let m=anchor;m<1440;m+=50)a.push(m);for(let m=anchor-50;m>=480;m-=50)a.unshift(m);return a.filter(m=>m+50<=1440)}
+  function overlapsWindow(slotStart,slotEnd,blockedStart,blockedEnd){return slotStart<blockedEnd&&slotEnd>blockedStart}
+  function mergeWindows(windows){return windows.sort((a,b)=>a[0]-b[0]).reduce((acc,w)=>{let last=acc.at(-1);if(last&&w[0]<=last[1])last[1]=Math.max(last[1],w[1]);else acc.push([...w]);return acc},[])}
+  function programLessons(d){let day=new Date(d+'T00:00:00').getDay(),hol=HOL.includes(d),semi=[],yoga=[];if(hol||day===0||day===6)semi=[[600,640],[650,690],[700,740],[750,790]];else if([1,2,3,5].includes(day))semi=[[1110,1150],[1160,1200],[1210,1250],[1260,1300]];if(hol)yoga=[[540,580]];else if(day===1)yoga=[[540,580]];else if(day===2)yoga=[[540,580],[750,790]];else if(day===4)yoga=[[1245,1285]];else if(day===0||day===6)yoga=[[490,530],[540,580]];return {semi,yoga}}
+  function blocks(d){let lessons=programLessons(d),windows=[];lessons.semi.forEach(([s,e])=>windows.push([s-30,e+30]));lessons.yoga.forEach(([s,e])=>windows.push([s-30,e+30]));return mergeWindows(windows.map(([s,e])=>[Math.max(0,s),Math.min(1440,e)]))}
+  function eveningFlexibleStart(d){let day=new Date(d+'T00:00:00').getDay();if([1,2,3,5].includes(day))return 1330;if(day===4)return 1315;return null}
+  function starts(d){let set=new Set(fixedStarts());for(let m=0;m+50<=480;m+=10)set.add(m);let evening=eveningFlexibleStart(d);if(evening!==null){set.add(evening);for(let m=Math.ceil(evening/10)*10;m+50<=1440;m+=10)set.add(m)}return [...set].sort((a,b)=>a-b)}
+  function blockedByProgram(d,m){let a=Number(m),b=a+60;return blocks(d).some(([s,e])=>overlapsWindow(a,b,s,e))}
   function ensure(){
     if($('#bulkClosePanel'))return;
     const target=$('#settingsTab')||$('#calendarTab');
@@ -41,7 +46,7 @@
     const ok=confirm(mode==='day'?`${date} を1日丸ごと利用不可にしますか？\n既存予約は変更されません。`:`${date} の ${fmt(s)}〜${fmt(end)} を利用不可にしますか？\n既存予約は変更されません。`);
     if(!ok)return;
     let count=0, skipped=0;
-    for(const m of starts()){
+    for(const m of starts(date)){
       if(m<s||m>=end||blockedByProgram(date,m)){skipped++;continue;}
       const r=await rpc('fs_admin_close_slot',{p_admin_password:pass(),p_date:date,p_start_minute:m,p_reason:reason});
       if(r.ok)count++; else skipped++;
