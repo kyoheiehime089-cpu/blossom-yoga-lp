@@ -98,7 +98,6 @@
           <div class="apps-entry-card"><span>今日の状態</span><strong id="stressTodayStatus">確認中</strong></div>
         </div>
         <div id="appsList" class="apps-list"></div>
-        <p class="small apps-medical-note">このゲームは医療行為ではありません。ストレスや不調が強い場合は専門家にご相談ください。</p>
       </section>
     `);
     return $('#stressTab') || $('#appsTab');
