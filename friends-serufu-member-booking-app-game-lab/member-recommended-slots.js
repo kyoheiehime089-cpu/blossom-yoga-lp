@@ -5,6 +5,7 @@
   const pad = (n) => String(n).padStart(2, '0');
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const USE_MINUTES = 50;
+  const BLOCK_MINUTES = 60;
   const fmt = (minute) => {
     minute = Number(minute);
     const prefix = minute >= 1440 ? '翌' : '';
@@ -143,7 +144,7 @@
     content.innerHTML = `
       ${next ? '<p>予約しやすい候補を表示しています。</p>' : '<p>次回予約はまだありません。<br>予約しやすい候補を表示しています。</p>'}
       ${remainingText()}
-      ${list.length ? `<h3>あなたにおすすめの空き枠</h3><div class="recommended-slot-list">${list.map((slot, index) => `<article class="res recommended-slot"><h3>${index + 1}. ${jp(slot.date)} ${fmt(slot.start_minute)}〜${fmt(Number(slot.start_minute) + USE_MINUTES)}</h3><p class="small">スコア：${slot.score} / 実際に予約可能な空き枠のみ表示</p><button class="ghost" data-recommended-date="${esc(slot.date)}" data-recommended-start="${esc(slot.start_minute)}">この枠を見る</button></article>`).join('')}</div>` : '<p class="notice">現在おすすめできる空き枠はありません。カレンダーから空き枠をご確認ください。</p>'}
+      ${list.length ? `<h3>あなたにおすすめの空き枠</h3><div class="recommended-slot-list">${list.map((slot, index) => `<article class="res recommended-slot"><h3>${index + 1}. ${jp(slot.date)} ${fmt(slot.start_minute)}〜${fmt(Number(slot.start_minute) + USE_MINUTES)}</h3><p class="small">入れ替え時間：${fmt(Number(slot.start_minute) + USE_MINUTES)}〜${fmt(Number(slot.start_minute) + BLOCK_MINUTES)} / 実際に予約可能な空き枠のみ表示</p><button class="ghost" data-recommended-date="${esc(slot.date)}" data-recommended-start="${esc(slot.start_minute)}">この枠を見る</button></article>`).join('')}</div>` : '<p class="notice">現在おすすめできる空き枠はありません。カレンダーから空き枠をご確認ください。</p>'}
     `;
   }
 
