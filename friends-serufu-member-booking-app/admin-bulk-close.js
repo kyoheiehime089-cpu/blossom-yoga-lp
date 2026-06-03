@@ -4,7 +4,9 @@
   const FLEXIBLE_SLOT_STEP_MINUTES=10;
   const BLOCK_MINUTES=50;
   const FIXED_SLOT_START_MINUTE=490;
-  const FLEXIBLE_SLOT_END_MINUTE=480;
+  const FIXED_SLOT_END_MINUTE=1320;
+  const FLEXIBLE_NIGHT_START_MINUTE=1320;
+  const FLEXIBLE_MORNING_END_MINUTE=480;
   const db=window.supabase.createClient(window.FRIENDS_SUPABASE_URL,window.FRIENDS_SUPABASE_ANON_KEY);
   const $=q=>document.querySelector(q);
   const pad=n=>String(n).padStart(2,'0');
@@ -13,8 +15,8 @@
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function pass(){return document.getElementById('adminPass')?.value||sessionStorage.getItem('fs_admin_pass')||'';}
   function toast(msg){if(window.adminSoftToast)window.adminSoftToast(msg);else alert(msg)}
-  function starts(){let a=[];for(let m=0;m<FLEXIBLE_SLOT_END_MINUTE;m+=FLEXIBLE_SLOT_STEP_MINUTES)a.push(m);for(let m=FIXED_SLOT_START_MINUTE;m<1440;m+=FIXED_SLOT_STEP_MINUTES)a.push(m);return a.filter(m=>m+BLOCK_MINUTES<=1440)}
-  function blocks(d){let day=new Date(d+'T00:00:00').getDay();if(day===6)return[[490,530],[600,790]];if(day===0||HOL.includes(d))return[[540,580],[600,790]];return[[720,760],[1110,1300]]}
+  function starts(){let a=[];for(let m=FLEXIBLE_NIGHT_START_MINUTE;m+USE_MINUTES<=1440;m+=FLEXIBLE_SLOT_STEP_MINUTES)a.push(m);for(let m=0;m+USE_MINUTES<=FLEXIBLE_MORNING_END_MINUTE;m+=FLEXIBLE_SLOT_STEP_MINUTES)a.push(m);for(let m=FIXED_SLOT_START_MINUTE;m<FIXED_SLOT_END_MINUTE;m+=FIXED_SLOT_STEP_MINUTES)a.push(m);return a}
+  function blocks(d){let day=new Date(d+'T00:00:00').getDay();if(HOL.includes(d))return[[510,820]];if(day===1)return[[510,610],[1080,1330]];if(day===2)return[[510,610],[720,820],[1080,1330]];if(day===3)return[[1080,1330]];if(day===4)return[[690,790],[1215,1315]];if(day===5)return[[1080,1330]];if(day===6||day===0)return[[460,820]];return[]}
   function blockedByProgram(d,m){let a=Number(m),b=a+BLOCK_MINUTES;return blocks(d).some(([s,e])=>a<e&&s<b)}
   function ensure(){
     if($('#bulkClosePanel'))return;
