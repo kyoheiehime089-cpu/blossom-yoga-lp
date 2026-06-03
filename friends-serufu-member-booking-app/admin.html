@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>friendsセルフ｜管理者画面</title>
 <meta name="theme-color" content="#1f2a24">
-<link rel="stylesheet" href="./admin-style.css?v=31">
+<link rel="stylesheet" href="./admin-style.css?v=32">
 </head>
 <body>
 <div class="wrap">
@@ -37,12 +37,13 @@
 </div>
 <dialog id="adminSlotDialog" class="modal"><form id="adminSlotForm"><button class="close" type="button">×</button><p class="eyebrow">カレンダー操作</p><h2 id="adminSlotTitle">枠の操作</h2><label>操作内容</label><select name="action" id="slotAction"><option value="reserve">会員の予約を入れる</option><option value="close">予約枠を埋める</option></select><div id="reserveFields"><label>会員</label><select name="memberId" id="slotMemberSelect"></select><label>利用人数</label><input name="people" type="number" min="1" value="1" inputmode="numeric"><label>メモ</label><textarea name="note" rows="3" placeholder="例：管理者が代理予約"></textarea></div><div id="closeFields" class="hidden"><label>利用不可理由</label><input name="reason" placeholder="例：清掃・メンテナンス・予備枠"></div><button class="btn">確定する</button></form></dialog>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js?v=31"></script>
-<script src="./admin-script.js?v=31"></script>
-<script src="./admin-cancel-confirm.js?v=31"></script>
-<script src="./admin-safety-actions.js?v=31"></script>
-<script src="./admin-feedback.js?v=31"></script>
-<script src="./admin-bulk-close.js?v=31"></script>
-<script src="./admin-override-v19.js?v=31"></script>
+<script src="./supabase-config.js?v=32"></script>
+<script src="./admin-script.js?v=32"></script>
+<script src="./admin-cancel-confirm.js?v=32"></script>
+<script src="./admin-safety-actions.js?v=32"></script>
+<script src="./admin-feedback.js?v=32"></script>
+<script src="./admin-bulk-close.js?v=32"></script>
+<script src="./admin-override-v19.js?v=32"></script>
+<script src="./admin-daily-check.js?v=32"></script>
 </body>
 </html>
