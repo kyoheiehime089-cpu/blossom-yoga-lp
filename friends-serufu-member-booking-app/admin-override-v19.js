@@ -6,7 +6,7 @@
   function pass(){return document.getElementById('adminPass')?.value||sessionStorage.getItem('fs_admin_pass')||'';}
   function toast(msg){if(window.adminSoftToast)window.adminSoftToast(msg);else alert(msg)}
   function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
-  function loginUrl(member){return 'https://kyoheiehime089-cpu.github.io/friends-member-reservation/friends-serufu-member-booking-app/?'+new URLSearchParams({mid:member.member_code,pin:member.pin}).toString()}
+  function loginUrl(member){return 'https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/friends-serufu-member-booking-app/?'+new URLSearchParams({mid:member.member_code,pin:member.pin}).toString()}
   function newMemberLineMessage(member){return `friendsセルフの会員登録が完了しました。
 
 下記URLから予約画面にログインできます。
