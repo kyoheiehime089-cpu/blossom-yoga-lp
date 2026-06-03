@@ -1,10 +1,11 @@
 (()=>{
+  const USE_MINUTES=40;
   const db=window.supabase.createClient(window.FRIENDS_SUPABASE_URL,window.FRIENDS_SUPABASE_ANON_KEY);
   const $=q=>document.querySelector(q);
   const pad=n=>String(n).padStart(2,'0');
   const fmt=m=>{m=Number(m);return m===1440?'24:00':pad(Math.floor(m/60))+':'+pad(m%60)};
   const jp=s=>{const d=new Date(s+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`};
-  const full=(d,m)=>`${jp(d)} ${fmt(m)}〜${fmt(Number(m)+50)}`;
+  const full=(d,m)=>`${jp(d)} ${fmt(m)}〜${fmt(Number(m)+USE_MINUTES)}`;
   let target=null;
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function toast(msg){
