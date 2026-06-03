@@ -84,6 +84,18 @@ for (const file of slotFiles) {
   assert(!source.includes('〜${minText(s+50)}'), `${file} must not render localStorage slots with +50 end time`);
 }
 
+
+const memberSupabaseSource = fs.readFileSync(path.join(appDir, 'fs-member-supabase.js'), 'utf8');
+const adminSource = fs.readFileSync(path.join(appDir, 'admin-script.js'), 'utf8');
+assert(memberSupabaseSource.includes('renderFlexible'), 'member UI must render midnight/early-morning slots as a separate flexible section');
+assert(memberSupabaseSource.includes("<select id='flexStart'"), 'member flexible starts must be presented in a dropdown');
+assert(memberSupabaseSource.includes('data-flex-book'), 'member flexible starts must reserve through the selected dropdown value');
+assert(memberSupabaseSource.includes('fixedStarts().filter'), 'member fixed slots must render separately from flexible starts');
+assert(adminSource.includes('renderAdminFlexible'), 'admin UI must render midnight/early-morning slots as a separate flexible section');
+assert(adminSource.includes("<select id='adminFlexStart'"), 'admin flexible starts must be presented in a dropdown');
+assert(adminSource.includes('data-admin-flex-action'), 'admin flexible starts must act through the selected dropdown value');
+assert(adminSource.includes('fixedStartArr().filter'), 'admin fixed slots must render separately from flexible starts');
+
 for (const file of displayFiles) {
   const source = fs.readFileSync(path.join(appDir, file), 'utf8');
   assert(!source.includes('Number(m)+50'), `${file} must not build visible end time with +50`);
