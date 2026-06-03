@@ -7,6 +7,8 @@
   const jp=s=>{const d=new Date(s+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`};
   const full=(d,m)=>`${jp(d)} ${fmt(m)}〜${fmt(Number(m)+USE_MINUTES)}`;
   const startDate=(d,m)=>{const x=new Date(d+'T00:00:00');x.setMinutes(Number(m));return x};
+  const cancelClosedMessage='開始時刻を過ぎたため、この予約はアプリからキャンセルできません。';
+  const canCancelReservation=r=>startDate(r.date,r.start_minute)>new Date();
   let target=null;
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function ensureDialog(){
@@ -23,6 +25,7 @@
     return {snap,code,pin};
   }
   function showCancel(r,code,pin){
+    if(!canCancelReservation(r)){alert(cancelClosedMessage);return;}
     ensureDialog();
     target={id:r.id,date:r.date,start:Number(r.start_minute),code,pin};
     $('#memberCalendarCancelInfo').innerHTML=`<p><strong>日時：</strong>${full(r.date,r.start_minute)}</p><p><strong>利用人数：</strong>${r.people||'1名'}</p>`;
@@ -37,18 +40,20 @@
     const start=Number(slot.dataset.s);
     const r=(snap.reservations||[]).find(x=>x.date===date&&Number(x.start_minute)===start);
     if(!r){alert('予約が見つかりません。画面を更新します。');if(typeof window.loadSnapshot==='function') await window.loadSnapshot();return;}
+    if(!canCancelReservation(r)){alert(cancelClosedMessage);if(typeof window.loadSnapshot==='function') await window.loadSnapshot();return;}
     showCancel(r,code,pin);
   }
   async function openCancelFromNext(){
     const {snap,code,pin}=await getSnapshot();
     if(!snap.ok){alert(snap.error||'ログイン情報を確認できませんでした。');return;}
-    const future=(snap.reservations||[]).filter(r=>startDate(r.date,r.start_minute)>new Date()).sort((a,b)=>startDate(a.date,a.start_minute)-startDate(b.date,b.start_minute));
+    const future=(snap.reservations||[]).filter(canCancelReservation).sort((a,b)=>startDate(a.date,a.start_minute)-startDate(b.date,b.start_minute));
     const r=future[0];
     if(!r){alert('キャンセルできる次回予約がありません。');return;}
     showCancel(r,code,pin);
   }
   async function cancelTarget(){
     if(!target)return;
+    if(startDate(target.date,target.start)<=new Date()){alert(cancelClosedMessage);$('#memberCalendarCancelDialog').close();if(typeof window.loadSnapshot==='function') await window.loadSnapshot();return;}
     const r=await rpc('fs_member_cancel_reservation',{p_member_code:target.code,p_pin:target.pin,p_reservation_id:target.id});
     if(!r.ok){alert(r.error||'キャンセルできませんでした。');return;}
     $('#memberCalendarCancelDialog').close();
