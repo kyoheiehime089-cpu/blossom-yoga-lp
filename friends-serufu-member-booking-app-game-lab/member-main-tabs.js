@@ -86,12 +86,12 @@
   }
 
   function ensureAppsTab(mine){
-    let appsTab = $('#appsTab');
+    let appsTab = $('#stressTab') || $('#appsTab');
     if(appsTab || !mine) return appsTab;
     mine.insertAdjacentHTML('afterend', `
-      <section id="appsTab" class="panel hidden apps-entry-panel">
-        <p class="eyebrow">アプリ</p>
-        <h2>アプリ</h2>
+      <section id="stressTab" class="panel hidden apps-entry-panel">
+        <p class="eyebrow">ストレスケア</p>
+        <h2>ストレスケア</h2>
         <p id="appsFallbackNotice" class="notice hidden">${FALLBACK_MESSAGE}</p>
         <div class="apps-entry-grid">
           <div class="apps-entry-card"><span>ストレスリセットポイント</span><strong id="stressPointValue">0pt</strong></div>
@@ -101,7 +101,7 @@
         <p class="small apps-medical-note">このゲームは医療行為ではありません。ストレスや不調が強い場合は専門家にご相談ください。</p>
       </section>
     `);
-    return $('#appsTab');
+    return $('#stressTab') || $('#appsTab');
   }
 
   function ensureAppStyles(){
@@ -218,12 +218,12 @@
     const booking = $('#bookingTab');
     const mine = $('#mineTab');
     const usage = $('#usageTab');
-    const appsTab = $('#appsTab');
-    const panels = { home: dashboard, calendar: booking, mine, usage, apps: appsTab };
+    const appsTab = $('#stressTab') || $('#appsTab');
+    const panels = { home: dashboard, calendar: booking, mine, usage, stress: appsTab };
     const selected = panels[name] ? name : 'home';
     $$('#memberMainTabs .tab').forEach((button) => button.classList.toggle('active', button.dataset.memberTab === selected));
     Object.entries(panels).forEach(([key, panel]) => { if(panel) panel.classList.toggle('hidden', key !== selected); });
-    if(selected === 'apps') renderApps();
+    if(selected === 'stress') renderApps();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -244,7 +244,7 @@
         <button type="button" class="tab" data-member-tab="calendar">カレンダー</button>
         <button type="button" class="tab" data-member-tab="mine">自分の予約</button>
         <button type="button" class="tab" data-member-tab="usage">利用実績</button>
-        <button type="button" class="tab" data-member-tab="apps">アプリ</button>
+        <button type="button" class="tab" data-member-tab="stress">ストレスケア</button>
       </nav>
     `);
     if(oldNav) oldNav.style.display = 'none';

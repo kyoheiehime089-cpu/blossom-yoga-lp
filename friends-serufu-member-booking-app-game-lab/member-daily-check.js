@@ -31,7 +31,7 @@
   function ensureMount(){
     let mount = $('#dailyCheckCard');
     if(mount) return mount;
-    const appsTab = $('#appsTab');
+    const appsTab = $('#stressTab') || $('#appsTab');
     if(!appsTab) return null;
     const appsList = $('#appsList', appsTab);
     const html = '<section id="dailyCheckCard" class="fs-daily-check-card apps-daily-check-card"><p class="eyebrow">コンディションチェックアプリ</p><div id="dailyCheckContent" data-daily-check-content class="res"><p>読み込み中...</p></div></section>';
