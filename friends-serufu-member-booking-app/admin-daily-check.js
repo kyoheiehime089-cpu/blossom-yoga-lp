@@ -81,10 +81,7 @@
   function renderSnapshot(payload){
     const answers = Array.isArray(payload.answers) ? payload.answers : [];
     const questions = Array.isArray(payload.questions) ? payload.questions : [];
-    const verifiedQuestions = questions.filter((q) => q.verified);
-    const unverifiedQuestions = questions.filter((q) => !q.verified);
     $('#adminDailyCheckContent').innerHTML = `
-      <article class="res admin-daily-card admin-daily-notice-card"><p class="notice">会員画面には、verified=true かつ確認済み参考文献が紐づいた質問だけが表示されます。</p><p class="small">検証済み質問: ${verifiedQuestions.length}件 / 未検証質問: ${unverifiedQuestions.length}件</p></article>
       <h3>直近の回答履歴</h3>
       ${answers.length ? answers.map((answer) => `
         <article class="res admin-daily-card admin-daily-answer-card">
