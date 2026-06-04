@@ -120,6 +120,7 @@ for (const file of displayFiles) {
 
 const memberSupabaseSource = fs.readFileSync(path.join(appDir, 'fs-member-supabase.js'), 'utf8');
 const adminSource = fs.readFileSync(path.join(appDir, 'admin-script.js'), 'utf8');
+const yogaPrivateSource = fs.readFileSync(path.join(appDir, 'yoga-private.js'), 'utf8');
 assert(memberSupabaseSource.includes('renderFlexible'), 'member UI must render midnight/early-morning slots as a separate flexible section');
 assert(memberSupabaseSource.includes("<select id='flexStart'"), 'member flexible starts must be presented in a dropdown');
 assert(memberSupabaseSource.includes('data-flex-book'), 'member flexible starts must reserve through the selected dropdown value');
@@ -128,13 +129,51 @@ assert(adminSource.includes('renderAdminFlexible'), 'admin UI must render midnig
 assert(adminSource.includes("<select id='adminFlexStart'"), 'admin flexible starts must be presented in a dropdown');
 assert(adminSource.includes('data-admin-flex-action'), 'admin flexible starts must act through the selected dropdown value');
 assert(adminSource.includes('fixedStartArr().filter'), 'admin fixed slots must render separately from flexible starts');
+assert(yogaPrivateSource.includes('step') || fs.readFileSync(path.join(appDir, 'yoga-private.html'), 'utf8').includes('step="600"'), 'yoga private page must use 10-minute time inputs');
 
 for (const [htmlFile, assets] of Object.entries(htmlVersions)) {
   const html = fs.readFileSync(path.join(appDir, htmlFile), 'utf8');
   assert(!html.includes('v=32'), `${htmlFile} must not load v32 assets`);
-  for (const asset of assets) assert(html.includes(`${asset}?v=34`), `${htmlFile} must load ${asset} with v34`);
+  assert(!html.includes('v=34'), `${htmlFile} must not load v34 assets`);
+  for (const asset of assets) assert(html.includes(`${asset}?v=35`), `${htmlFile} must load ${asset} with v35`);
 }
 
+
+
+function overlapsRange(aStart, aEnd, bStart, bEnd) {
+  return aStart < bEnd && bStart < aEnd;
+}
+function selfBlockedByYoga(selfStart, yogaStart, yogaEnd) {
+  return overlapsRange(selfStart, selfStart + blockMinutes, yogaStart, yogaEnd);
+}
+function yogaPrivateTimeValid(startMinute, endMinute) {
+  return Number.isInteger(startMinute) && Number.isInteger(endMinute)
+    && startMinute >= 0 && startMinute <= 1430
+    && endMinute >= 10 && endMinute <= 1440
+    && endMinute > startMinute
+    && startMinute % 10 === 0 && endMinute % 10 === 0;
+}
+function yogaPrivateCreatable(block, {reservations = [], closedSlots = [], externalBlocks = [], fixedBlocks = []} = {}) {
+  if (!yogaPrivateTimeValid(block.start, block.end)) return false;
+  if (fixedBlocks.some(([s, e]) => overlapsRange(block.start, block.end, s, e))) return false;
+  if (reservations.some((r) => overlapsRange(block.start, block.end, r.start, r.start + blockMinutes))) return false;
+  if (closedSlots.some((c) => overlapsRange(block.start, block.end, c.start, c.start + blockMinutes))) return false;
+  if (externalBlocks.some((x) => overlapsRange(block.start, block.end, x.start, x.end))) return false;
+  return true;
+}
+
+assert.strictEqual(selfBlockedByYoga(840, 840, 880), true, 'ヨガ個別予約 14:00〜14:40 がある場合、セルフ枠 14:00〜14:40 は予約不可');
+assert.strictEqual(selfBlockedByYoga(800, 840, 880), true, 'セルフ枠 13:20〜14:00 は内部50分ブロックがヨガ個別予約 14:00〜14:40 と重なるため予約不可');
+assert.strictEqual(yogaPrivateCreatable({start: 1370, end: 1400}, {reservations: [{start: 1330}]}), false, '22:10開始のセルフ内部50分ブロックと22:50開始のヨガ個別予約は重複不可');
+assert.strictEqual(yogaPrivateCreatable({start: 850, end: 890}, {externalBlocks: [{start: 840, end: 880}]}), false, 'ヨガ個別予約同士が重なる場合は登録不可');
+assert.strictEqual(yogaPrivateTimeValid(840, 880), true, 'ヨガ個別予約の開始・終了は10分単位なら有効');
+assert.strictEqual(yogaPrivateTimeValid(845, 880), false, '10分単位でない開始時間は登録不可');
+assert.strictEqual(yogaPrivateTimeValid(840, 885), false, '10分単位でない終了時間は登録不可');
+assert.strictEqual(yogaPrivateTimeValid(880, 840), false, '終了時間が開始時間以前なら登録不可');
+assert.strictEqual(label(1330), '22:10〜22:50', '22:10の表示は40分のまま');
+assert.strictEqual(sameBlock(1370, 1330), true, '22:10の内部ブロックは22:50も重なり扱い');
+assert(memberSupabaseSource.includes('externalBlock'), 'member side must consider external_blocks without exposing details');
+assert(adminSource.includes('externalBlockCard'), 'admin side must render yoga private reservation details');
 
 const plans = {
   '月4回プラン': 4,
