@@ -132,6 +132,12 @@ assert(adminSource.includes('data-admin-flex-action'), 'admin flexible starts mu
 assert(adminSource.includes('fixedStartArr().filter'), 'admin fixed slots must render separately from flexible starts');
 const yogaPrivateHtml = fs.readFileSync(path.join(appDir, 'yoga-private.html'), 'utf8');
 assert(yogaPrivateHtml.includes('<select id="yogaStart"'), 'yoga private start time must be a 10-minute select');
+assert(!yogaPrivateHtml.includes('id="quickDate"') && !yogaPrivateHtml.includes('id="quickStart"') && !yogaPrivateHtml.includes('id="quickEnd"'), 'yoga private page must have one date/start/end input set');
+assert(!yogaPrivateHtml.includes('LINE返信文をコピー') && !yogaPrivateSource.includes('quickCopy'), 'LINE reply copy UI must be removed');
+assert(!yogaPrivateHtml.includes('この内容で会員さんへ返信できます。') && !yogaPrivateSource.includes('この内容で登録する'), 'quick registration copy must be removed');
+assert(!yogaPrivateHtml.includes('新規登録') && !yogaPrivateHtml.includes('ヨガ個別予約を登録'), 'old registration headings must be removed');
+assert(!yogaPrivateHtml.includes('name="memberName"') && !yogaPrivateHtml.includes('name="instructorName"'), 'member and instructor fields must be removed from the screen');
+assert(yogaPrivateHtml.includes('name="note"') && !/name="note"[^>]*required/.test(yogaPrivateHtml), 'optional note field must remain');
 assert(yogaPrivateHtml.includes('<select id="yogaEnd"'), 'yoga private end time must be a 10-minute select');
 assert(!yogaPrivateHtml.includes('type="time"'), 'yoga private page must not use native time inputs');
 assert(!yogaPrivateHtml.includes('step="600"'), 'yoga private page must not rely on native time step');
@@ -149,7 +155,8 @@ for (const [htmlFile, assets] of Object.entries(htmlVersions)) {
   assert(!html.includes('v=34'), `${htmlFile} must not load v34 assets`);
   assert(!html.includes('v=35'), `${htmlFile} must not load v35 assets`);
   assert(!html.includes('v=37'), `${htmlFile} must not load v37 assets`);
-  for (const asset of assets) assert(html.includes(`${asset}?v=38`), `${htmlFile} must load ${asset} with v38`);
+  assert(!html.includes('v=38'), `${htmlFile} must not load v38 assets`);
+  for (const asset of assets) assert(html.includes(`${asset}?v=39`), `${htmlFile} must load ${asset} with v39`);
 }
 
 
@@ -230,15 +237,14 @@ assert.strictEqual(sameBlock(1370, 1330), true, '22:10の内部ブロックは22
 assert(memberSupabaseSource.includes('externalBlock'), 'member side must consider external_blocks without exposing details');
 assert(adminSource.includes('externalBlockCard'), 'admin side must render yoga private reservation details');
 assert(memberSupabaseSource.includes("'title','予約不可'") || fs.readFileSync(path.join(appDir, 'supabase-patch-v38-yoga-private-buffer.sql'), 'utf8').includes("'title','予約不可'"), 'member side snapshot must not expose yoga private personal details');
-assert(yogaPrivateSource.includes("p_member_name: String(fd.get('memberName') || '').trim()"), 'yoga private create must allow blank member name');
-assert(yogaPrivateSource.includes("p_instructor_name: String(fd.get('instructorName') || '').trim()"), 'yoga private create must allow blank instructor name');
+assert(yogaPrivateSource.includes("p_member_name: '', p_instructor_name: ''"), 'yoga private create must send blank member and instructor values after removing those fields');
 assert(yogaPrivateSource.includes("p_note: String(fd.get('note') || '').trim()"), 'yoga private create must allow blank note');
 assert(yogaPrivateSource.includes('btn.disabled = !result.ok'), 'yoga private submit button must be disabled when selected time is unavailable');
 assert(yogaPrivateSource.includes("setMessage('登録完了しました', true)"), '登録成功時に登録完了しましたを表示する');
 assert(yogaPrivateSource.includes("catch(err){setMessage(err.message); alert(err.message);}"), '登録失敗時はエラー理由を画面内にも表示する');
 assert(yogaPrivateSource.includes('セルフジム予約') && yogaPrivateSource.includes('利用不可枠') && yogaPrivateSource.includes('既存のヨガ個別予約'), 'yoga private unavailable list must distinguish self, closed, and yoga blocks');
 assert.strictEqual(yogaPrivateCreatable({start: 490, end: 530}), true, '提案枠が空きなら登録可能');
-assert.strictEqual(yogaPrivateAvailability({start: 490, end: 530}).label, '予約できます', '空きなら予約できます表示になる');
+assert.strictEqual(yogaPrivateAvailability({start: 490, end: 530}).ok, true, '空きなら登録可能になる');
 assert.strictEqual(yogaPrivateCreatable({start: 490, end: 530}, {reservations: [{start: 490}]}), false, 'セルフ予約の内部50分ブロックがある場合、同開始のヨガ個別予約は不可');
 assert.strictEqual(yogaPrivateCreatable({start: 530, end: 560}, {reservations: [{start: 490}]}), false, 'セルフ予約の内部50分ブロックがある場合、終了間際に重なるヨガ個別予約も不可');
 assert.strictEqual(yogaPrivateCreatable({start: 540, end: 580}, {reservations: [{start: 490}]}), true, 'セルフ予約の内部50分ブロック終了後ならヨガ個別予約は可能');
@@ -248,7 +254,6 @@ const nearYogaCandidates = yogaPrivateCandidates(490, 530, {reservations: [{star
 assert(nearYogaCandidates.length > 0 && nearYogaCandidates.length <= 5, '予約不可時に近い空き候補を最大5件出す');
 assert(nearYogaCandidates.every((c) => c.start % 10 === 0 && c.end % 10 === 0), '空き候補は10分単位');
 assert(!nearYogaCandidates.some((c) => [495, 536].includes(c.start)), '空き候補に10分単位でない時刻は出ない');
-assert(yogaPrivateReply(false, nearYogaCandidates).includes('近いお時間') && yogaPrivateReply(true).includes('ご予約可能'), 'LINE返信用コピー文が生成される');
 assert(!memberSupabaseSource.includes('member_name') || memberSupabaseSource.includes("'title','予約不可'"), '会員側にはヨガ個別予約の個人情報を出さない');
 assert(!/type=["']time["']|step=["']600["']/.test(yogaPrivateHtml + yogaPrivateSource), 'input type=time must not return');
 
