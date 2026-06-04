@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ヨガ個別予約登録 | friendsセルフ予約</title>
-<link rel="stylesheet" href="./admin-style.css?v=35">
+<link rel="stylesheet" href="./admin-style.css?v=36">
 </head>
 <body>
 <header class="hero"><p class="eyebrow">friends セルフ予約アプリ</p><h1>ヨガ個別予約登録</h1><p>マンツーマンヨガ予約を登録すると、重なるセルフジム枠が自動で予約不可になります。</p></header>
@@ -31,15 +31,24 @@
       <form id="yogaForm" class="mini">
         <label>日付<input name="date" type="date" required></label>
         <div class="two">
-          <label>開始時間<input name="start" type="time" step="600" required></label>
-          <label>終了時間<input name="end" type="time" step="600" required></label>
+          <label>開始時間<select id="yogaStart" name="start" required></select></label>
+          <label>終了時間<select id="yogaEnd" name="end" required></select></label>
         </div>
-        <label>会員名<input name="memberName" required placeholder="会員名"></label>
-        <label>インストラクター名（任意）<input name="instructorName" placeholder="インストラクター名"></label>
-        <label>メモ<textarea name="note" rows="3" placeholder="連絡事項など"></textarea></label>
-        <button class="btn">登録する</button>
+        <label>会員名（任意）<input name="memberName" placeholder="未入力でも登録できます"></label>
+        <label>インストラクター名（任意）<input name="instructorName" placeholder="未入力でも登録できます"></label>
+        <label>メモ（任意）<textarea name="note" rows="3" placeholder="未入力でも登録できます"></textarea></label>
+        <p id="yogaStatus" class="notice"></p>
+        <button id="yogaSubmit" class="btn">登録する</button>
       </form>
       <p class="small">開始・終了は全日10分単位です。終了は開始より後、同一日内（24:00まで）にしてください。</p>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">空き状況</p>
+      <h2>その日の予約不可時間</h2>
+      <p class="small">セルフジム予約は画面表示40分でも、重なり判定上の50分ブロックとして表示します。</p>
+      <div id="yogaUnavailable" class="res"></div>
+      <p id="yogaOpenCandidates" class="small"></p>
     </section>
 
     <section class="card">
@@ -51,7 +60,7 @@
 </main>
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js?v=35"></script>
-<script src="./yoga-private.js?v=35"></script>
+<script src="./supabase-config.js?v=36"></script>
+<script src="./yoga-private.js?v=36"></script>
 </body>
 </html>
