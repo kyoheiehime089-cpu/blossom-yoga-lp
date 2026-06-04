@@ -40,7 +40,9 @@ function hasReservation(d,m){return snap.reservations.some(r=>r.date===d&&sameBl
 function reservationAt(d,m){let list=snap.reservations.filter(r=>r.date===d),exact=list.find(r=>Number(r.start_minute)===Number(m));return exact||list.find(r=>sameBlock(m,r.start_minute))}
 function isClosed(d,m){return snap.closed_slots.some(c=>c.date===d&&sameBlock(m,c.start_minute))}
 function closedAt(d,m){let list=snap.closed_slots.filter(c=>c.date===d),exact=list.find(c=>Number(c.start_minute)===Number(m));return exact||list.find(c=>sameBlock(m,c.start_minute))}
-function externalBlockAt(d,m){let s=Number(m),e=s+BLOCK_MINUTES;return (snap.external_blocks||[]).find(x=>x.date===d&&overlapsRange(s,e,x.start_minute,x.end_minute))}
+function externalBlockEnd(x){return Number(x.block_end_minute??Number(x.end_minute)+10)}
+function externalDisplayEnd(x){return Number(x.display_end_minute??x.end_minute)}
+function externalBlockAt(d,m){let s=Number(m),e=s+BLOCK_MINUTES;return (snap.external_blocks||[]).find(x=>x.date===d&&overlapsRange(s,e,x.start_minute,externalBlockEnd(x)))}
 function hasExternalBlock(d,m){return !!externalBlockAt(d,m)}
 function validManualSlot(d,m){return d&&!conflict(d,m)&&!hasReservation(d,m)&&!isClosed(d,m)&&!hasExternalBlock(d,m)}
 function weekStart(){let d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+adminWeek*7);return d}
@@ -52,7 +54,7 @@ window.loadSnapshot=loadSnapshot;
 function renderAll(){renderSummary();renderCalendar();renderPurchases();renderMembers();renderClosed();fillTime();renderBadges()}
 function renderBadges(){let n=snap.purchases.filter(purchaseNeedsAction).length,b=$('#purchaseBadge');if(b){b.textContent=n;b.classList.toggle('show',n>0)}}
 function reservationCard(r){return `<article class='res'><h3>${esc(full(r.date,r.start_minute))}</h3><p>${esc(r.member_name)} / ${esc(r.plan)} / ${esc(r.people)}</p><div class='two'><button class='ghost' data-detail='${esc(r.member_id)}'>会員を開く</button><button class='danger' data-cancel='${esc(r.id)}'>キャンセル</button></div></article>`}
-function externalRange(x){return `${jp(x.date)} ${fmtMin(x.start_minute)}〜${fmtMin(x.end_minute)}`}
+function externalRange(x){return `${jp(x.date)} ${fmtMin(x.start_minute)}〜${fmtMin(externalDisplayEnd(x))}`}
 function externalBlockCard(x){return `<article class='res yoga-private'><h3>ヨガ個別予約：${esc(labelOrEmpty(x.member_name))}</h3><p>${esc(externalRange(x))}</p><p>インストラクター：${esc(labelOrEmpty(x.instructor_name))}</p><p>メモ：${esc(labelOrEmpty(x.note))}</p><button class='danger' data-yoga-delete='${esc(x.id)}'>削除</button></article>`}
 function externalSlotRow(x){return `<article class='slot-row closed yoga-private'><div class='time'>${fmtMin(x.start_minute)}〜${fmtMin(x.end_minute)}</div><div><span class='pill closed'>ヨガ個別予約</span> ${esc(labelOrEmpty(x.member_name))}${x.note?` / ${esc(x.note)}`:''}</div><button class='danger' data-yoga-delete='${esc(x.id)}'>削除</button></article>`}
 function flexibleSortValue(m){m=Number(m);return m>=FLEXIBLE_NIGHT_START_MINUTE?m:1440+m}
