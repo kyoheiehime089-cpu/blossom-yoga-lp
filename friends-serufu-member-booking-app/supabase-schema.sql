@@ -19,7 +19,7 @@ create table if not exists members (
   name text not null,
   email text unique,
   pin text not null,
-  plan text not null check (plan in ('月4回プラン','月8回プラン','ファミリー月4回プラン','ファミリー月8回プラン')),
+  plan text not null check (plan in ('月4回プラン','月8回プラン','通い放題プラン','ファミリー月4回プラン','ファミリー月8回プラン','ファミリー通い放題プラン')),
   status text not null default 'active',
   created_at timestamptz not null default now()
 );
@@ -86,10 +86,20 @@ as $$
   select case p_plan
     when '月4回プラン' then 4
     when '月8回プラン' then 8
+    when '通い放題プラン' then 0
     when 'ファミリー月4回プラン' then 4
     when 'ファミリー月8回プラン' then 8
+    when 'ファミリー通い放題プラン' then 0
     else 4
   end;
+$$;
+
+create or replace function fs_is_unlimited_plan(p_plan text)
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(p_plan,'') like '%通い放題%';
 $$;
 
 create or replace function fs_extra_slots(p_member_id uuid, p_month text)
