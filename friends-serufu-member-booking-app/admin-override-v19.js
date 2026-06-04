@@ -1,7 +1,7 @@
 (()=>{
   const db=window.supabase.createClient(window.FRIENDS_SUPABASE_URL,window.FRIENDS_SUPABASE_ANON_KEY);
   const $=q=>document.querySelector(q);
-  const plans=['月4回プラン','月8回プラン','ファミリー月4回プラン','ファミリー月8回プラン'];
+  const plans=['月4回プラン','月8回プラン','通い放題プラン','ファミリー月4回プラン','ファミリー月8回プラン','ファミリー通い放題プラン'];
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function pass(){return document.getElementById('adminPass')?.value||sessionStorage.getItem('fs_admin_pass')||'';}
   function toast(msg){if(window.adminSoftToast)window.adminSoftToast(msg);else alert(msg)}

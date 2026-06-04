@@ -132,7 +132,70 @@ assert(adminSource.includes('fixedStartArr().filter'), 'admin fixed slots must r
 for (const [htmlFile, assets] of Object.entries(htmlVersions)) {
   const html = fs.readFileSync(path.join(appDir, htmlFile), 'utf8');
   assert(!html.includes('v=32'), `${htmlFile} must not load v32 assets`);
-  for (const asset of assets) assert(html.includes(`${asset}?v=33`), `${htmlFile} must load ${asset} with v33`);
+  for (const asset of assets) assert(html.includes(`${asset}?v=34`), `${htmlFile} must load ${asset} with v34`);
+}
+
+
+const plans = {
+  '月4回プラン': 4,
+  '月8回プラン': 8,
+  '通い放題プラン': null,
+  'ファミリー月4回プラン': 4,
+  'ファミリー月8回プラン': 8,
+  'ファミリー通い放題プラン': null,
+};
+function isUnlimitedPlan(plan) {
+  return String(plan || '').includes('通い放題');
+}
+function hasMonthlyLimit(member) {
+  return !isUnlimitedPlan(member.plan);
+}
+function quota(member) {
+  return hasMonthlyLimit(member) ? plans[member.plan] : null;
+}
+function canReserveByMonthlyLimit(member, monthlyCount) {
+  return !hasMonthlyLimit(member) || monthlyCount < quota(member);
+}
+function canReserve(member, { monthlyCount = 0, futureCount = 0, dayCount = 0 }) {
+  return canReserveByMonthlyLimit(member, monthlyCount) && futureCount < 2 && dayCount < 2;
+}
+function quotaLabel(member) {
+  return hasMonthlyLimit(member) ? `月の予約回数：${quota(member)}回まで` : '月の予約回数：制限なし';
+}
+function usageLabel(member, monthlyCount) {
+  return hasMonthlyLimit(member) ? `${monthlyCount} / ${quota(member)}` : `${monthlyCount}回（月回数制限なし）`;
+}
+
+assert.strictEqual(canReserveByMonthlyLimit({ plan: '月4回プラン' }, 4), false, '月4回プランは月4回で上限になる');
+assert.strictEqual(canReserveByMonthlyLimit({ plan: '月8回プラン' }, 8), false, '月8回プランは月8回で上限になる');
+assert.strictEqual(canReserveByMonthlyLimit({ plan: 'ファミリー月4回プラン' }, 4), false, 'ファミリー月4回プランは月4回で上限になる');
+assert.strictEqual(canReserveByMonthlyLimit({ plan: 'ファミリー月8回プラン' }, 8), false, 'ファミリー月8回プランは月8回で上限になる');
+assert.strictEqual(canReserveByMonthlyLimit({ plan: '通い放題プラン' }, 99), true, '通い放題プランは月回数上限で止まらない');
+assert.strictEqual(canReserveByMonthlyLimit({ plan: 'ファミリー通い放題プラン' }, 99), true, 'ファミリー通い放題プランは月回数上限で止まらない');
+assert.strictEqual(canReserve({ plan: '通い放題プラン' }, { futureCount: 2 }), false, '通い放題プランでも同時予約2枠制限は残る');
+assert.strictEqual(canReserve({ plan: 'ファミリー通い放題プラン' }, { futureCount: 2 }), false, 'ファミリー通い放題プランでも同時予約2枠制限は残る');
+assert.strictEqual(canReserve({ plan: '通い放題プラン' }, { dayCount: 2 }), false, '通い放題プランでも同日2枠制限は残る');
+assert.strictEqual(canReserve({ plan: 'ファミリー通い放題プラン' }, { dayCount: 2 }), false, 'ファミリー通い放題プランでも同日2枠制限は残る');
+assert.strictEqual(label(490), '08:10〜08:50', '通い放題プランでも予約時間表示は40分');
+assert.strictEqual(label(540), '09:00〜09:40', 'ファミリー通い放題プランでも予約時間表示は40分');
+assert.strictEqual(sameBlock(10, 0), true, '通い放題プランでも50分ブロック判定は残る');
+assert.strictEqual(sameBlock(40, 0), true, 'ファミリー通い放題プランでも50分ブロック判定は残る');
+for (const plan of ['通い放題プラン', 'ファミリー通い放題プラン']) {
+  const member = { plan };
+  assert.strictEqual(quotaLabel(member), '月の予約回数：制限なし', `${plan}では月の予約回数が制限なし表示になる`);
+  const usage = usageLabel(member, 5);
+  assert(!usage.includes('9999回まで'), `${plan} must not show 9999回まで`);
+  assert(!usage.includes('Infinity回まで'), `${plan} must not show Infinity回まで`);
+  assert(!usage.includes('NaN回まで'), `${plan} must not show NaN回まで`);
+}
+for (const source of [memberSupabaseSource, fs.readFileSync(path.join(appDir, 'member-script.js'), 'utf8')]) {
+  assert(source.includes('function isUnlimitedPlan'), 'member sources must define isUnlimitedPlan');
+  assert(source.includes('function hasMonthlyLimit'), 'member sources must define hasMonthlyLimit');
+  assert(source.includes('通い放題プラン'), 'member sources must include 通い放題プラン');
+  assert(source.includes('ファミリー通い放題プラン') || source.includes("includes('通い放題')"), 'member sources must support family unlimited plans');
+  assert(!source.includes('9999回まで'), 'member sources must not render 9999回まで');
+  assert(!source.includes('Infinity回まで'), 'member sources must not render Infinity回まで');
+  assert(!source.includes('NaN回まで'), 'member sources must not render NaN回まで');
 }
 
 console.log([...flexibleLabels, ...fixedLabels].join('\n'));

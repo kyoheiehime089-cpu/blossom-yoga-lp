@@ -39,7 +39,7 @@ create table if not exists fs_members (
   name text not null,
   email text unique,
   pin text not null,
-  plan text not null check (plan in ('月4回プラン','月8回プラン','ファミリー月4回プラン','ファミリー月8回プラン')),
+  plan text not null check (plan in ('月4回プラン','月8回プラン','通い放題プラン','ファミリー月4回プラン','ファミリー月8回プラン','ファミリー通い放題プラン')),
   status text not null default 'active',
   created_at timestamptz not null default now()
 );
@@ -104,10 +104,20 @@ as $$
   select case p_plan
     when '月4回プラン' then 4
     when '月8回プラン' then 8
+    when '通い放題プラン' then 0
     when 'ファミリー月4回プラン' then 4
     when 'ファミリー月8回プラン' then 8
+    when 'ファミリー通い放題プラン' then 0
     else 4
   end;
+$$;
+
+create or replace function fs_is_unlimited_plan(p_plan text)
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(p_plan,'') like '%通い放題%';
 $$;
 
 create or replace function fs_extra_slots(p_member_id uuid, p_month text)
@@ -207,7 +217,7 @@ begin
   if (select count(*) from fs_reservations where member_id=m.id and cancelled=false and (date::timestamp + make_interval(mins=>start_minute)) > now()) >= 2 then return jsonb_build_object('ok',false,'error','同時予約は最大2枠までです。'); end if;
   if (select count(*) from fs_reservations where member_id=m.id and cancelled=false and date=p_date) >= 2 then return jsonb_build_object('ok',false,'error','同日予約は最大2枠までです。'); end if;
   q := fs_plan_quota(m.plan) + fs_extra_slots(m.id, mo);
-  if (select count(*) from fs_reservations where member_id=m.id and cancelled=false and to_char(date,'YYYY-MM')=mo) >= q then return jsonb_build_object('ok',false,'error','今月の予約上限に達しています。'); end if;
+  if not fs_is_unlimited_plan(m.plan) and (select count(*) from fs_reservations where member_id=m.id and cancelled=false and to_char(date,'YYYY-MM')=mo) >= q then return jsonb_build_object('ok',false,'error','今月の予約上限に達しています。'); end if;
   insert into fs_reservations(member_id,date,start_minute,people,note,created_by) values(m.id,p_date,p_start_minute,coalesce(nullif(p_people,''),'1名'),p_note,'member');
   return jsonb_build_object('ok',true);
 exception when unique_violation then

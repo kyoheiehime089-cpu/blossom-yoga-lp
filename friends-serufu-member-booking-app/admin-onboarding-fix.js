@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const form=document.getElementById('addMember');
   const box=document.getElementById('generatedLogin');
   const url='https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/friends-serufu-member-booking-app/';
-  function normalizePlanFix(p){if(p==='ファミリー週1（月4回）'||p==='ファミリープラン')return'ファミリー月4回プラン';if(p==='ファミリー週2（月8回）')return'ファミリー月8回プラン';if(p==='通い放題')return'月8回プラン';return p||'月4回プラン'}
+  function normalizePlanFix(p){if(p==='ファミリー週1（月4回）'||p==='ファミリープラン')return'ファミリー月4回プラン';if(p==='ファミリー週2（月8回）')return'ファミリー月8回プラン';if(p==='通い放題')return'通い放題プラン';return p||'月4回プラン'}
   function nextIdFix(){let max=0;(S.members||[]).forEach(m=>{let n=Number(String(m.id||'').replace(/\D/g,''));if(n>max)max=n});return 'FS'+String(max+1).padStart(3,'0')}
   function pinFix(){return String(Math.floor(1000+Math.random()*9000))}
   function loginUrl(m){return url+'?'+new URLSearchParams({mid:m.id,pin:m.pin,name:m.name,email:m.email||'',plan:m.plan}).toString()}
