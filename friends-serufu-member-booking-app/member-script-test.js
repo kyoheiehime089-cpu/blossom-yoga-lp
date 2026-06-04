@@ -148,7 +148,7 @@ for (const [htmlFile, assets] of Object.entries(htmlVersions)) {
   assert(!html.includes('v=32'), `${htmlFile} must not load v32 assets`);
   assert(!html.includes('v=34'), `${htmlFile} must not load v34 assets`);
   assert(!html.includes('v=35'), `${htmlFile} must not load v35 assets`);
-  for (const asset of assets) assert(html.includes(`${asset}?v=36`), `${htmlFile} must load ${asset} with v36`);
+  for (const asset of assets) assert(html.includes(`${asset}?v=37`), `${htmlFile} must load ${asset} with v37`);
 }
 
 
@@ -174,6 +174,24 @@ function yogaPrivateCreatable(block, {reservations = [], closedSlots = [], exter
   if (externalBlocks.some((x) => overlapsRange(block.start, block.end, x.start, x.end))) return false;
   return true;
 }
+function yogaPrivateAvailability(block, blocks = {}) {
+  return yogaPrivateCreatable(block, blocks) ? { ok: true, label: '予約できます' } : { ok: false, label: '予約できません' };
+}
+function yogaPrivateCandidates(requestedStart, requestedEnd, blocks = {}, limit = 5) {
+  const duration = yogaPrivateTimeValid(requestedStart, requestedEnd) ? requestedEnd - requestedStart : useMinutes;
+  const candidates = [];
+  for (let start = 0; start + duration <= 1440; start += flexibleSlotStepMinutes) {
+    const end = start + duration;
+    if (yogaPrivateCreatable({ start, end }, blocks)) candidates.push({ start, end });
+  }
+  return candidates.sort((a, b) => Math.abs(a.start - requestedStart) - Math.abs(b.start - requestedStart) || a.start - b.start).slice(0, limit);
+}
+function yogaPrivateReply(ok, candidates = []) {
+  if (ok) return 'ご希望の日時でご予約可能です。';
+  return `ご希望のお時間は埋まっております。
+近いお時間ですと、以下がご案内可能です。
+${candidates.slice(0, 3).map((c, i) => `${i + 1}.${label(c.start)}`).join('\n')}`;
+}
 
 assert.strictEqual(selfBlockedByYoga(840, 840, 880), true, 'ヨガ個別予約 14:00〜14:40 がある場合、セルフ枠 14:00〜14:40 は予約不可');
 assert.strictEqual(selfBlockedByYoga(800, 840, 880), true, 'セルフ枠 13:20〜14:00 は内部50分ブロックがヨガ個別予約 14:00〜14:40 と重なるため予約不可');
@@ -197,6 +215,18 @@ assert(yogaPrivateSource.includes("p_instructor_name: String(fd.get('instructorN
 assert(yogaPrivateSource.includes("p_note: String(fd.get('note') || '').trim()"), 'yoga private create must allow blank note');
 assert(yogaPrivateSource.includes('btn.disabled = !result.ok'), 'yoga private submit button must be disabled when selected time is unavailable');
 assert(yogaPrivateSource.includes('セルフジム予約') && yogaPrivateSource.includes('利用不可枠') && yogaPrivateSource.includes('既存のヨガ個別予約'), 'yoga private unavailable list must distinguish self, closed, and yoga blocks');
+assert.strictEqual(yogaPrivateCreatable({start: 490, end: 530}), true, '提案枠が空きなら登録可能');
+assert.strictEqual(yogaPrivateAvailability({start: 490, end: 530}).label, '予約できます', '空きなら予約できます表示になる');
+assert.strictEqual(yogaPrivateCreatable({start: 490, end: 530}, {reservations: [{start: 490}]}), false, 'セルフ予約の内部50分ブロックがある場合、同開始のヨガ個別予約は不可');
+assert.strictEqual(yogaPrivateCreatable({start: 530, end: 560}, {reservations: [{start: 490}]}), false, 'セルフ予約の内部50分ブロックがある場合、終了間際に重なるヨガ個別予約も不可');
+assert.strictEqual(yogaPrivateCreatable({start: 540, end: 580}, {reservations: [{start: 490}]}), true, 'セルフ予約の内部50分ブロック終了後ならヨガ個別予約は可能');
+const nearYogaCandidates = yogaPrivateCandidates(490, 530, {reservations: [{start: 490}]});
+assert(nearYogaCandidates.length > 0 && nearYogaCandidates.length <= 5, '予約不可時に近い空き候補を最大5件出す');
+assert(nearYogaCandidates.every((c) => c.start % 10 === 0 && c.end % 10 === 0), '空き候補は10分単位');
+assert(!nearYogaCandidates.some((c) => [495, 536].includes(c.start)), '空き候補に10分単位でない時刻は出ない');
+assert(yogaPrivateReply(false, nearYogaCandidates).includes('近いお時間') && yogaPrivateReply(true).includes('ご予約可能'), 'LINE返信用コピー文が生成される');
+assert(!memberSupabaseSource.includes('member_name') || memberSupabaseSource.includes("'title','予約不可'"), '会員側にはヨガ個別予約の個人情報を出さない');
+assert(!/type=["']time["']|step=["']600["']/.test(yogaPrivateHtml + yogaPrivateSource), 'input type=time must not return');
 
 const plans = {
   '月4回プラン': 4,

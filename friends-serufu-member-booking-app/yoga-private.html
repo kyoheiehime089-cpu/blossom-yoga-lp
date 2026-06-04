@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ヨガ個別予約登録 | friendsセルフ予約</title>
-<link rel="stylesheet" href="./admin-style.css?v=36">
+<link rel="stylesheet" href="./admin-style.css?v=37">
 </head>
 <body>
 <header class="hero"><p class="eyebrow">friends セルフ予約アプリ</p><h1>ヨガ個別予約登録</h1><p>マンツーマンヨガ予約を登録すると、重なるセルフジム枠が自動で予約不可になります。</p></header>
@@ -24,6 +24,28 @@
       <button id="reloadYoga" class="ghost">再読み込み</button>
       <button id="logoutYoga" class="danger">ログアウト</button>
     </div>
+
+
+    <section class="card quick-check-card">
+      <p class="eyebrow">日時をすぐ確認</p>
+      <h2>会員さんから提案された日時を確認</h2>
+      <p class="small">日付・開始時間・終了時間を選ぶだけで、予約できるかと近い代替候補を確認できます。</p>
+      <div class="mini">
+        <label>日付<input id="quickDate" type="date"></label>
+        <div class="two">
+          <label>開始時間<select id="quickStart"></select></label>
+          <label>終了時間<select id="quickEnd"></select></label>
+        </div>
+      </div>
+      <div id="quickAvailability" class="quick-result neutral">
+        <h3>日時を選択してください</h3>
+        <p class="small">10分単位で確認できます。</p>
+      </div>
+      <div class="quick-actions">
+        <button id="quickCopy" class="ghost" type="button">LINE返信文をコピー</button>
+        <span id="quickCopyStatus" class="small"></span>
+      </div>
+    </section>
 
     <section class="card">
       <p class="eyebrow">新規登録</p>
@@ -60,7 +82,7 @@
 </main>
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js?v=36"></script>
-<script src="./yoga-private.js?v=36"></script>
+<script src="./supabase-config.js?v=37"></script>
+<script src="./yoga-private.js?v=37"></script>
 </body>
 </html>
