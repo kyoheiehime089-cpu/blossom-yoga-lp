@@ -17,6 +17,7 @@ const displayFiles = [...files, 'member-calendar-cancel.js', 'admin-cancel-confi
 const htmlVersions = {
   'index.html': ['member-style.css', 'supabase-config.js', 'fs-member-supabase.js', 'member-calendar-cancel.js', 'member-main-tabs.js', 'member-daily-check.js'],
   'admin.html': ['admin-style.css', 'supabase-config.js', 'admin-script.js', 'admin-cancel-confirm.js', 'admin-safety-actions.js', 'admin-feedback.js', 'admin-bulk-close.js', 'admin-override-v19.js', 'admin-daily-check.js'],
+  'yoga-private.html': ['admin-style.css', 'supabase-config.js', 'yoga-private.js'],
 };
 const fixedLabels = [
   '08:10〜08:50',
@@ -129,13 +130,25 @@ assert(adminSource.includes('renderAdminFlexible'), 'admin UI must render midnig
 assert(adminSource.includes("<select id='adminFlexStart'"), 'admin flexible starts must be presented in a dropdown');
 assert(adminSource.includes('data-admin-flex-action'), 'admin flexible starts must act through the selected dropdown value');
 assert(adminSource.includes('fixedStartArr().filter'), 'admin fixed slots must render separately from flexible starts');
-assert(yogaPrivateSource.includes('step') || fs.readFileSync(path.join(appDir, 'yoga-private.html'), 'utf8').includes('step="600"'), 'yoga private page must use 10-minute time inputs');
+const yogaPrivateHtml = fs.readFileSync(path.join(appDir, 'yoga-private.html'), 'utf8');
+assert(yogaPrivateHtml.includes('<select id="yogaStart"'), 'yoga private start time must be a 10-minute select');
+assert(yogaPrivateHtml.includes('<select id="yogaEnd"'), 'yoga private end time must be a 10-minute select');
+assert(!yogaPrivateHtml.includes('type="time"'), 'yoga private page must not use native time inputs');
+assert(!yogaPrivateHtml.includes('step="600"'), 'yoga private page must not rely on native time step');
+assert(yogaPrivateSource.includes('timeOptions(0, 1430)'), 'yoga private start select must cover 00:00〜23:50 in 10-minute increments');
+assert(yogaPrivateSource.includes('timeOptions(minEnd, 1440)'), 'yoga private end select must cover later 10-minute choices through 24:00');
+assert(!yogaPrivateSource.includes('currentTarget.reset'), 'yoga private submit must not call e.currentTarget.reset() after async work');
+assert(yogaPrivateSource.includes('const form = e.currentTarget') && yogaPrivateSource.includes('form.reset()'), 'yoga private submit must store the form before await and reset that form safely');
+assert(!/name="memberName"[^>]*required/.test(yogaPrivateHtml), 'member name must be optional on yoga private form');
+assert(!/name="instructorName"[^>]*required/.test(yogaPrivateHtml), 'instructor name must be optional on yoga private form');
+assert(!/name="note"[^>]*required/.test(yogaPrivateHtml), 'note must be optional on yoga private form');
 
 for (const [htmlFile, assets] of Object.entries(htmlVersions)) {
   const html = fs.readFileSync(path.join(appDir, htmlFile), 'utf8');
   assert(!html.includes('v=32'), `${htmlFile} must not load v32 assets`);
   assert(!html.includes('v=34'), `${htmlFile} must not load v34 assets`);
-  for (const asset of assets) assert(html.includes(`${asset}?v=35`), `${htmlFile} must load ${asset} with v35`);
+  assert(!html.includes('v=35'), `${htmlFile} must not load v35 assets`);
+  for (const asset of assets) assert(html.includes(`${asset}?v=36`), `${htmlFile} must load ${asset} with v36`);
 }
 
 
@@ -167,6 +180,10 @@ assert.strictEqual(selfBlockedByYoga(800, 840, 880), true, 'セルフ枠 13:20�
 assert.strictEqual(yogaPrivateCreatable({start: 1370, end: 1400}, {reservations: [{start: 1330}]}), false, '22:10開始のセルフ内部50分ブロックと22:50開始のヨガ個別予約は重複不可');
 assert.strictEqual(yogaPrivateCreatable({start: 850, end: 890}, {externalBlocks: [{start: 840, end: 880}]}), false, 'ヨガ個別予約同士が重なる場合は登録不可');
 assert.strictEqual(yogaPrivateTimeValid(840, 880), true, 'ヨガ個別予約の開始・終了は10分単位なら有効');
+assert.strictEqual(yogaPrivateTimeValid(495, 880), false, '08:15は10分単位ではないためNG');
+assert.strictEqual(yogaPrivateTimeValid(536, 880), false, '08:56は10分単位ではないためNG');
+assert.strictEqual(yogaPrivateTimeValid(490, 880), true, '08:10は10分単位のためOK');
+assert.strictEqual(yogaPrivateTimeValid(530, 880), true, '08:50は10分単位のためOK');
 assert.strictEqual(yogaPrivateTimeValid(845, 880), false, '10分単位でない開始時間は登録不可');
 assert.strictEqual(yogaPrivateTimeValid(840, 885), false, '10分単位でない終了時間は登録不可');
 assert.strictEqual(yogaPrivateTimeValid(880, 840), false, '終了時間が開始時間以前なら登録不可');
@@ -174,6 +191,12 @@ assert.strictEqual(label(1330), '22:10〜22:50', '22:10の表示は40分のま�
 assert.strictEqual(sameBlock(1370, 1330), true, '22:10の内部ブロックは22:50も重なり扱い');
 assert(memberSupabaseSource.includes('externalBlock'), 'member side must consider external_blocks without exposing details');
 assert(adminSource.includes('externalBlockCard'), 'admin side must render yoga private reservation details');
+assert(memberSupabaseSource.includes("'title','予約不可'") || fs.readFileSync(path.join(appDir, 'supabase-patch-v36-yoga-private-ui-fixes.sql'), 'utf8').includes("'title','予約不可'"), 'member side snapshot must not expose yoga private personal details');
+assert(yogaPrivateSource.includes("p_member_name: String(fd.get('memberName') || '').trim()"), 'yoga private create must allow blank member name');
+assert(yogaPrivateSource.includes("p_instructor_name: String(fd.get('instructorName') || '').trim()"), 'yoga private create must allow blank instructor name');
+assert(yogaPrivateSource.includes("p_note: String(fd.get('note') || '').trim()"), 'yoga private create must allow blank note');
+assert(yogaPrivateSource.includes('btn.disabled = !result.ok'), 'yoga private submit button must be disabled when selected time is unavailable');
+assert(yogaPrivateSource.includes('セルフジム予約') && yogaPrivateSource.includes('利用不可枠') && yogaPrivateSource.includes('既存のヨガ個別予約'), 'yoga private unavailable list must distinguish self, closed, and yoga blocks');
 
 const plans = {
   '月4回プラン': 4,

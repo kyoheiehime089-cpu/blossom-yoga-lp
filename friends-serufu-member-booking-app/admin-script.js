@@ -23,6 +23,7 @@ const jp=s=>{let d=new Date(s+'T00:00:00'),w='日月火水木金土'[d.getDay()]
 const slotRange=m=>`${fmtMin(m)}〜${fmtMin(Number(m)+USE_MINUTES)}`;
 const full=(d,m)=>`${jp(d)} ${slotRange(m)}`;
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const labelOrEmpty=s=>String(s||'').trim()||'未入力';
 const toast=msg=>{if(window.adminSoftToast)window.adminSoftToast(msg);};
 
 async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)throw new Error(error.message);if(!data?.ok)throw new Error(data?.error||'RPC失敗');return data}
@@ -52,8 +53,8 @@ function renderAll(){renderSummary();renderCalendar();renderPurchases();renderMe
 function renderBadges(){let n=snap.purchases.filter(purchaseNeedsAction).length,b=$('#purchaseBadge');if(b){b.textContent=n;b.classList.toggle('show',n>0)}}
 function reservationCard(r){return `<article class='res'><h3>${esc(full(r.date,r.start_minute))}</h3><p>${esc(r.member_name)} / ${esc(r.plan)} / ${esc(r.people)}</p><div class='two'><button class='ghost' data-detail='${esc(r.member_id)}'>会員を開く</button><button class='danger' data-cancel='${esc(r.id)}'>キャンセル</button></div></article>`}
 function externalRange(x){return `${jp(x.date)} ${fmtMin(x.start_minute)}〜${fmtMin(x.end_minute)}`}
-function externalBlockCard(x){return `<article class='res yoga-private'><h3>ヨガ個別予約：${esc(x.member_name)}</h3><p>${esc(externalRange(x))}</p><p>インストラクター：${esc(x.instructor_name||'未入力')}</p><p>メモ：${esc(x.note||'なし')}</p><button class='danger' data-yoga-delete='${esc(x.id)}'>削除</button></article>`}
-function externalSlotRow(x){return `<article class='slot-row closed yoga-private'><div class='time'>${fmtMin(x.start_minute)}〜${fmtMin(x.end_minute)}</div><div><span class='pill closed'>ヨガ個別予約</span> ${esc(x.member_name)}${x.note?` / ${esc(x.note)}`:''}</div><button class='danger' data-yoga-delete='${esc(x.id)}'>削除</button></article>`}
+function externalBlockCard(x){return `<article class='res yoga-private'><h3>ヨガ個別予約：${esc(labelOrEmpty(x.member_name))}</h3><p>${esc(externalRange(x))}</p><p>インストラクター：${esc(labelOrEmpty(x.instructor_name))}</p><p>メモ：${esc(labelOrEmpty(x.note))}</p><button class='danger' data-yoga-delete='${esc(x.id)}'>削除</button></article>`}
+function externalSlotRow(x){return `<article class='slot-row closed yoga-private'><div class='time'>${fmtMin(x.start_minute)}〜${fmtMin(x.end_minute)}</div><div><span class='pill closed'>ヨガ個別予約</span> ${esc(labelOrEmpty(x.member_name))}${x.note?` / ${esc(x.note)}`:''}</div><button class='danger' data-yoga-delete='${esc(x.id)}'>削除</button></article>`}
 function flexibleSortValue(m){m=Number(m);return m>=FLEXIBLE_NIGHT_START_MINUTE?m:1440+m}
 function isFlexibleStart(m){m=Number(m);return (m>=FLEXIBLE_NIGHT_START_MINUTE&&m+USE_MINUTES<=1440)||(m>=0&&m+USE_MINUTES<=FLEXIBLE_MORNING_END_MINUTE)}
 function flexibleItemTime(m){return slotRange(m)}
