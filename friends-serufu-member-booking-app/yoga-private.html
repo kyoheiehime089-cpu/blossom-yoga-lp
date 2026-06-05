@@ -17,12 +17,14 @@
       <button id="yogaOpen" class="btn">開く</button>
     </div>
   </section>
+
   <section id="yogaView" class="hidden">
     <div class="toolbar">
       <a class="ghost" href="./admin.html">管理者画面へ</a>
       <button id="reloadYoga" class="ghost">再読み込み</button>
       <button id="logoutYoga" class="danger">ログアウト</button>
     </div>
+
     <section class="card">
       <p class="eyebrow">予約登録</p>
       <h2>ヨガ個別予約</h2>
@@ -32,12 +34,14 @@
           <label>開始時間<select id="yogaStart" name="start" required></select></label>
           <label>終了時間<select id="yogaEnd" name="end" required></select></label>
         </div>
+        <label>会員名（任意）<input name="memberName" placeholder="未入力でも登録できます"></label>
         <label>メモ（任意）<textarea name="note" rows="3" placeholder="未入力でも登録できます"></textarea></label>
         <p id="yogaStatus" class="notice"></p>
         <button id="yogaSubmit" class="btn">登録する</button>
       </form>
       <p class="small">開始・終了は全日10分単位です。開始時間を選ぶと終了時間は自動で40分後になりますが、必要に応じて変更できます。</p>
     </section>
+
     <section class="card">
       <p class="eyebrow">空き状況</p>
       <h2>その日の予約不可時間</h2>
@@ -45,6 +49,7 @@
       <div id="yogaUnavailable" class="res"></div>
       <div id="yogaOpenCandidates" class="small"></div>
     </section>
+
     <section class="card">
       <p class="eyebrow">登録済み</p>
       <h2>ヨガ個別予約一覧</h2>
@@ -52,9 +57,11 @@
     </section>
   </section>
 </main>
+
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js?v=39"></script>
-<script src="./yoga-private-clean-v39.js?v=39"></script>
+<script src="./yoga-private-v40-helper.js?v=40"></script>
+<script src="./yoga-private-clean-v39.js?v=40"></script>
 </body>
 </html>
