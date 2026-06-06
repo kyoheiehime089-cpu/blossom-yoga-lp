@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ヨガ個別予約登録 | friendsセルフ予約</title>
-<link rel="stylesheet" href="./admin-style.css?v=45">
+<link rel="stylesheet" href="./admin-style.css?v=46">
 </head>
 <body>
 <header class="hero"><p class="eyebrow">friends セルフ予約アプリ</p><h1>ヨガ個別予約登録</h1><p>マンツーマンヨガ予約を登録すると、重なるセルフジム枠が自動で予約不可になります。</p></header>
@@ -34,7 +34,7 @@
           <label>開始時間<select id="yogaStart" name="start" required></select></label>
           <label>終了時間<select id="yogaEnd" name="end" required></select></label>
         </div>
-        <label>会員名（任意）<input name="memberName" placeholder="未入力でも登録できます"></label>
+        <label>会員名（必須）<input name="memberName" placeholder="例：阿久津さん" required></label>
         <label>メモ（任意）<textarea name="note" rows="3" placeholder="未入力でも登録できます"></textarea></label>
         <p id="yogaStatus" class="notice"></p>
         <button id="yogaSubmit" class="btn">登録する</button>
@@ -60,9 +60,9 @@
 
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js?v=45"></script>
-<script src="./yoga-private-v40-helper.js?v=45"></script>
-<script src="./yoga-private-clean-v39.js?v=45"></script>
-<script src="./yoga-save-v42.js?v=45"></script>
+<script src="./supabase-config.js?v=46"></script>
+<script src="./yoga-private-v40-helper.js?v=46"></script>
+<script src="./yoga-private-clean-v39.js?v=46"></script>
+<script src="./yoga-save-v42.js?v=46"></script>
 </body>
 </html>
