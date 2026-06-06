@@ -12,28 +12,29 @@
   const ymd = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
   const dateValue = () => $('#yogaForm input[name=date]')?.value || ymd();
   const hit = (a, b, c, d) => a < d && c < b;
-  function fixed(date) {
+  function programBlocks(date) {
     const day = new Date(date + 'T00:00:00').getDay();
-    if (HOLIDAYS.includes(date)) return [[510, 820]];
-    if (day === 1) return [[510, 610], [1080, 1330]];
-    if (day === 2) return [[510, 610], [750, 790], [1080, 1330]];
-    if (day === 3) return [[1080, 1330]];
-    if (day === 4) return [[690, 790], [1215, 1315]];
-    if (day === 5) return [[1080, 1330]];
-    if (day === 6 || day === 0) return [[460, 820]];
+    if (HOLIDAYS.includes(date)) return [[540, 580], [600, 790]];
+    if (day === 1) return [[540, 580], [1110, 1300]];
+    if (day === 2) return [[540, 580], [750, 790], [1110, 1300]];
+    if (day === 3) return [[1110, 1300]];
+    if (day === 4) return [[720, 760], [1215, 1315]];
+    if (day === 5) return [[1110, 1300]];
+    if (day === 6 || day === 0) return [[490, 530], [600, 790]];
     return [];
   }
-  function blocks(date) {
+  function busyBlocks(date) {
     if (!snap) return [];
     const self = (snap.reservations || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Number(x.start_minute) + BLOCK]);
     const closed = (snap.closed_slots || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Number(x.start_minute) + BLOCK]);
     const yoga = (snap.external_blocks || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Math.min(1440, Number(x.block_end_minute || (Number(x.end_minute) + BUF)))]);
-    return [...self, ...closed, ...yoga, ...fixed(date)];
+    return [...self, ...closed, ...yoga];
   }
   function ok(date, s, e) {
     if (!Number.isInteger(s) || !Number.isInteger(e) || s < 0 || e > 1440 || s >= e || s % STEP || e % STEP) return false;
     const endWithBuffer = Math.min(1440, e + BUF);
-    return !blocks(date).some(([bs, be]) => hit(s, endWithBuffer, bs, be));
+    if (busyBlocks(date).some(([bs, be]) => hit(s, endWithBuffer, bs, be))) return false;
+    return !programBlocks(date).some(([ps, pe]) => hit(s, endWithBuffer, ps, Math.min(1440, pe + BUF)));
   }
   function startList(date) {
     const out = [];
