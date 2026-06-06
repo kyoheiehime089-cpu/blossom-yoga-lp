@@ -16,7 +16,7 @@
     const day = new Date(date + 'T00:00:00').getDay();
     if (HOLIDAYS.includes(date)) return [[510, 820]];
     if (day === 1) return [[510, 610], [1080, 1330]];
-    if (day === 2) return [[510, 610], [720, 820], [1080, 1330]];
+    if (day === 2) return [[510, 610], [750, 790], [1080, 1330]];
     if (day === 3) return [[1080, 1330]];
     if (day === 4) return [[690, 790], [1215, 1315]];
     if (day === 5) return [[1080, 1330]];
