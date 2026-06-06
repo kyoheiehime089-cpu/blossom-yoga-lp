@@ -5,6 +5,7 @@
   const BUF = 10;
   const HOLIDAYS = ['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23'];
   let snap = null;
+  let helperDb = null;
   const $ = (q) => document.querySelector(q);
   const pad = (n) => String(n).padStart(2, '0');
   const fmt = (m) => m === 1440 ? '24:00' : pad(Math.floor(m / 60)) + ':' + pad(m % 60);
@@ -27,15 +28,17 @@
     if (!snap) return [];
     const self = (snap.reservations || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Number(x.start_minute) + BLOCK]);
     const closed = (snap.closed_slots || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Number(x.start_minute) + BLOCK]);
-    const yoga = (snap.external_blocks || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Math.min(1440, Number(x.block_end_minute || (Number(x.end_minute) + BUF)))]);
+    const yoga = (snap.external_blocks || []).filter(x => x.date === date).map(x => [Number(x.start_minute), Math.min(1440, Number(x.block_end_minute || (Number(x.end_minute) + BUF))) ]);
     return [...self, ...closed, ...yoga];
   }
-  function ok(date, s, e) {
-    if (!Number.isInteger(s) || !Number.isInteger(e) || s < 0 || e > 1440 || s >= e || s % STEP || e % STEP) return false;
+  function availability(date, s, e) {
+    if (!Number.isInteger(s) || !Number.isInteger(e) || s < 0 || e > 1440 || s >= e || s % STEP || e % STEP) return { ok:false, reason:'開始・終了時間は10分単位で、終了を開始より後にしてください。' };
     const endWithBuffer = Math.min(1440, e + BUF);
-    if (busyBlocks(date).some(([bs, be]) => hit(s, endWithBuffer, bs, be))) return false;
-    return !programBlocks(date).some(([ps, pe]) => hit(s, endWithBuffer, ps, Math.min(1440, pe + BUF)));
+    if (busyBlocks(date).some(([bs, be]) => hit(s, endWithBuffer, bs, be))) return { ok:false, reason:'既存予約または利用不可枠と重なっています' };
+    if (programBlocks(date).some(([ps, pe]) => hit(s, endWithBuffer, ps, Math.min(1440, pe + BUF)))) return { ok:false, reason:'通常ヨガ・セミパーソナルと重なっています' };
+    return { ok:true, reason:'' };
   }
+  const ok = (date, s, e) => availability(date, s, e).ok;
   function startList(date) {
     const out = [];
     for (let m = 0; m + USE <= 1440; m += STEP) if (ok(date, m, m + USE)) out.push(m);
@@ -47,6 +50,22 @@
     return out;
   }
   function options(list) { return list.length ? list.map(m => `<option value="${fmt(m)}">${fmt(m)}</option>`).join('') : '<option value="">空きなし</option>'; }
+  function showStatus(msg, isOk = false) {
+    const el = $('#yogaStatus');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = msg ? `notice ${isOk ? 'ok' : 'danger'}` : 'notice';
+  }
+  function refreshStatus() {
+    const f = $('#yogaForm');
+    if (!f) return;
+    const s = toMin(f.elements.start?.value);
+    const e = toMin(f.elements.end?.value);
+    const res = availability(dateValue(), s, e);
+    const btn = $('#yogaSubmit');
+    if (btn) btn.disabled = !res.ok;
+    showStatus(res.ok ? '' : res.reason, res.ok);
+  }
   function sync(forceStart = false, forceEnd = false) {
     const start = $('#yogaStart');
     const end = $('#yogaEnd');
@@ -65,6 +84,14 @@
     if (!forceEnd && ends.includes(oldEnd)) end.value = fmt(oldEnd);
     else if (ends.includes(def)) end.value = fmt(def);
     else if (ends.length) end.value = fmt(ends[0]);
+    setTimeout(refreshStatus, 0);
+  }
+  async function helperRpc(name, args) {
+    if (!helperDb) helperDb = window.supabase.createClient(window.FRIENDS_SUPABASE_URL, window.FRIENDS_SUPABASE_ANON_KEY);
+    const { data, error } = await helperDb.rpc(name, args);
+    if (error) throw new Error(error.message);
+    if (!data?.ok) throw new Error(data?.error || 'RPC失敗');
+    return data;
   }
   if (window.supabase && !window.__fsYogaV40Wrapped) {
     window.__fsYogaV40Wrapped = true;
@@ -80,7 +107,7 @@
         const result = await originalRpc(name, params);
         if (name === 'fs_yoga_private_snapshot' && result?.data?.ok) {
           snap = result.data;
-          setTimeout(() => sync(false, false), 0);
+          setTimeout(() => { sync(false, false); refreshStatus(); }, 0);
         }
         return result;
       };
@@ -93,10 +120,41 @@
     if (!form.querySelector('[name="memberName"]')) {
       form.querySelector('.two')?.insertAdjacentHTML('afterend', '<label>会員名（任意）<input name="memberName" placeholder="未入力でも登録できます"></label>');
     }
-    setTimeout(() => sync(true, true), 0);
+    setTimeout(() => { sync(true, true); refreshStatus(); }, 0);
     form.addEventListener('change', (e) => {
       if (e.target?.name === 'date') setTimeout(() => sync(true, true), 0);
-      if (e.target?.name === 'start') setTimeout(() => sync(false, true), 0);
+      else if (e.target?.name === 'start') setTimeout(() => sync(false, true), 0);
+      else setTimeout(refreshStatus, 0);
     });
+    form.addEventListener('submit', async (e) => {
+      const fd = new FormData(form);
+      const s = toMin(fd.get('start'));
+      const en = toMin(fd.get('end'));
+      const res = availability(String(fd.get('date') || dateValue()), s, en);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (!res.ok) { showStatus(res.reason); alert(res.reason); return; }
+      try {
+        showStatus('登録しています...', true);
+        await helperRpc('fs_yoga_private_create', {
+          p_admin_password: ($('#yogaPass')?.value || sessionStorage.getItem('fs_yoga_private_pass') || '').trim(),
+          p_date: fd.get('date'),
+          p_start_minute: s,
+          p_end_minute: en,
+          p_member_name: String(fd.get('memberName') || '').trim(),
+          p_instructor_name: '',
+          p_note: String(fd.get('note') || '').trim()
+        });
+        snap = await helperRpc('fs_yoga_private_snapshot', { p_admin_password: ($('#yogaPass')?.value || sessionStorage.getItem('fs_yoga_private_pass') || '').trim() });
+        showStatus('登録完了しました', true);
+        const toast = $('#toast');
+        if (toast) { toast.textContent = '登録完了しました'; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500); }
+        $('#reloadYoga')?.click();
+      } catch (err) {
+        showStatus(err.message || '登録できませんでした');
+        alert(err.message || '登録できませんでした');
+      }
+    }, true);
+    setInterval(refreshStatus, 700);
   });
 })();
