@@ -13,6 +13,7 @@
   const ymd = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
   const dateValue = () => $('#yogaForm input[name=date]')?.value || ymd();
   const hit = (a, b, c, d) => a < d && c < b;
+  function memberNameValue(){ return String(document.querySelector('[name="memberName"]')?.value || '').trim(); }
   function programBlocks(date) {
     const day = new Date(date + 'T00:00:00').getDay();
     if (HOLIDAYS.includes(date)) return [[540, 580], [600, 790]];
@@ -101,8 +102,7 @@
       const originalRpc = client.rpc.bind(client);
       client.rpc = async (name, params) => {
         if (name === 'fs_yoga_private_create') {
-          const member = document.querySelector('[name="memberName"]')?.value || '';
-          params = { ...params, p_member_name: member.trim() };
+          params = { ...params, p_member_name: memberNameValue() };
         }
         const result = await originalRpc(name, params);
         if (name === 'fs_yoga_private_snapshot' && result?.data?.ok) {
@@ -117,8 +117,14 @@
   document.addEventListener('DOMContentLoaded', () => {
     const form = $('#yogaForm');
     if (!form) return;
-    if (!form.querySelector('[name="memberName"]')) {
-      form.querySelector('.two')?.insertAdjacentHTML('afterend', '<label>会員名（任意）<input name="memberName" placeholder="未入力でも登録できます"></label>');
+    const existingMember = form.querySelector('[name="memberName"]');
+    if (!existingMember) {
+      form.querySelector('.two')?.insertAdjacentHTML('afterend', '<label>会員名（必須）<input name="memberName" placeholder="例：阿久津さん" required></label>');
+    } else {
+      existingMember.required = true;
+      const label = existingMember.closest('label');
+      if (label && label.firstChild) label.firstChild.textContent = '会員名（必須）';
+      existingMember.placeholder = '例：阿久津さん';
     }
     setTimeout(() => { sync(true, true); refreshStatus(); }, 0);
     form.addEventListener('change', (e) => {
@@ -128,11 +134,13 @@
     });
     form.addEventListener('submit', async (e) => {
       const fd = new FormData(form);
+      const memberName = String(fd.get('memberName') || '').trim();
       const s = toMin(fd.get('start'));
       const en = toMin(fd.get('end'));
       const res = availability(String(fd.get('date') || dateValue()), s, en);
       e.preventDefault();
       e.stopImmediatePropagation();
+      if (!memberName) { showStatus('会員名を入力してください。'); alert('会員名を入力してください。'); form.querySelector('[name="memberName"]')?.focus(); return; }
       if (!res.ok) { showStatus(res.reason); alert(res.reason); return; }
       try {
         showStatus('登録しています...', true);
@@ -141,7 +149,7 @@
           p_date: fd.get('date'),
           p_start_minute: s,
           p_end_minute: en,
-          p_member_name: String(fd.get('memberName') || '').trim(),
+          p_member_name: memberName,
           p_instructor_name: '',
           p_note: String(fd.get('note') || '').trim()
         });
