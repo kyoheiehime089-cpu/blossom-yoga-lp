@@ -45,12 +45,7 @@ ${member.plan}
 同時に確保できる予約は最大2枠までです。`}
   async function copyText(text){
     if(navigator.clipboard?.writeText){
-      try{
-        await navigator.clipboard.writeText(text);
-        return true;
-      }catch(e){
-        // prompt fallback below
-      }
+      try{await navigator.clipboard.writeText(text);return true;}catch(e){}
     }
     window.prompt('コピーできない場合は、下記文面を選択してコピーしてください。',text);
     return false;
@@ -61,8 +56,7 @@ ${member.plan}
     form.dataset.overrideReady='1';
     form.innerHTML=`<label>会員名<input name="name" placeholder="例：山田 太郎" required></label><label>メールアドレス<input name="email" type="email" placeholder="例：sample@example.com" required></label><label>プラン<select name="plan">${plans.map(p=>`<option>${p}</option>`).join('')}</select></label><button class="btn" type="submit">この画面で会員を追加</button>`;
     form.addEventListener('submit',async e=>{
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault();e.stopImmediatePropagation();
       if(form.dataset.submitting==='1')return;
       const submitButton=form.querySelector('button[type="submit"]');
       form.dataset.submitting='1';
@@ -89,20 +83,34 @@ ${member.plan}
       }
     },true);
   }
-  document.addEventListener('DOMContentLoaded',setupAddForm);
+  function dedupeYogaRows(){
+    const list=document.querySelector('#calendarList');
+    if(!list)return;
+    const seen=new Set();
+    list.querySelectorAll('.slot-row.yoga-private, article.yoga-private').forEach(row=>{
+      const btn=row.querySelector('[data-yoga-delete]');
+      const id=btn&&btn.getAttribute('data-yoga-delete');
+      if(!id)return;
+      if(seen.has(id)){row.remove();return;}
+      seen.add(id);
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    setupAddForm();
+    dedupeYogaRows();
+    const list=document.querySelector('#calendarList');
+    if(list)new MutationObserver(dedupeYogaRows).observe(list,{childList:true,subtree:true});
+  });
   setTimeout(setupAddForm,800);
+  setTimeout(dedupeYogaRows,1000);
   document.addEventListener('click',async e=>{
     const copy=e.target.closest('[data-copy-login]');
     if(!copy)return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
+    e.preventDefault();e.stopImmediatePropagation();
     const id=copy.dataset.copyLogin;
     let member=null;
     if(window.snap&&Array.isArray(window.snap.members))member=window.snap.members.find(x=>x.id===id);
-    if(!member){
-      const s=await rpc('fs_admin_snapshot',{p_admin_password:pass()});
-      if(s.ok)member=(s.members||[]).find(x=>x.id===id);
-    }
+    if(!member){const s=await rpc('fs_admin_snapshot',{p_admin_password:pass()});if(s.ok)member=(s.members||[]).find(x=>x.id===id);}
     if(!member){alert('会員情報が見つかりません。');return;}
     await copyText(existingMemberLineMessage(member));
     toast('LINE文面をコピーしました');
