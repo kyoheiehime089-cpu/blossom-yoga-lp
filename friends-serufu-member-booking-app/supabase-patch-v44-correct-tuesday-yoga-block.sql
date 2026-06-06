@@ -1,16 +1,16 @@
 -- v44: 火曜日の昼枠を 12:00〜13:40 セミパーソナル から 12:30〜13:10 通常ヨガ へ修正
 -- Supabase SQL Editorでこのファイルを実行してください。
+-- 既存の fs_slot_blocked は第2引数名が p_start のため、同じ引数名で置き換えます。
 
-create or replace function public.fs_slot_blocked(p_date date, p_start_minute int)
+create or replace function public.fs_slot_blocked(p_date date, p_start int)
 returns boolean
 language plpgsql
-security definer
-set search_path = public
+immutable
 as $$
 declare
   dow int := extract(dow from p_date);
-  s int := p_start_minute;
-  e int := p_start_minute + 50;
+  s int := p_start;
+  e int := p_start + 50;
 begin
   if p_date in (
     date '2026-01-01',date '2026-01-12',date '2026-02-11',date '2026-02-23',date '2026-03-20',date '2026-04-29',date '2026-05-03',date '2026-05-04',date '2026-05-05',date '2026-05-06',date '2026-07-20',date '2026-08-11',date '2026-09-21',date '2026-09-22',date '2026-09-23',date '2026-10-12',date '2026-11-03',date '2026-11-23'
