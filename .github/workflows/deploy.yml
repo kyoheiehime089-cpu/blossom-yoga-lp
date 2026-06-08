@@ -53,6 +53,20 @@ jobs:
           if [ -d assets ]; then
             cp -r assets _site/assets
           fi
+                    if [ -d friends-serufu-member-booking-app ]; then
+            cp -r friends-serufu-member-booking-app _site/friends-serufu-member-booking-app
+          else
+            echo "friends-serufu-member-booking-app is missing"
+            exit 1
+          fi
+
+          if [ -f 404.html ]; then
+            cp 404.html _site/
+          fi
+
+          if [ -f yoga-private.html ]; then
+            cp yoga-private.html _site/
+          fi
 
           touch _site/.nojekyll
 
