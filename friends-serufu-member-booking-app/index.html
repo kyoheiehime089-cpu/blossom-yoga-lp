@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>friendsセルフ｜会員予約</title>
+<title>行徳ジム24｜会員予約</title>
 <meta name="theme-color" content="#1f2a24">
 <link rel="stylesheet" href="./member-style.css?v=39">
 </head>
 <body>
 <div class="wrap">
 <header class="top">
-  <div class="brand"><div class="mark">fs</div><div><p>完全予約制・貸切型 24時間セルフジム</p><h1>friendsセルフ</h1></div></div>
+  <div class="brand"><div class="mark">24</div><div><p>完全予約制・貸切型 24時間セルフジム</p><h1>行徳ジム24</h1></div></div>
 </header>
 <main>
 <section id="loginView" class="hero">
@@ -46,14 +46,14 @@
   <section id="mineTab" class="panel hidden"><p class="eyebrow">マイページ</p><h2>自分の予約</h2><div id="mine" class="list"></div></section>
 </section>
 </main>
-<footer class="footer">friendsセルフ｜会員専用予約アプリ</footer>
+<footer class="footer">行徳ジム24｜会員専用予約アプリ</footer>
 </div>
 <dialog id="dialog" class="modal"><form id="bookingForm"><button class="close" type="button">×</button><p class="eyebrow">予約内容確認</p><h2 id="dialogTitle"></h2><div id="dialogSummary" class="res"></div><label>利用人数</label><input type="number" name="people" min="1" inputmode="numeric" value="1" required><label>メモ</label><textarea name="note" rows="3"></textarea><button class="btn">この枠を予約する</button></form></dialog>
 <dialog id="purchaseDialog" class="modal"><div class="modal-inner"><button class="close" type="button">×</button><p class="eyebrow">追加枠購入</p><h2>1枠を購入しますか？</h2><div class="agree-box"><p><strong>追加枠：1枠 3,000円</strong></p><ul><li>1回の購入につき、今月利用できる予約枠が1枠だけ追加されます。</li><li>複数回購入した場合も、購入1回ごとに1枠ずつ追加されます。</li><li>登録しているクレジットカードへの請求対象となります。</li><li>会員数や予約枠の埋まり具合により、追加枠の購入を停止する場合があります。</li><li>同時に確保できる予約は最大2枠までで、購入後もこのルールは変わりません。</li><li>同日に確保できる予約は最大2枠までで、購入後もこのルールは変わりません。</li></ul></div><label style="display:flex;gap:8px;align-items:flex-start"><input id="purchaseAgree" type="checkbox" style="width:auto;margin-top:7px"> 上記内容に同意して、1枠3,000円で追加枠を購入します。</label><button id="confirmPurchase" class="btn" disabled>同意して購入する</button></div></dialog>
 <dialog id="purchaseCompleteDialog" class="modal"><div class="modal-inner"><button class="close" type="button">×</button><p class="eyebrow">購入完了</p><h2>追加枠が1枠追加されました</h2><div class="success-box"><p>今月利用できる予約枠に、追加枠が1枠反映されました。</p><p id="purchaseCompleteMessage"></p></div><button id="closePurchaseComplete" class="btn">予約画面に戻る</button></div></dialog>
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js?v=41"></script>
+<script src="./supabase-config.js?v=42"></script>
 <script src="./fs-member-supabase.js?v=41"></script>
 <script src="./member-calendar-cancel.js?v=41"></script>
 <script src="./member-main-tabs.js?v=41"></script>
