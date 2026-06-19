@@ -53,10 +53,18 @@ jobs:
           if [ -d assets ]; then
             cp -r assets _site/assets
           fi
-                    if [ -d friends-serufu-member-booking-app ]; then
+
+          if [ -d friends-serufu-member-booking-app ]; then
             cp -r friends-serufu-member-booking-app _site/friends-serufu-member-booking-app
           else
             echo "friends-serufu-member-booking-app is missing"
+            exit 1
+          fi
+
+          if [ -d friends-serufu-member-booking-app-game-lab ]; then
+            cp -r friends-serufu-member-booking-app-game-lab _site/friends-serufu-member-booking-app-game-lab
+          else
+            echo "friends-serufu-member-booking-app-game-lab is missing"
             exit 1
           fi
 
