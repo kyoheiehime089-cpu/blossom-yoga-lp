@@ -3,11 +3,13 @@
   const $=q=>document.querySelector(q);
   const pad=n=>String(n).padStart(2,'0');
   const USE_MINUTES=40;
+  const CANCEL_DEADLINE_MS=3*60*60*1000;
   const fmt=m=>{m=Number(m);return m===1440?'24:00':pad(Math.floor(m/60))+':'+pad(m%60)};
   const jp=s=>{const d=new Date(s+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`};
   const slotRange=m=>`${fmt(m)}〜${fmt(Number(m)+USE_MINUTES)}`;
   const full=(d,m)=>`${jp(d)} ${slotRange(m)}`;
   const startDate=(d,m)=>{const x=new Date(d+'T00:00:00');x.setMinutes(Number(m));return x};
+  const canCancel=r=>startDate(r.date,r.start_minute)-new Date()>=CANCEL_DEADLINE_MS;
   let target=null;
   async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)return{ok:false,error:error.message};return data||{ok:false,error:'応答がありません'};}
   function ensureDialog(){
@@ -24,6 +26,7 @@
     return {snap,code,pin};
   }
   function showCancel(r,code,pin){
+    if(!canCancel(r)){alert('キャンセルは開始時刻の3時間前までです。');return;}
     ensureDialog();
     target={id:r.id,date:r.date,start:Number(r.start_minute),code,pin};
     $('#memberCalendarCancelInfo').innerHTML=`<p><strong>日時：</strong>${full(r.date,r.start_minute)}</p><p><strong>利用人数：</strong>${r.people||'1名'}</p>`;
