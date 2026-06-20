@@ -5,7 +5,7 @@ const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)];
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const ym=()=>dk(new Date()).slice(0,7);
-const USE_MINUTES=40,FIXED_SLOT_STEP_MINUTES=50,FLEXIBLE_SLOT_STEP_MINUTES=10,BLOCK_MINUTES=50,FIXED_SLOT_START_MINUTE=490,FIXED_SLOT_END_MINUTE=1320,FLEXIBLE_NIGHT_START_MINUTE=1320,FLEXIBLE_MORNING_END_MINUTE=480;
+const USE_MINUTES=40,FIXED_SLOT_STEP_MINUTES=50,FLEXIBLE_SLOT_STEP_MINUTES=10,BLOCK_MINUTES=50,FIXED_SLOT_START_MINUTE=490,FIXED_SLOT_END_MINUTE=1320,FLEXIBLE_NIGHT_START_MINUTE=1320,FLEXIBLE_MORNING_END_MINUTE=480,BOOK_DEADLINE_MS=2*60*60*1000,CANCEL_DEADLINE_MS=3*60*60*1000;
 const fmt=m=>{m=Number(m);return m===1440?'24:00':pad(Math.floor(m/60))+':'+pad(m%60)};
 const jp=s=>{let d=new Date(s+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`};
 const slotRange=m=>`${fmt(m)}〜${fmt(Number(m)+USE_MINUTES)}`;
@@ -19,8 +19,8 @@ function blocks(d){let w=new Date(d+'T00:00:00').getDay();if(holiday(d))return[[
 function conflict(d,m){m=Number(m);return blocks(d).some(([s,e])=>m<e&&s<m+BLOCK_MINUTES)}
 function start(d,m){let x=new Date(d+'T00:00:00');x.setMinutes(Number(m));return x}
 function daysFrom(d){let a=new Date(d+'T00:00:00'),b=new Date();b.setHours(0,0,0,0);return Math.floor((a-b)/86400000)}
-const canBook=(d,m)=>start(d,m)-new Date()>=3600000;
-const canCancel=r=>start(r.date,r.start_minute)-new Date()>=7200000;
+const canBook=(d,m)=>start(d,m)-new Date()>=BOOK_DEADLINE_MS;
+const canCancel=r=>start(r.date,r.start_minute)-new Date()>=CANCEL_DEADLINE_MS;
 function sameBlock(a,b){a=Number(a);b=Number(b);return a<b+BLOCK_MINUTES&&b<a+BLOCK_MINUTES}function byStartAsc(a,b){return start(a.date,a.start_minute)-start(b.date,b.start_minute)}function byStartDesc(a,b){return start(b.date,b.start_minute)-start(a.date,a.start_minute)}
 function overlapsRange(aStart,aEnd,bStart,bEnd){return Number(aStart)<Number(bEnd)&&Number(bStart)<Number(aEnd)}function externalBlockEnd(x){return Number(x.block_end_minute??Number(x.end_minute)+10)}function externalBlock(d,m){let s=Number(m),e=s+BLOCK_MINUTES;return (snap?.external_blocks||[]).find(x=>x.date===d&&overlapsRange(s,e,x.start_minute,externalBlockEnd(x)))}function mine(){return [...(snap?.reservations||[])].sort(byStartAsc)}function booked(d,m){let list=snap?.booked_slots||[],exact=list.find(x=>x.date===d&&Number(x.start_minute)===Number(m));return exact||list.find(x=>x.date===d&&sameBlock(m,x.start_minute))}function closed(d,m){let list=snap?.closed_slots||[],exact=list.find(x=>x.date===d&&Number(x.start_minute)===Number(m));return exact||list.find(x=>x.date===d&&sameBlock(m,x.start_minute))}
 function future(){return mine().filter(r=>start(r.date,r.start_minute)>new Date()).sort(byStartAsc)}function monthRes(){return mine().filter(r=>String(r.date).slice(0,7)===ym())}function dayRes(d){return mine().filter(r=>r.date===d)}function isUnlimitedPlan(plan){return String(plan||'').includes('通い放題')}function isFamilyPlan(member){return String(member?.plan||'').includes('ファミリー')}function hasMonthlyLimit(member){return !isUnlimitedPlan(member?.plan)}function canPurchaseExtra(member){return ['月4回プラン','月8回プラン','ファミリー月4回プラン','ファミリー月8回プラン'].includes(String(member?.plan||''))}function quotaText(member){return hasMonthlyLimit(member)?`${member.quota}回まで`:'制限なし'}function monthUsageText(member){return hasMonthlyLimit(member)?`${monthRes().length} / ${member.quota}`:`${monthRes().length}回（月回数制限なし）`}
