@@ -40,7 +40,7 @@
     </section>
     <section class="card"><p class="eyebrow">次回予約</p><div id="nextReservation" class="res"><p>現在、予約はありません。</p></div></section>
   </div>
-  <section id="familyUsersCard" class="card hidden" style="margin-bottom:18px"><p class="eyebrow">ファミリープラン</p><h2>ご利用者登録</h2><p class="small">予約時に利用する方のお名前を登録できます。最大2名まで登録できます。</p><label>ご利用者1 フルネーム</label><input id="familyRegisteredName1" placeholder="例：山田 太郎" autocomplete="name"><label>ご利用者2 フルネーム</label><input id="familyRegisteredName2" placeholder="例：山田 花子" autocomplete="name"><button id="saveFamilyUsers" class="btn" type="button">保存する</button></section>
+  <section id="familyUsersCard" class="card hidden" style="margin-bottom:18px"><p class="eyebrow">ファミリープラン</p><h2>ご利用者登録</h2><p class="small">予約時に利用する方のお名前を登録できます。登録人数に制限はありません。予約時は最大2名まで選択・入力できます。</p><div id="familyUserList"></div><button id="addFamilyUser" class="ghost" type="button" style="margin-top:10px;min-height:44px">＋ ご利用者を追加</button><button id="saveFamilyUsers" class="btn" type="button">保存する</button></section>
   <section class="card" style="margin-bottom:18px"><p class="eyebrow">利用実績</p><h2>これまでの利用状況</h2><div id="usageSummary" class="metric-grid"></div><div id="usageHistory" class="history-bars"></div></section>
   <nav class="tabs"><button class="tab active" data-tab="booking">予約する</button><button class="tab" data-tab="mine">自分の予約</button><button class="tab" id="logout">ログアウト</button></nav>
   <section id="bookingTab" class="panel"><div class="head"><div><p class="eyebrow">予約カレンダー</p><h2>予約カレンダー</h2><p class="small">週を切り替えて、空いている枠を予約できます。</p></div><div class="legend"><span><i class="dot a"></i>空き</span><span><i class="dot b"></i>予約不可</span><span><i class="dot m"></i>自分の予約</span><span><i class="dot c"></i>受付終了</span></div></div><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn" style="margin:0;min-height:44px">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><div class="filter hidden" aria-hidden="true" style="display:none"><label style="margin:0">表示時間帯<select id="timeFilter"><option value="all" selected>すべて</option><option value="morning">朝 5:00〜11:00</option><option value="day">昼 11:00〜17:00</option><option value="night">夜 17:00〜23:00</option><option value="midnight">深夜 23:00〜5:00</option></select></label></div><div id="calendar"></div></section>
@@ -56,7 +56,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js?v=42"></script>
 <script src="./fs-member-supabase.js?v=45"></script>
-<script src="./family-users-v45.js?v=45"></script>
+<script src="./family-users-v46.js?v=46"></script>
 <script src="./member-calendar-cancel.js?v=41"></script>
 <script src="./member-main-tabs.js?v=41"></script>
 <script src="./member-daily-check.js?v=41"></script>
