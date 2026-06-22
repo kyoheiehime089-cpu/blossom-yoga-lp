@@ -51,33 +51,31 @@
       return;
     }
     const names=readNames();
+    const current1=String(n1?.value||'').trim();
+    const current2=String(n2?.value||'').trim();
     if(standard)standard.classList.add('hidden');
     if(family)family.classList.remove('hidden');
     if(people)people.required=false;
-    if(n1){n1.innerHTML=optionList(names);n1.required=true;}
-    if(n2){n2.innerHTML=optionList(names);n2.required=false;}
+    if(n1){n1.innerHTML=optionList(names);n1.required=true;if(names.includes(current1))n1.value=current1;}
+    if(n2){n2.innerHTML=optionList(names);n2.required=false;if(names.includes(current2))n2.value=current2;}
   }
   async function submitFamilyReservation(form){
     const names=readNames();
     if(!names.length){toast('ご利用者登録がありません。先にホーム画面でご利用者を登録してください');return;}
+    const fdBefore=new FormData(form);
+    let n1=String(fdBefore.get('familyName1')||'').trim();
+    let n2=String(fdBefore.get('familyName2')||'').trim();
     ensureBookingFamilyFields();
     const fd=new FormData(form);
-    const n1=String(fd.get('familyName1')||'').trim();
-    const n2=String(fd.get('familyName2')||'').trim();
+    n1=String(fd.get('familyName1')||n1||'').trim();
+    n2=String(fd.get('familyName2')||n2||'').trim();
     const note=String(fd.get('note')||'');
     if(!n1){toast('利用する方1を選択してください');return;}
     if(!selectedSlot?.date||selectedSlot.startMinute==null){toast('予約枠情報を取得できませんでした。もう一度枠を選び直してください');return;}
     try{
       const client=window.supabase.createClient(window.FRIENDS_SUPABASE_URL,window.FRIENDS_SUPABASE_ANON_KEY);
       const people='利用者：'+[n1,n2].filter(Boolean).join('、');
-      const {data,error}=await client.rpc('fs_member_create_reservation',{
-        p_member_code:code(),
-        p_pin:pin(),
-        p_date:selectedSlot.date,
-        p_start_minute:selectedSlot.startMinute,
-        p_people:people,
-        p_note:note
-      });
+      const {data,error}=await client.rpc('fs_member_create_reservation',{p_member_code:code(),p_pin:pin(),p_date:selectedSlot.date,p_start_minute:selectedSlot.startMinute,p_people:people,p_note:note});
       if(error){toast(error.message||'予約に失敗しました');return;}
       if(!data?.ok){toast(data?.error||'予約に失敗しました');return;}
       $('#dialog')?.close();
@@ -127,9 +125,5 @@
     }
   },true);
   const mo=new MutationObserver(()=>{setupFamilyCard();watchDialog();});
-  document.addEventListener('DOMContentLoaded',()=>{
-    setupFamilyCard();
-    watchDialog();
-    mo.observe(document.body,{childList:true,subtree:true,characterData:true});
-  });
+  document.addEventListener('DOMContentLoaded',()=>{setupFamilyCard();watchDialog();mo.observe(document.body,{childList:true,subtree:true,characterData:true});});
 })();
