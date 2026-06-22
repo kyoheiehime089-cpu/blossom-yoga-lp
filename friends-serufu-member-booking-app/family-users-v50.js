@@ -51,19 +51,24 @@
       return;
     }
     const names=readNames();
+    const current1=String(n1?.value||'').trim();
+    const current2=String(n2?.value||'').trim();
     if(standard)standard.classList.add('hidden');
     if(family)family.classList.remove('hidden');
     if(people)people.required=false;
-    if(n1){n1.innerHTML=optionList(names);n1.required=true;}
-    if(n2){n2.innerHTML=optionList(names);n2.required=false;}
+    if(n1){n1.innerHTML=optionList(names);n1.required=true;if(names.includes(current1))n1.value=current1;}
+    if(n2){n2.innerHTML=optionList(names);n2.required=false;if(names.includes(current2))n2.value=current2;}
   }
   async function submitFamilyReservation(form){
     const names=readNames();
     if(!names.length){toast('ご利用者登録がありません。先にホーム画面でご利用者を登録してください');return;}
+    const fdBefore=new FormData(form);
+    let n1=String(fdBefore.get('familyName1')||'').trim();
+    let n2=String(fdBefore.get('familyName2')||'').trim();
     ensureBookingFamilyFields();
     const fd=new FormData(form);
-    const n1=String(fd.get('familyName1')||'').trim();
-    const n2=String(fd.get('familyName2')||'').trim();
+    n1=String(fd.get('familyName1')||n1||'').trim();
+    n2=String(fd.get('familyName2')||n2||'').trim();
     const note=String(fd.get('note')||'');
     if(!n1){toast('利用する方1を選択してください');return;}
     if(!selectedSlot?.date||selectedSlot.startMinute==null){toast('予約枠情報を取得できませんでした。もう一度枠を選び直してください');return;}
