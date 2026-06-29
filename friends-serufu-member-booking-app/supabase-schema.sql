@@ -28,7 +28,7 @@ create table if not exists reservations (
   id uuid primary key default gen_random_uuid(),
   member_id uuid not null references members(id) on delete cascade,
   date date not null,
-  start_minute int not null check (start_minute >= 0 and start_minute <= 1390),
+  start_minute int not null check (start_minute >= 0 and start_minute <= 1400),
   people text not null default '1名',
   note text,
   created_by text not null default 'member',
@@ -44,7 +44,7 @@ where cancelled = false;
 create table if not exists closed_slots (
   id uuid primary key default gen_random_uuid(),
   date date not null,
-  start_minute int not null check (start_minute >= 0 and start_minute <= 1390),
+  start_minute int not null check (start_minute >= 0 and start_minute <= 1400),
   reason text,
   created_at timestamptz not null default now(),
   unique(date,start_minute)
