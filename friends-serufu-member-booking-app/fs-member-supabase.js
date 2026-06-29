@@ -28,11 +28,12 @@ const fmt = m => {
   m = Number(m);
   return m === 1440 ? '24:00' : pad(Math.floor(m / 60)) + ':' + pad(m % 60);
 };
+const fmtEnd = m => Number(m) === 1440 ? '翌0:00' : fmt(m);
 const jp = s => {
   const d = new Date(s + 'T00:00:00');
   return `${d.getMonth() + 1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`;
 };
-const slotRange = m => `${fmt(m)}〜${fmt(Number(m) + USE_MINUTES)}`;
+const slotRange = m => `${fmt(m)}〜${fmtEnd(Number(m) + USE_MINUTES)}`;
 const full = (d, m) => `${jp(d)} ${slotRange(m)}`;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
 
@@ -72,6 +73,13 @@ function start(d, m) {
   x.setMinutes(Number(m));
   return x;
 }
+function absStartMs(d, m) { return start(d, m).getTime(); }
+function absBlock(d, m, minutes = BLOCK_MINUTES) { const s = absStartMs(d, m); return [s, s + minutes * 60000]; }
+function absBlocksOverlap(aDate, aStart, aMinutes, bDate, bStart, bMinutes) {
+  const [as, ae] = absBlock(aDate, aStart, aMinutes);
+  const [bs, be] = absBlock(bDate, bStart, bMinutes);
+  return as < be && bs < ae;
+}
 function daysFrom(d) {
   const a = new Date(d + 'T00:00:00');
   const b = new Date();
@@ -97,12 +105,12 @@ function mine() { return [...(snap?.reservations || [])].sort(byStartAsc); }
 function booked(d, m) {
   const list = snap?.booked_slots || [];
   const exact = list.find(x => x.date === d && Number(x.start_minute) === Number(m));
-  return exact || list.find(x => x.date === d && sameBlock(m, x.start_minute));
+  return exact || list.find(x => absBlocksOverlap(d, m, BLOCK_MINUTES, x.date, x.start_minute, BLOCK_MINUTES));
 }
 function closed(d, m) {
   const list = snap?.closed_slots || [];
   const exact = list.find(x => x.date === d && Number(x.start_minute) === Number(m));
-  return exact || list.find(x => x.date === d && sameBlock(m, x.start_minute));
+  return exact || list.find(x => absBlocksOverlap(d, m, BLOCK_MINUTES, x.date, x.start_minute, BLOCK_MINUTES));
 }
 function future() { return mine().filter(r => start(r.date, r.start_minute) > new Date()).sort(byStartAsc); }
 function monthRes() { return mine().filter(r => String(r.date).slice(0, 7) === ym()); }

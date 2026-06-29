@@ -19,8 +19,9 @@ const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)];
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const fmtMin=m=>{m=Number(m);return m===1440?'24:00':pad(Math.floor(m/60))+':'+pad(m%60)};
+const fmtEnd=m=>Number(m)===1440?'翌0:00':fmtMin(m);
 const jp=s=>{let d=new Date(s+'T00:00:00'),w='日月火水木金土'[d.getDay()];return `${d.getMonth()+1}/${d.getDate()}（${w}）`};
-const slotRange=m=>`${fmtMin(m)}〜${fmtMin(Number(m)+USE_MINUTES)}`;
+const slotRange=m=>`${fmtMin(m)}〜${fmtEnd(Number(m)+USE_MINUTES)}`;
 const full=(d,m)=>`${jp(d)} ${slotRange(m)}`;
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const labelOrEmpty=s=>String(s||'').trim()||'未入力';
@@ -35,11 +36,13 @@ function holiday(d){return HOL.includes(d)}
 function blocks(d){let day=new Date(d+'T00:00:00').getDay();if(holiday(d))return[[510,820]];if(day===1)return[[510,610],[1080,1330]];if(day===2)return[[510,610],[720,820],[1080,1330]];if(day===3)return[[1080,1330]];if(day===4)return[[690,790],[1215,1315]];if(day===5)return[[1080,1330]];if(day===6||day===0)return[[460,820]];return[]}
 function conflict(d,m){let a=Number(m),b=a+BLOCK_MINUTES;return blocks(d).some(([s,e])=>a<e&&s<b)}
 function sameBlock(a,b){a=Number(a);b=Number(b);return a<b+BLOCK_MINUTES&&b<a+BLOCK_MINUTES}
+function absoluteStartMs(d,m){let x=new Date(d+'T00:00:00');x.setMinutes(Number(m));return x.getTime()}
+function absoluteBlocksOverlap(aDate,aStart,aMinutes,bDate,bStart,bMinutes){let as=absoluteStartMs(aDate,aStart),ae=as+aMinutes*60000,bs=absoluteStartMs(bDate,bStart),be=bs+bMinutes*60000;return as<be&&bs<ae}
 function overlapsRange(aStart,aEnd,bStart,bEnd){return Number(aStart)<Number(bEnd)&&Number(bStart)<Number(aEnd)}
-function hasReservation(d,m){return snap.reservations.some(r=>r.date===d&&sameBlock(m,r.start_minute))}
-function reservationAt(d,m){let list=snap.reservations.filter(r=>r.date===d),exact=list.find(r=>Number(r.start_minute)===Number(m));return exact||list.find(r=>sameBlock(m,r.start_minute))}
-function isClosed(d,m){return snap.closed_slots.some(c=>c.date===d&&sameBlock(m,c.start_minute))}
-function closedAt(d,m){let list=snap.closed_slots.filter(c=>c.date===d),exact=list.find(c=>Number(c.start_minute)===Number(m));return exact||list.find(c=>sameBlock(m,c.start_minute))}
+function hasReservation(d,m){return snap.reservations.some(r=>absoluteBlocksOverlap(d,m,BLOCK_MINUTES,r.date,r.start_minute,BLOCK_MINUTES))}
+function reservationAt(d,m){let list=snap.reservations,exact=list.find(r=>r.date===d&&Number(r.start_minute)===Number(m));return exact||list.find(r=>absoluteBlocksOverlap(d,m,BLOCK_MINUTES,r.date,r.start_minute,BLOCK_MINUTES))}
+function isClosed(d,m){return snap.closed_slots.some(c=>absoluteBlocksOverlap(d,m,BLOCK_MINUTES,c.date,c.start_minute,BLOCK_MINUTES))}
+function closedAt(d,m){let list=snap.closed_slots,exact=list.find(c=>c.date===d&&Number(c.start_minute)===Number(m));return exact||list.find(c=>absoluteBlocksOverlap(d,m,BLOCK_MINUTES,c.date,c.start_minute,BLOCK_MINUTES))}
 function externalBlockEnd(x){return Number(x.block_end_minute??Number(x.end_minute)+10)}
 function externalDisplayEnd(x){return Number(x.display_end_minute??x.end_minute)}
 function externalBlockAt(d,m){let s=Number(m),e=s+BLOCK_MINUTES;return (snap.external_blocks||[]).find(x=>x.date===d&&overlapsRange(s,e,x.start_minute,externalBlockEnd(x)))}
