@@ -32,7 +32,21 @@
   function renderList(snap) {
     const listEl = $('#yogaList');
     if (!listEl || !snap) return;
-    const list = [...(snap.external_blocks || [])].sort((a, b) => (String(a.date) + String(a.start_minute).padStart(4, '0')).localeCompare(String(b.date) + String(b.start_minute).padStart(4, '0')));
+    const list = [...(snap.external_blocks || [])].sort((a, b) => {
+      const da = String(a.date || '');
+      const db = String(b.date || '');
+      if (da !== db) return db.localeCompare(da);
+
+      const sa = Number(a.start_minute || 0);
+      const sb = Number(b.start_minute || 0);
+      if (sa !== sb) return sb - sa;
+
+      const ca = String(a.created_at || '');
+      const cb = String(b.created_at || '');
+      if (ca !== cb) return cb.localeCompare(ca);
+
+      return String(b.id || '').localeCompare(String(a.id || ''));
+    });
     listEl.innerHTML = list.length ? list.map((b) => {
       const end = Number(b.display_end_minute ?? b.end_minute);
       const name = String(b.member_name || '').trim() || '未入力';
