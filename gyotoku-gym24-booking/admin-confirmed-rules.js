@@ -28,16 +28,17 @@
     panel=document.createElement('div');panel.dataset.companionPanel=memberId;panel.className='res';panel.innerHTML='<p>読み込み中です...</p>';card.insertAdjacentElement('afterend',panel);
     try{panel.innerHTML=await companionPanel(memberId);button.textContent='同伴者欄を閉じる';}catch(e){panel.innerHTML=`<p>${escapeHtml(e.message)}</p>`;}
   }
-  const baseRenderMembers=window.renderMembers;
-  window.renderMembers=function(){
-    baseRenderMembers();
+  function decorateMemberCards(){
+    if(!window.snapshot?.members)return;
     snapshot.members.forEach(member=>{
       if(!['standard','premium'].includes(member.plan))return;
       const card=document.querySelector(`[data-member-card='${CSS.escape(member.id)}']`);
       if(!card||card.querySelector('[data-companions]'))return;
       const button=document.createElement('button');button.type='button';button.className='ghost';button.dataset.companions=member.id;button.textContent='同伴者を登録・編集';button.style.marginTop='10px';button.style.width='100%';card.appendChild(button);
     });
-  };
+  }
+  const observer=new MutationObserver(decorateMemberCards);
+  document.addEventListener('DOMContentLoaded',()=>{const members=document.querySelector('#members');if(members)observer.observe(members,{childList:true,subtree:true});setTimeout(decorateMemberCards,500);});
   document.addEventListener('click',event=>{const button=event.target.closest('[data-companions]');if(button)toggleCompanions(button.dataset.companions,button);});
   document.addEventListener('submit',async event=>{
     const add=event.target.closest('.companion-add'),edit=event.target.closest('.companion-edit');if(!add&&!edit)return;
