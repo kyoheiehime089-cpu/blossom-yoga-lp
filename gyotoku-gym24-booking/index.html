@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>行徳ジム24｜会員予約</title>
 <meta name="theme-color" content="#1f2a24">
-<link rel="stylesheet" href="./member-style.css?v=40">
+<link rel="stylesheet" href="./member-style.css?v=42">
 </head>
 <body>
 <div class="wrap">
@@ -20,6 +20,7 @@
     <section class="card"><p class="eyebrow">ログイン中</p><h2 id="memberName"></h2><div class="meta"><span id="memberPlan"></span><span id="memberQuota"></span><span id="extraSlots"></span></div><div style="margin-top:18px"><div style="display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:800"><span>今月の予約回数</span><strong id="usageText"></strong></div><div class="bar"><div id="usageBar"></div></div></div><div class="rules"></div></section>
     <section class="card"><p class="eyebrow">次回予約</p><div id="nextReservation" class="res"><p>現在、予約はありません。</p></div></section>
   </div>
+  <section id="companionManager" class="panel hidden"><p class="eyebrow">ホーム</p><h2>同伴者の登録</h2><p class="small">スタンダード・プレミアムプランでは、同伴者を2名まで登録できます。登録後、予約画面の利用者プルダウンに表示されます。</p><div id="companionList" class="list"></div></section>
   <nav class="tabs"><button class="tab active" data-tab="booking">予約する</button><button class="tab" data-tab="mine">自分の予約</button><button class="tab" id="logout">ログアウト</button></nav>
   <section id="bookingTab" class="panel"><div class="head"><div><p class="eyebrow">予約カレンダー</p><h2>予約カレンダー</h2><p class="small">日付を選び、開始時刻を10分単位で選択してください。</p></div></div><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn" style="margin:0;min-height:44px">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><div id="calendar"></div></section>
   <section id="mineTab" class="panel hidden"><p class="eyebrow">マイページ</p><h2>自分の予約</h2><div id="mine" class="list"></div></section>
@@ -31,6 +32,7 @@
 <div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-config.js?v=1"></script>
-<script src="./fs-member-supabase.js?v=40"></script>
+<script src="./fs-member-supabase.js?v=42"></script>
+<script src="./member-companions.js?v=1"></script>
 </body>
 </html>
