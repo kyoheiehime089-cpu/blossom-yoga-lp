@@ -2,3 +2,9 @@
 window.GYOTOKU_SUPABASE_URL = 'https://fplvstwmsewpqwrcsqrm.supabase.co';
 window.GYOTOKU_SUPABASE_ANON_KEY = 'sb_publishable_tp2GByyzV1A2Ltv52_XBuA_2xbd4Svw';
 window.GYOTOKU_SUPABASE_READY = Boolean(window.GYOTOKU_SUPABASE_URL && window.GYOTOKU_SUPABASE_ANON_KEY);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const script = document.createElement('script');
+  script.src = location.pathname.endsWith('/admin.html') ? './admin-hardening.js?v=1' : './member-hardening.js?v=1';
+  document.body.appendChild(script);
+});
