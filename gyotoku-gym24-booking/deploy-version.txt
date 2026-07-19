@@ -1,0 +1,2 @@
+gyotoku-gym24-booking deploy version 2026-07-19 19:00 JST
+plans: free, standard, premium
