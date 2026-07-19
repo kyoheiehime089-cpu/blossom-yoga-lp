@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>行徳ジム24｜管理者画面</title>
+<meta name="theme-color" content="#1f2a24">
+<link rel="stylesheet" href="./admin-style.css?v=39">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand"><div class="mark">24</div><div><p>管理者専用</p><h1>行徳ジム24</h1></div></div>
+  <div class="row"><a class="ghost" style="display:inline-flex;align-items:center;text-decoration:none" href="./yoga-private.html">ヨガ個別予約</a><a class="ghost" style="display:inline-flex;align-items:center;text-decoration:none" href="./">会員画面へ</a></div>
+</header>
+<main>
+<section id="loginView" class="hero">
+  <div class="hero-copy"><p class="eyebrow">管理者画面</p><h2>通知・予約・顧客管理</h2><p>会員・予約・利用不可枠を管理できます。</p></div>
+  <div class="panel"><h2>管理者ログイン</h2><p class="small">管理者パスコードを入力してください。</p><label>管理者パスコード</label><div class="row"><input id="adminPass" type="password" placeholder="パスコード"><button id="adminOpen" class="btn">開く</button></div></div>
+</section>
+<section id="adminView" class="hidden">
+  <nav class="tabs">
+    <button class="tab active" data-tab="dashboard">概要</button>
+    <button class="tab" data-tab="calendar">カレンダー</button>
+    <button class="tab" data-tab="customers">顧客管理</button>
+    <button class="tab" data-tab="requests">購入履歴<span id="purchaseBadge" class="badge"></span></button>
+    <button class="tab" data-tab="settings">利用不可</button>
+  </nav>
+  <section id="dashboardTab" class="panel"><p class="eyebrow">ダッシュボード</p><h2>全体状況</h2><div id="summary" class="summary-grid"></div><h3>購入通知</h3><div id="billingAlerts" class="list"></div><h3>今日の予約</h3><div id="todayReservations" class="list"></div></section>
+  <section id="calendarTab" class="panel hidden"><p class="eyebrow">カレンダー</p><h2>予約状況</h2><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><p class="small">空き枠をタップすると、管理者側で会員予約を入れる／利用不可で埋める操作ができます。</p><div id="calendarList" class="cal-list"></div></section>
+  <section id="customersTab" class="panel hidden"><p class="eyebrow">顧客管理</p><h2>会員追加・編集</h2><form id="addMember" class="mini"><label>会員名<input name="name" placeholder="例：山田 太郎" required></label><label>メールアドレス<input name="email" type="email" placeholder="例：sample@example.com" required></label><label>プラン<select name="plan"><option>月4回プラン</option><option>月8回プラン</option><option>通い放題プラン</option><option>ファミリー月4回プラン</option><option>ファミリー月8回プラン</option><option>ファミリー通い放題プラン</option></select></label><button class="btn">この画面で会員を追加</button></form><div id="generatedLogin" class="res hidden" style="margin-top:12px"></div><h3>会員一覧</h3><div id="members" class="list"></div></section>
+  <section id="requestsTab" class="panel hidden"><p class="eyebrow">購入履歴</p><h2>枠の購入履歴</h2><p class="small">購入履歴タブ右上の数字は、即時課金対応が未完了の件数です。</p><div id="requests" class="list"></div></section>
+  <section id="settingsTab" class="panel hidden"><p class="eyebrow">利用不可設定</p><h2>手動利用不可</h2><p class="small">基本はここで1枠ずつ埋めます。1日休業や長時間メンテナンスの時だけ、下の一括管理を使ってください。</p><form id="addClosed" class="mini"><input name="date" type="date" required><select name="start" required></select><input name="reason" placeholder="理由 例：清掃"><button class="btn">この枠を埋める</button></form><h3>利用不可一覧</h3><div id="closed" class="list"></div><button id="reset" class="danger hidden" style="margin-top:14px;width:100%">デモデータ初期化</button></section>
+</section>
+</main>
+<footer class="footer">行徳ジム24｜管理者専用画面</footer>
+</div>
+<dialog id="adminSlotDialog" class="modal"><form id="adminSlotForm"><button class="close" type="button">×</button><p class="eyebrow">カレンダー操作</p><h2 id="adminSlotTitle">枠の操作</h2><label>操作内容</label><select name="action" id="slotAction"><option value="reserve">会員の予約を入れる</option><option value="close">予約枠を埋める</option></select><div id="reserveFields"><label>会員</label><select name="memberId" id="slotMemberSelect"></select><label>利用人数</label><input name="people" type="number" min="1" value="1" inputmode="numeric"><label>メモ</label><textarea name="note" rows="3" placeholder="例：管理者が代理予約"></textarea></div><div id="closeFields" class="hidden"><label>利用不可理由</label><input name="reason" placeholder="例：清掃・メンテナンス・予備枠"></div><button class="btn">確定する</button></form></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js?v=42"></script>
+<script src="./admin-script.js?v=52"></script>
+<script src="./admin-day-status-v1.js?v=1"></script>
+<script src="./admin-cancel-confirm.js?v=41"></script>
+<script src="./admin-safety-actions.js?v=41"></script>
+<script src="./admin-feedback.js?v=41"></script>
+<script src="./admin-bulk-close.js?v=41"></script>
+<script src="./admin-override-v19.js?v=42"></script>
+<script src="./admin-daily-check.js?v=41"></script>
+<script src="./admin-login-memory-v41.js?v=42"></script> <script src="./admin-today-yoga-v43.js?v=43"></script>
+</body>
+</html>
