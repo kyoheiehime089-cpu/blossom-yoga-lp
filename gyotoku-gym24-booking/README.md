@@ -1,46 +1,22 @@
-# friendsセルフ 会員予約アプリ
+# 行徳ジム24 会員予約アプリ
 
-GitHub Pagesで公開するために、既存の `blossom-yoga-lp` リポジトリ内にサブフォルダとして追加した会員用予約アプリです。
+会員向け予約画面と管理画面を、行徳ジム24専用の `fs_*` Supabase構成で提供します。
 
 ## 公開URL
 
-GitHub Pagesが有効な場合、以下のURLで開けます。
+- 会員画面: https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/gyotoku-gym24-booking/
+- 管理画面: https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/gyotoku-gym24-booking/admin.html
 
-https://kyoheiehime089-cpu.github.io/blossom-yoga-lp/friends-serufu-member-booking-app/
+## Supabase
 
-## 仕様
+接続先は `https://fplvstwmsewpqwrcsqrm.supabase.co` の1つだけです。
 
-- friendsセルフ表記で統一
-- 月回数制
-- 1回60分枠
-- 利用50分＋入替10分
-- お連れ様1名まで無料
-- セミパーソナル・ヨガの時間はカレンダーに表示しない
-- 当日10:00以降は当日分の予約不可
-- 週切り替え対応
-- 自分の予約確認・キャンセル対応
-- 管理者画面あり
+初回はSupabase SQL Editorで `supabase-setup-gyotoku-gym24-v1.sql` を実行し、既存環境には続けて `supabase-final-migration.sql` を実行します。テーブルはRLSを有効にし、公開画面からは認証情報を受け取るRPCだけを実行します。
 
-## セミパーソナル・ヨガの予約不可時間
+## プラン
 
-60分予約枠が以下と重なる場合、カレンダーに表示されません。
+- 無料プラン: 1回25分、月4回まで、同時予約1枠、同日1枠、14日先まで。大人2名は不可です。
+- スタンダードプラン: 月4,800円、1回40分、月6回まで、同時予約1枠、同日1枠、14日先まで。大人2名は2枠消化です。
+- プレミアムプラン: 管理画面で選択できますが、具体仕様は未確定です。仕様を設定するまで予約は受け付けません。
 
-- 平日ヨガ：12:00〜12:40
-- 平日セミパーソナル：18:30〜21:40
-- 土日祝ヨガ：9:00〜9:40
-- 土日祝セミパーソナル：10:00〜13:10
-
-## サンプルログイン
-
-- FS001 / 1234：月4回プラン
-- FS002 / 5678：月8回プラン
-- FS003 / 9999：ファミリープラン
-
-## 管理者ログイン
-
-- 初期パスコード：1111
-
-## 注意
-
-この版は静的アプリです。予約データはブラウザの localStorage に保存されます。
-本番運用では、Supabase、Firebase、Googleスプレッドシート＋Apps Scriptなどのデータ保存先が必要です。
+予約可能時間、月回数、人数、同時予約、同日予約、予約締切、キャンセル締切はSupabase RPCでも検証します。

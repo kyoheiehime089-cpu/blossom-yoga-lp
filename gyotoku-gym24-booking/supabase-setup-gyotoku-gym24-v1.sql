@@ -1,111 +1,256 @@
--- gyotoku-gym24-booking initial setup. Run once in the new project's SQL Editor.
--- Compatibility policy B: this creates isolated fs_* tables. It never reads or writes g24_* tables.
--- No Supabase URL, publishable key, or secret key is stored in this file.
+-- 行徳ジム24予約アプリの初期構成。対象は fs_* テーブルだけです。
+-- Supabase SQL Editorで一度実行し、以後の変更は supabase-final-migration.sql を実行します。
 
 create extension if not exists pgcrypto;
 
-create table if not exists public.fs_app_settings (key text primary key, value text not null);
-insert into public.fs_app_settings(key,value) values
-  ('admin_password','1111'),('purchase_enabled','true') on conflict (key) do nothing;
+create table if not exists public.fs_app_settings (
+  key text primary key,
+  value text not null
+);
+insert into public.fs_app_settings(key, value)
+values ('admin_password', '1111')
+on conflict (key) do nothing;
 
 create table if not exists public.fs_plan_settings (
-  plan_code text primary key,
-  monthly_price integer not null,
+  plan_code text primary key check (plan_code in ('free', 'standard', 'premium')),
+  monthly_price integer not null default 0,
   monthly_quota integer,
-  use_minutes integer not null,
-  adults_allowed integer not null,
-  two_adult_cost integer not null,
-  concurrent_limit integer not null,
-  daily_limit integer not null,
-  booking_days integer not null,
-  booking_deadline_minutes integer not null,
-  cancellation_deadline_minutes integer not null,
-  check (plan_code in ('free','standard','premium')),
+  use_minutes integer not null default 0,
+  adults_allowed integer not null default 0,
+  two_adult_cost integer not null default 0,
+  concurrent_limit integer not null default 0,
+  daily_limit integer not null default 0,
+  booking_days integer not null default 0,
+  booking_deadline_minutes integer not null default 0,
+  cancellation_deadline_minutes integer not null default 0,
+  is_configured boolean not null default false,
   check (monthly_quota is null or monthly_quota >= 0)
 );
-insert into public.fs_plan_settings values
-  ('free',0,4,25,1,1,1,1,7,120,180),
-  ('standard',4800,6,40,2,2,2,2,14,120,180),
-  ('premium',19800,null,40,2,1,2,1,14,120,180)
-on conflict (plan_code) do update set monthly_price=excluded.monthly_price, monthly_quota=excluded.monthly_quota, use_minutes=excluded.use_minutes, adults_allowed=excluded.adults_allowed, two_adult_cost=excluded.two_adult_cost, concurrent_limit=excluded.concurrent_limit, daily_limit=excluded.daily_limit, booking_days=excluded.booking_days, booking_deadline_minutes=excluded.booking_deadline_minutes, cancellation_deadline_minutes=excluded.cancellation_deadline_minutes;
+alter table public.fs_plan_settings add column if not exists is_configured boolean not null default false;
+insert into public.fs_plan_settings(plan_code, monthly_price, monthly_quota, use_minutes, adults_allowed, two_adult_cost, concurrent_limit, daily_limit, booking_days, booking_deadline_minutes, cancellation_deadline_minutes, is_configured)
+values
+  ('free', 0, 4, 25, 1, 1, 1, 1, 14, 120, 180, true),
+  ('standard', 4800, 6, 40, 2, 2, 1, 1, 14, 120, 180, true),
+  ('premium', 0, null, 0, 0, 0, 0, 0, 0, 0, 0, false)
+on conflict (plan_code) do update set
+  monthly_price = excluded.monthly_price,
+  monthly_quota = excluded.monthly_quota,
+  use_minutes = excluded.use_minutes,
+  adults_allowed = excluded.adults_allowed,
+  two_adult_cost = excluded.two_adult_cost,
+  concurrent_limit = excluded.concurrent_limit,
+  daily_limit = excluded.daily_limit,
+  booking_days = excluded.booking_days,
+  booking_deadline_minutes = excluded.booking_deadline_minutes,
+  cancellation_deadline_minutes = excluded.cancellation_deadline_minutes,
+  is_configured = excluded.is_configured;
 
 create table if not exists public.fs_members (
- id uuid primary key default gen_random_uuid(), member_code text not null, name text not null,
- email text, pin text not null, plan text not null default 'free' check (plan in ('free','standard','premium')),
- status text not null default 'active' check (status in ('active','suspended','deleted')), created_at timestamptz not null default now()
+  id uuid primary key default gen_random_uuid(),
+  member_code text not null,
+  name text not null,
+  email text,
+  pin text not null,
+  plan text not null default 'free' check (plan in ('free', 'standard', 'premium')),
+  status text not null default 'active' check (status in ('active', 'suspended', 'deleted')),
+  created_at timestamptz not null default now()
 );
-create unique index if not exists fs_members_active_code_uq on public.fs_members (upper(member_code)) where status='active';
-create unique index if not exists fs_members_active_email_uq on public.fs_members (lower(email)) where status='active' and email is not null and email<>'';
+create unique index if not exists fs_members_active_code_uq on public.fs_members (upper(member_code)) where status = 'active';
+create unique index if not exists fs_members_active_email_uq on public.fs_members (lower(email)) where status = 'active' and email is not null and email <> '';
+
 create table if not exists public.fs_reservations (
- id uuid primary key default gen_random_uuid(), member_id uuid not null references public.fs_members(id) on delete cascade,
- date date not null, start_minute integer not null check(start_minute between 0 and 1400 and start_minute % 10=0),
- people text not null default '1名', note text, created_by text not null default 'member', cancelled boolean not null default false,
- created_at timestamptz not null default now(), cancelled_at timestamptz
+  id uuid primary key default gen_random_uuid(),
+  member_id uuid not null references public.fs_members(id) on delete cascade,
+  date date not null,
+  start_minute integer not null check (start_minute between 0 and 1400 and start_minute % 10 = 0),
+  people text not null default '1名',
+  note text,
+  created_by text not null default 'member',
+  cancelled boolean not null default false,
+  created_at timestamptz not null default now(),
+  cancelled_at timestamptz
 );
 create table if not exists public.fs_closed_slots (
- id uuid primary key default gen_random_uuid(), date date not null, start_minute integer not null check(start_minute between 0 and 1400 and start_minute % 10=0), reason text, created_at timestamptz not null default now()
+  id uuid primary key default gen_random_uuid(),
+  date date not null,
+  start_minute integer not null check (start_minute between 0 and 1400 and start_minute % 10 = 0),
+  reason text,
+  created_at timestamptz not null default now()
 );
-create table if not exists public.fs_slot_purchases (
- id uuid primary key default gen_random_uuid(), member_id uuid not null references public.fs_members(id) on delete cascade,
- month text not null, price integer not null default 3000, slots integer not null default 1, billing_status text not null default 'unconfirmed', created_at timestamptz not null default now(), billing_completed_at timestamptz
-);
-create table if not exists public.fs_external_blocks (
- id uuid primary key default gen_random_uuid(), date date not null, start_minute integer not null check(start_minute between 0 and 1430 and start_minute % 10=0), end_minute integer not null check(end_minute between 10 and 1440 and end_minute % 10=0 and end_minute>start_minute),
- source text not null default 'yoga_private', title text, member_name text, instructor_name text, note text, created_by text, created_at timestamptz not null default now()
-);
--- Condition-check data is intentionally separate from reservations and uses the same UUID member key.
-create table if not exists public.fs_daily_answers (
- id uuid primary key default gen_random_uuid(), member_id uuid not null references public.fs_members(id) on delete cascade,
- question_key text not null, option_key text not null, created_at timestamptz not null default now()
-);
-create index if not exists fs_reservations_active_date_idx on public.fs_reservations(date,start_minute) where not cancelled;
-create index if not exists fs_closed_slots_date_idx on public.fs_closed_slots(date,start_minute);
-create index if not exists fs_external_blocks_date_idx on public.fs_external_blocks(date,start_minute);
+create index if not exists fs_reservations_active_date_idx on public.fs_reservations(date, start_minute) where not cancelled;
+create index if not exists fs_closed_slots_date_idx on public.fs_closed_slots(date, start_minute);
 
-alter table public.fs_app_settings enable row level security; alter table public.fs_plan_settings enable row level security; alter table public.fs_members enable row level security; alter table public.fs_reservations enable row level security; alter table public.fs_closed_slots enable row level security; alter table public.fs_slot_purchases enable row level security; alter table public.fs_external_blocks enable row level security;
-alter table public.fs_daily_answers enable row level security;
+alter table public.fs_app_settings enable row level security;
+alter table public.fs_plan_settings enable row level security;
+alter table public.fs_members enable row level security;
+alter table public.fs_reservations enable row level security;
+alter table public.fs_closed_slots enable row level security;
 
-create or replace function public.fs_is_admin(p_admin_password text) returns boolean language sql security definer set search_path=public as $$ select exists(select 1 from fs_app_settings where key='admin_password' and value=p_admin_password) $$;
-create or replace function public.fs_member_by_login(p_member_code text,p_pin text) returns public.fs_members language sql security definer set search_path=public as $$ select * from fs_members where upper(member_code)=upper(p_member_code) and pin=p_pin and status='active' limit 1 $$;
-create or replace function public.fs_plan_quota(p_plan text) returns integer language sql stable security definer set search_path=public as $$ select monthly_quota from fs_plan_settings where plan_code=p_plan $$;
-create or replace function public.fs_is_unlimited_plan(p_plan text) returns boolean language sql stable security definer set search_path=public as $$ select coalesce((select monthly_quota is null from fs_plan_settings where plan_code=p_plan),false) $$;
-create or replace function public.fs_extra_slots(p_member_id uuid,p_month text) returns integer language sql security definer set search_path=public as $$ select coalesce(sum(slots),0)::integer from fs_slot_purchases where member_id=p_member_id and month=p_month and billing_status<>'cancelled' $$;
-create or replace function public.fs_range_overlaps(a integer,b integer,c integer,d integer) returns boolean language sql immutable as $$ select a<d and c<b $$;
-create or replace function public.fs_self_block_overlaps(p_date date,p_start_minute integer,p_block_minutes integer,p_existing_date date,p_existing_start_minute integer,p_existing_block_minutes integer) returns boolean language sql immutable as $$ select (p_date::timestamp+make_interval(mins=>p_start_minute)) < (p_existing_date::timestamp+make_interval(mins=>p_existing_start_minute+p_existing_block_minutes)) and (p_existing_date::timestamp+make_interval(mins=>p_existing_start_minute)) < (p_date::timestamp+make_interval(mins=>p_start_minute+p_block_minutes)) $$;
-create or replace function public.fs_self_reservation_overlaps(p_date date,p_start_minute integer,p_end_minute integer,p_ignore_reservation_id uuid default null) returns boolean language sql security definer set search_path=public as $$ select exists(select 1 from fs_reservations r where not r.cancelled and (p_ignore_reservation_id is null or r.id<>p_ignore_reservation_id) and r.date between p_date-1 and p_date+1 and fs_self_block_overlaps(p_date,p_start_minute,p_end_minute-p_start_minute,r.date,r.start_minute,50)) $$;
-create or replace function public.fs_closed_slot_overlaps(p_date date,p_start_minute integer,p_end_minute integer) returns boolean language sql security definer set search_path=public as $$ select exists(select 1 from fs_closed_slots c where c.date between p_date-1 and p_date+1 and fs_self_block_overlaps(p_date,p_start_minute,p_end_minute-p_start_minute,c.date,c.start_minute,50)) $$;
-create or replace function public.fs_external_block_overlaps(p_date date,p_start_minute integer,p_end_minute integer) returns boolean language sql security definer set search_path=public as $$ select exists(select 1 from fs_external_blocks b where b.date=p_date and fs_range_overlaps(p_start_minute,p_end_minute,b.start_minute,least(1440,b.end_minute+10))) $$;
+create or replace function public.fs_is_admin(p_admin_password text)
+returns boolean language sql security definer set search_path = public as $$
+  select exists(select 1 from fs_app_settings where key = 'admin_password' and value = p_admin_password)
+$$;
 
-create or replace function public.fs_member_snapshot(p_member_code text,p_pin text) returns jsonb language plpgsql security definer set search_path=public as $$
-declare m fs_members; q integer; ex integer; begin select * into m from fs_member_by_login(p_member_code,p_pin); if m.id is null then return jsonb_build_object('ok',false,'error','会員IDまたはPINが違います。'); end if; ex:=fs_extra_slots(m.id,to_char(current_date,'YYYY-MM')); q:=coalesce(fs_plan_quota(m.plan),0)+ex; return jsonb_build_object('ok',true,'purchase_enabled',coalesce((select value='true' from fs_app_settings where key='purchase_enabled'),true),'member',jsonb_build_object('id',m.id,'member_code',m.member_code,'name',m.name,'email',m.email,'pin',m.pin,'plan',m.plan,'quota',q,'base_quota',fs_plan_quota(m.plan),'extra_slots',ex,'monthly_limit',not fs_is_unlimited_plan(m.plan)),'reservations',coalesce((select jsonb_agg(jsonb_build_object('id',id,'date',date,'start_minute',start_minute,'people',people,'note',note,'created_at',created_at) order by date,start_minute) from fs_reservations where member_id=m.id and not cancelled),'[]'),'booked_slots',coalesce((select jsonb_agg(jsonb_build_object('date',date,'start_minute',start_minute,'is_mine',member_id=m.id) order by date,start_minute) from fs_reservations where not cancelled),'[]'),'closed_slots',coalesce((select jsonb_agg(to_jsonb(c) order by date,start_minute) from fs_closed_slots c),'[]'),'external_blocks',coalesce((select jsonb_agg(jsonb_build_object('id',id,'date',date,'start_minute',start_minute,'end_minute',end_minute,'display_end_minute',end_minute,'block_end_minute',least(1440,end_minute+10),'source',source,'title','予約不可') order by date,start_minute) from fs_external_blocks),'[]'),'purchases',coalesce((select jsonb_agg(to_jsonb(p) order by created_at desc) from fs_slot_purchases p where member_id=m.id),'[]')); end $$;
-create or replace function public.fs_member_apps_snapshot(p_member_code text,p_pin text) returns jsonb language sql security definer set search_path=public as $$ select fs_member_snapshot(p_member_code,p_pin) $$;
+create or replace function public.fs_member_by_login(p_member_code text, p_pin text)
+returns public.fs_members language sql security definer set search_path = public as $$
+  select * from fs_members where upper(member_code) = upper(p_member_code) and pin = p_pin and status = 'active' and plan in ('free', 'standard', 'premium') limit 1
+$$;
 
-create or replace function public.fs_member_create_reservation(p_member_code text,p_pin text,p_date date,p_start_minute integer,p_people text,p_note text default '') returns jsonb language plpgsql security definer set search_path=public as $$
-declare m fs_members; s fs_plan_settings; start_ts timestamp; cost integer:=1; used integer; begin select * into m from fs_member_by_login(p_member_code,p_pin); if m.id is null then return jsonb_build_object('ok',false,'error','ログイン情報が違います。'); end if; select * into s from fs_plan_settings where plan_code=m.plan; start_ts:=p_date::timestamp+make_interval(mins=>p_start_minute); if p_start_minute not between 0 and 1400 or p_start_minute%10<>0 then return jsonb_build_object('ok',false,'error','開始時刻は10分単位です。'); end if; if p_date<current_date or p_date>=current_date+s.booking_days then return jsonb_build_object('ok',false,'error','予約可能期間外です。'); end if; if start_ts<=now()+make_interval(mins=>s.booking_deadline_minutes) then return jsonb_build_object('ok',false,'error','予約は開始時刻の2時間前までです。'); end if; if p_people like '2%' then if s.adults_allowed<2 then return jsonb_build_object('ok',false,'error','このプランは大人2名利用できません。'); end if; cost:=s.two_adult_cost; end if; if fs_closed_slot_overlaps(p_date,p_start_minute,p_start_minute+s.use_minutes+10) or fs_external_block_overlaps(p_date,p_start_minute,p_start_minute+s.use_minutes+10) or fs_self_reservation_overlaps(p_date,p_start_minute,p_start_minute+s.use_minutes+10) then return jsonb_build_object('ok',false,'error','この時間は予約できません。'); end if; if (select count(*) from fs_reservations where member_id=m.id and not cancelled and date::timestamp+make_interval(mins=>start_minute)>now())>=s.concurrent_limit then return jsonb_build_object('ok',false,'error','同時予約上限に達しています。'); end if; if (select count(*) from fs_reservations where member_id=m.id and not cancelled and date=p_date)>=s.daily_limit then return jsonb_build_object('ok',false,'error','同日予約上限に達しています。'); end if; used:=(select coalesce(sum(case when people like '2%' then (select two_adult_cost from fs_plan_settings where plan_code=m.plan) else 1 end),0) from fs_reservations where member_id=m.id and not cancelled and to_char(date,'YYYY-MM')=to_char(p_date,'YYYY-MM')); if s.monthly_quota is not null and used+cost>s.monthly_quota+fs_extra_slots(m.id,to_char(p_date,'YYYY-MM')) then return jsonb_build_object('ok',false,'error','今月の予約上限に達しています。'); end if; insert into fs_reservations(member_id,date,start_minute,people,note,created_by) values(m.id,p_date,p_start_minute,coalesce(nullif(p_people,''),'1名'),p_note,'member'); return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_member_cancel_reservation(p_member_code text,p_pin text,p_reservation_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ declare m fs_members; r fs_reservations; begin select * into m from fs_member_by_login(p_member_code,p_pin); select * into r from fs_reservations where id=p_reservation_id and member_id=m.id and not cancelled; if m.id is null or r.id is null then return jsonb_build_object('ok',false,'error','予約が見つかりません。'); end if; if r.date::timestamp+make_interval(mins=>r.start_minute)<=now()+interval '180 minutes' then return jsonb_build_object('ok',false,'error','キャンセルは開始時刻の3時間前までです。'); end if; update fs_reservations set cancelled=true,cancelled_at=now() where id=r.id; return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_member_purchase_slot(p_member_code text,p_pin text) returns jsonb language plpgsql security definer set search_path=public as $$ declare m fs_members; begin select * into m from fs_member_by_login(p_member_code,p_pin); if m.id is null then return jsonb_build_object('ok',false,'error','ログイン情報が違います。'); end if; if coalesce((select value='true' from fs_app_settings where key='purchase_enabled'),true)=false then return jsonb_build_object('ok',false,'error','現在、追加枠の購入は停止中です。'); end if; insert into fs_slot_purchases(member_id,month) values(m.id,to_char(current_date,'YYYY-MM')); return jsonb_build_object('ok',true); end $$;
+create or replace function public.fs_plan_quota(p_plan text)
+returns integer language sql stable security definer set search_path = public as $$
+  select monthly_quota from fs_plan_settings where plan_code = p_plan
+$$;
 
-create or replace function public.fs_admin_snapshot(p_admin_password text) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; return jsonb_build_object('ok',true,'purchase_enabled',coalesce((select value='true' from fs_app_settings where key='purchase_enabled'),true),'members',coalesce((select jsonb_agg(to_jsonb(m) order by created_at desc) from fs_members m where status='active'),'[]'),'reservations',coalesce((select jsonb_agg(jsonb_build_object('id',r.id,'member_id',r.member_id,'member_name',m.name,'member_code',m.member_code,'plan',m.plan,'date',r.date,'start_minute',r.start_minute,'people',r.people,'note',r.note,'created_by',r.created_by,'created_at',r.created_at,'cancelled',r.cancelled) order by r.date,r.start_minute) from fs_reservations r join fs_members m on m.id=r.member_id where not r.cancelled),'[]'),'closed_slots',coalesce((select jsonb_agg(to_jsonb(c) order by date,start_minute) from fs_closed_slots c),'[]'),'external_blocks',coalesce((select jsonb_agg(to_jsonb(b) order by date,start_minute) from fs_external_blocks b),'[]'),'purchases',coalesce((select jsonb_agg(jsonb_build_object('id',p.id,'member_id',p.member_id,'member_name',m.name,'member_code',m.member_code,'plan',m.plan,'month',p.month,'price',p.price,'slots',p.slots,'billing_status',p.billing_status,'created_at',p.created_at,'billing_completed_at',p.billing_completed_at) order by p.created_at desc) from fs_slot_purchases p join fs_members m on m.id=p.member_id),'[]')); end $$;
-create or replace function public.fs_admin_create_member(p_admin_password text,p_name text,p_email text,p_plan text) returns jsonb language plpgsql security definer set search_path=public as $$ declare n integer:=1; c text; m fs_members; begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; if p_plan not in ('free','standard','premium') then return jsonb_build_object('ok',false,'error','プランが不正です。'); end if; loop c:='FS'||lpad(n::text,3,'0'); exit when not exists(select 1 from fs_members where upper(member_code)=c and status='active'); n:=n+1; end loop; insert into fs_members(member_code,name,email,pin,plan) values(c,p_name,nullif(p_email,''),(floor(random()*9000)+1000)::integer::text,p_plan) returning * into m; return jsonb_build_object('ok',true,'member',to_jsonb(m)); end $$;
-create or replace function public.fs_admin_update_member(p_admin_password text,p_member_id uuid,p_name text,p_email text,p_pin text,p_plan text) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; update fs_members set name=p_name,email=nullif(p_email,''),pin=p_pin,plan=p_plan where id=p_member_id and status='active'; return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_delete_member(p_admin_password text,p_member_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; if exists(select 1 from fs_reservations where member_id=p_member_id and not cancelled) then return jsonb_build_object('ok',false,'error','この会員には予約が残っています。'); end if; update fs_members set status='deleted' where id=p_member_id; return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_create_reservation(p_admin_password text,p_member_id uuid,p_date date,p_start_minute integer,p_people text,p_note text default '') returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; if fs_self_reservation_overlaps(p_date,p_start_minute,p_start_minute+50) then return jsonb_build_object('ok',false,'error','この時間は予約済みです。'); end if; insert into fs_reservations(member_id,date,start_minute,people,note,created_by) values(p_member_id,p_date,p_start_minute,coalesce(nullif(p_people,''),'1名'),p_note,'admin'); return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_cancel_reservation(p_admin_password text,p_reservation_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; update fs_reservations set cancelled=true,cancelled_at=now() where id=p_reservation_id; return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_close_slot(p_admin_password text,p_date date,p_start_minute integer,p_reason text default '') returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; if fs_self_reservation_overlaps(p_date,p_start_minute,p_start_minute+50) then return jsonb_build_object('ok',false,'error','予約済み枠は停止できません。'); end if; insert into fs_closed_slots(date,start_minute,reason) values(p_date,p_start_minute,p_reason); return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_open_slot(p_admin_password text,p_closed_slot_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; delete from fs_closed_slots where id=p_closed_slot_id; return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_grant_slot(p_admin_password text,p_member_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; insert into fs_slot_purchases(member_id,month,price,slots,billing_status) values(p_member_id,to_char(current_date,'YYYY-MM'),0,1,'granted'); return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_admin_mark_purchase_billed(p_admin_password text,p_purchase_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; update fs_slot_purchases set billing_status='completed',billing_completed_at=now() where id=p_purchase_id; return jsonb_build_object('ok',true); end $$;
+create or replace function public.fs_is_unlimited_plan(p_plan text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce((select monthly_quota is null from fs_plan_settings where plan_code = p_plan), false)
+$$;
 
-create or replace function public.fs_yoga_private_snapshot(p_admin_password text) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','パスコードが違います。'); end if; return jsonb_build_object('ok',true,'reservations',coalesce((select jsonb_agg(jsonb_build_object('id',id,'date',date,'start_minute',start_minute) order by date,start_minute) from fs_reservations where not cancelled),'[]'),'closed_slots',coalesce((select jsonb_agg(to_jsonb(c) order by date,start_minute) from fs_closed_slots c),'[]'),'external_blocks',coalesce((select jsonb_agg(jsonb_build_object('id',id,'date',date,'start_minute',start_minute,'end_minute',end_minute,'display_end_minute',end_minute,'block_end_minute',least(1440,end_minute+10),'source',source,'title',title,'member_name',member_name,'instructor_name',instructor_name,'note',note,'created_at',created_at,'created_by',created_by) order by date,start_minute) from fs_external_blocks where source='yoga_private'),'[]')); end $$;
-create or replace function public.fs_yoga_private_create(p_admin_password text,p_date date,p_start_minute integer,p_end_minute integer,p_member_name text default '',p_instructor_name text default '',p_note text default '') returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','パスコードが違います。'); end if; if p_start_minute<0 or p_start_minute>1430 or p_end_minute<=p_start_minute or p_end_minute>1440 or p_start_minute%10<>0 or p_end_minute%10<>0 then return jsonb_build_object('ok',false,'error','開始・終了時間は10分単位です。'); end if; if fs_self_reservation_overlaps(p_date,p_start_minute,least(1440,p_end_minute+10)) or fs_closed_slot_overlaps(p_date,p_start_minute,least(1440,p_end_minute+10)) or fs_external_block_overlaps(p_date,p_start_minute,least(1440,p_end_minute+10)) then return jsonb_build_object('ok',false,'error','この時間は既存の予約と重なっています。'); end if; insert into fs_external_blocks(date,start_minute,end_minute,source,title,member_name,instructor_name,note,created_by) values(p_date,p_start_minute,p_end_minute,'yoga_private','ヨガ個別予約',nullif(btrim(p_member_name),''),nullif(btrim(p_instructor_name),''),nullif(btrim(p_note),''),'yoga_private'); return jsonb_build_object('ok',true); end $$;
-create or replace function public.fs_yoga_private_delete(p_admin_password text,p_external_block_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','パスコードが違います。'); end if; delete from fs_external_blocks where id=p_external_block_id and source='yoga_private'; return jsonb_build_object('ok',true); end $$;
+create or replace function public.fs_self_block_overlaps(p_date date, p_start_minute integer, p_block_minutes integer, p_existing_date date, p_existing_start_minute integer, p_existing_block_minutes integer)
+returns boolean language sql immutable as $$
+  select (p_date::timestamp + make_interval(mins => p_start_minute)) < (p_existing_date::timestamp + make_interval(mins => p_existing_start_minute + p_existing_block_minutes))
+    and (p_existing_date::timestamp + make_interval(mins => p_existing_start_minute)) < (p_date::timestamp + make_interval(mins => p_start_minute + p_block_minutes))
+$$;
 
--- The copied condition UI treats an empty question catalog as "preparing". These RPCs preserve
--- that response contract until questions and evidence are configured in a later dedicated setup.
-create or replace function public.fs_member_daily_check_snapshot(p_member_code text,p_pin text) returns jsonb language plpgsql security definer set search_path=public as $$ begin if (select id from fs_member_by_login(p_member_code,p_pin)) is null then return jsonb_build_object('ok',false,'error','ログイン情報が違います。'); end if; return jsonb_build_object('ok',true,'status','preparing','answered_today',false,'recent_advice','','monthly_themes','[]'::jsonb); end $$;
-create or replace function public.fs_member_submit_daily_answer(p_member_code text,p_pin text,p_question_key text,p_option_key text) returns jsonb language plpgsql security definer set search_path=public as $$ declare m fs_members; begin select * into m from fs_member_by_login(p_member_code,p_pin); if m.id is null then return jsonb_build_object('ok',false,'error','ログイン情報が違います。'); end if; insert into fs_daily_answers(member_id,question_key,option_key) values(m.id,p_question_key,p_option_key); return jsonb_build_object('ok',true,'already_answered',false); end $$;
-create or replace function public.fs_admin_daily_check_snapshot(p_admin_password text) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; return jsonb_build_object('ok',true,'answers','[]'::jsonb,'questions','[]'::jsonb); end $$;
-create or replace function public.fs_admin_member_daily_answers(p_admin_password text,p_member_id uuid) returns jsonb language plpgsql security definer set search_path=public as $$ begin if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false,'error','管理者パスコードが違います。'); end if; return jsonb_build_object('ok',true,'answers','[]'::jsonb,'monthly_tags','[]'::jsonb,'monthly_themes','[]'::jsonb); end $$;
+create or replace function public.fs_self_reservation_overlaps(p_date date, p_start_minute integer, p_end_minute integer, p_ignore_reservation_id uuid default null)
+returns boolean language sql security definer set search_path = public as $$
+  select exists(select 1 from fs_reservations r where not r.cancelled and (p_ignore_reservation_id is null or r.id <> p_ignore_reservation_id) and r.date between p_date - 1 and p_date + 1 and fs_self_block_overlaps(p_date, p_start_minute, p_end_minute - p_start_minute, r.date, r.start_minute, 50))
+$$;
+
+create or replace function public.fs_member_snapshot(p_member_code text, p_pin text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  m fs_members;
+  settings fs_plan_settings;
+begin
+  select * into m from fs_member_by_login(p_member_code, p_pin);
+  if m.id is null then return jsonb_build_object('ok', false, 'error', '会員IDまたはPINが違います。'); end if;
+  select * into settings from fs_plan_settings where plan_code = m.plan;
+  return jsonb_build_object(
+    'ok', true,
+    'member', jsonb_build_object('id', m.id, 'member_code', m.member_code, 'name', m.name, 'email', m.email, 'pin', m.pin, 'plan', m.plan, 'quota', settings.monthly_quota, 'base_quota', settings.monthly_quota, 'extra_slots', 0, 'monthly_limit', settings.monthly_quota is not null),
+    'plan_settings', to_jsonb(settings),
+    'reservations', coalesce((select jsonb_agg(jsonb_build_object('id', id, 'date', date, 'start_minute', start_minute, 'people', people, 'note', note, 'created_at', created_at) order by date, start_minute) from fs_reservations where member_id = m.id and not cancelled), '[]'),
+    'booked_slots', coalesce((select jsonb_agg(jsonb_build_object('date', date, 'start_minute', start_minute, 'is_mine', member_id = m.id) order by date, start_minute) from fs_reservations where not cancelled), '[]'),
+    'closed_slots', coalesce((select jsonb_agg(to_jsonb(c) order by date, start_minute) from fs_closed_slots c), '[]'),
+    'external_blocks', '[]'::jsonb
+  );
+end $$;
+
+create or replace function public.fs_member_apps_snapshot(p_member_code text, p_pin text)
+returns jsonb language sql security definer set search_path = public as $$ select fs_member_snapshot(p_member_code, p_pin) $$;
+
+create or replace function public.fs_member_create_reservation(p_member_code text, p_pin text, p_date date, p_start_minute integer, p_people text, p_note text default '')
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  m fs_members;
+  settings fs_plan_settings;
+  start_ts timestamp;
+  requested_people integer;
+  cost integer;
+  used integer;
+begin
+  select * into m from fs_member_by_login(p_member_code, p_pin);
+  if m.id is null then return jsonb_build_object('ok', false, 'error', 'ログイン情報が違います。'); end if;
+  select * into settings from fs_plan_settings where plan_code = m.plan;
+  if not coalesce(settings.is_configured, false) then return jsonb_build_object('ok', false, 'error', 'このプランの利用仕様は未確定です。'); end if;
+  if p_people not in ('1名', '2名') then return jsonb_build_object('ok', false, 'error', '利用人数が不正です。'); end if;
+  requested_people := case when p_people = '2名' then 2 else 1 end;
+  cost := case when requested_people = 2 then settings.two_adult_cost else 1 end;
+  if requested_people = 2 and settings.adults_allowed < 2 then return jsonb_build_object('ok', false, 'error', 'このプランは大人2名利用できません。'); end if;
+  if p_start_minute not between 0 and 1400 or p_start_minute % 10 <> 0 or p_start_minute + settings.use_minutes > 1440 then return jsonb_build_object('ok', false, 'error', '開始時刻が不正です。'); end if;
+  start_ts := p_date::timestamp + make_interval(mins => p_start_minute);
+  if p_date < current_date or p_date > current_date + settings.booking_days then return jsonb_build_object('ok', false, 'error', '予約可能期間外です。'); end if;
+  if start_ts <= now() + make_interval(mins => settings.booking_deadline_minutes) then return jsonb_build_object('ok', false, 'error', '予約は開始時刻の2時間前までです。'); end if;
+  if fs_self_reservation_overlaps(p_date, p_start_minute, p_start_minute + settings.use_minutes + 10) then return jsonb_build_object('ok', false, 'error', 'この時間は予約できません。'); end if;
+  if (select count(*) from fs_reservations where member_id = m.id and not cancelled and date::timestamp + make_interval(mins => start_minute) > now()) >= settings.concurrent_limit then return jsonb_build_object('ok', false, 'error', '同時予約上限に達しています。'); end if;
+  if (select count(*) from fs_reservations where member_id = m.id and not cancelled and date = p_date) >= settings.daily_limit then return jsonb_build_object('ok', false, 'error', '同日予約上限に達しています。'); end if;
+  select coalesce(sum(case when people = '2名' then settings.two_adult_cost else 1 end), 0) into used from fs_reservations where member_id = m.id and not cancelled and to_char(date, 'YYYY-MM') = to_char(p_date, 'YYYY-MM');
+  if settings.monthly_quota is not null and used + cost > settings.monthly_quota then return jsonb_build_object('ok', false, 'error', '今月の予約上限に達しています。'); end if;
+  insert into fs_reservations(member_id, date, start_minute, people, note, created_by) values (m.id, p_date, p_start_minute, p_people, p_note, 'member');
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.fs_member_cancel_reservation(p_member_code text, p_pin text, p_reservation_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare m fs_members; r fs_reservations;
+begin
+  select * into m from fs_member_by_login(p_member_code, p_pin);
+  select * into r from fs_reservations where id = p_reservation_id and member_id = m.id and not cancelled;
+  if m.id is null or r.id is null then return jsonb_build_object('ok', false, 'error', '予約が見つかりません。'); end if;
+  if r.date::timestamp + make_interval(mins => r.start_minute) <= now() + interval '180 minutes' then return jsonb_build_object('ok', false, 'error', 'キャンセルは開始時刻の3時間前までです。'); end if;
+  update fs_reservations set cancelled = true, cancelled_at = now() where id = r.id;
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.fs_admin_snapshot(p_admin_password text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  return jsonb_build_object(
+    'ok', true,
+    'members', coalesce((select jsonb_agg(to_jsonb(m) order by created_at desc) from fs_members m where status = 'active' and plan in ('free', 'standard', 'premium')), '[]'),
+    'reservations', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'member_id', r.member_id, 'member_name', m.name, 'member_code', m.member_code, 'plan', m.plan, 'date', r.date, 'start_minute', r.start_minute, 'people', r.people, 'note', r.note, 'created_by', r.created_by, 'created_at', r.created_at) order by r.date, r.start_minute) from fs_reservations r join fs_members m on m.id = r.member_id where not r.cancelled and m.status = 'active' and m.plan in ('free', 'standard', 'premium')), '[]'),
+    'closed_slots', coalesce((select jsonb_agg(to_jsonb(c) order by date, start_minute) from fs_closed_slots c), '[]'),
+    'external_blocks', '[]'::jsonb
+  );
+end $$;
+
+create or replace function public.fs_admin_create_member(p_admin_password text, p_name text, p_email text, p_plan text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare n integer := 1; code text; m fs_members;
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  if p_plan not in ('free', 'standard', 'premium') then return jsonb_build_object('ok', false, 'error', 'プランが不正です。'); end if;
+  loop code := 'G24' || lpad(n::text, 3, '0'); exit when not exists(select 1 from fs_members where upper(member_code) = code and status = 'active'); n := n + 1; end loop;
+  insert into fs_members(member_code, name, email, pin, plan) values (code, btrim(p_name), nullif(btrim(p_email), ''), (floor(random() * 9000) + 1000)::integer::text, p_plan) returning * into m;
+  return jsonb_build_object('ok', true, 'member', to_jsonb(m));
+end $$;
+
+create or replace function public.fs_admin_update_member(p_admin_password text, p_member_id uuid, p_name text, p_email text, p_pin text, p_plan text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  if p_plan not in ('free', 'standard', 'premium') then return jsonb_build_object('ok', false, 'error', 'プランが不正です。'); end if;
+  update fs_members set name = btrim(p_name), email = nullif(btrim(p_email), ''), pin = btrim(p_pin), plan = p_plan where id = p_member_id and status = 'active';
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.fs_admin_create_reservation(p_admin_password text, p_member_id uuid, p_date date, p_start_minute integer, p_people text, p_note text default '')
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  if not exists(select 1 from fs_members where id = p_member_id and status = 'active') then return jsonb_build_object('ok', false, 'error', '会員が見つかりません。'); end if;
+  if p_people not in ('1名', '2名') or p_start_minute not between 0 and 1400 or p_start_minute % 10 <> 0 then return jsonb_build_object('ok', false, 'error', '予約内容が不正です。'); end if;
+  if fs_self_reservation_overlaps(p_date, p_start_minute, p_start_minute + 50) then return jsonb_build_object('ok', false, 'error', 'この時間は予約済みです。'); end if;
+  insert into fs_reservations(member_id, date, start_minute, people, note, created_by) values (p_member_id, p_date, p_start_minute, p_people, p_note, 'admin');
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.fs_admin_cancel_reservation(p_admin_password text, p_reservation_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  update fs_reservations set cancelled = true, cancelled_at = now() where id = p_reservation_id;
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.fs_admin_close_slot(p_admin_password text, p_date date, p_start_minute integer, p_reason text default '')
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  if fs_self_reservation_overlaps(p_date, p_start_minute, p_start_minute + 50) then return jsonb_build_object('ok', false, 'error', '予約済み枠は利用不可にできません。'); end if;
+  insert into fs_closed_slots(date, start_minute, reason) values (p_date, p_start_minute, p_reason);
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.fs_admin_open_slot(p_admin_password text, p_closed_slot_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  if not fs_is_admin(p_admin_password) then return jsonb_build_object('ok', false, 'error', '管理者パスコードが違います。'); end if;
+  delete from fs_closed_slots where id = p_closed_slot_id;
+  return jsonb_build_object('ok', true);
+end $$;
 
 grant usage on schema public to anon, authenticated;
 grant execute on all functions in schema public to anon, authenticated;

@@ -1,425 +1,130 @@
-const fsdb = window.supabase.createClient(window.FRIENDS_SUPABASE_URL, window.FRIENDS_SUPABASE_ANON_KEY);
-const HOL = ['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23'];
-let code = localStorage.getItem('fs_code') || '';
-let pin = localStorage.getItem('fs_pin') || '';
-let snap = null;
-let week = 0;
-let day = 0;
-let selected = null;
+const gyotokuDb = window.supabase.createClient(window.GYOTOKU_SUPABASE_URL, window.GYOTOKU_SUPABASE_ANON_KEY);
 
-const $ = q => document.querySelector(q);
-const $$ = q => [...document.querySelectorAll(q)];
-const pad = n => String(n).padStart(2, '0');
-const dk = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-const ym = () => dk(new Date()).slice(0, 7);
-
-const USE_MINUTES = 40;
+const HOLIDAYS = ['2026-01-01', '2026-01-12', '2026-02-11', '2026-02-23', '2026-03-20', '2026-04-29', '2026-05-03', '2026-05-04', '2026-05-05', '2026-05-06', '2026-07-20', '2026-08-11', '2026-09-21', '2026-09-22', '2026-09-23', '2026-10-12', '2026-11-03', '2026-11-23'];
+const PLAN_LABELS = { free: '無料プラン', standard: 'スタンダードプラン', premium: 'プレミアムプラン' };
+const DEFAULT_RULES = {
+  free: { use_minutes: 25, monthly_quota: 4, adults_allowed: 1, two_adult_cost: 1, concurrent_limit: 1, daily_limit: 1, booking_days: 14, booking_deadline_minutes: 120, cancellation_deadline_minutes: 180, is_configured: true },
+  standard: { use_minutes: 40, monthly_quota: 6, adults_allowed: 2, two_adult_cost: 2, concurrent_limit: 1, daily_limit: 1, booking_days: 14, booking_deadline_minutes: 120, cancellation_deadline_minutes: 180, is_configured: true },
+  premium: { use_minutes: 0, monthly_quota: null, adults_allowed: 0, two_adult_cost: 0, concurrent_limit: 0, daily_limit: 0, booking_days: 0, booking_deadline_minutes: 0, cancellation_deadline_minutes: 0, is_configured: false }
+};
+const BLOCK_MINUTES = 50;
 const FIXED_SLOT_STEP_MINUTES = 50;
 const FLEXIBLE_SLOT_STEP_MINUTES = 10;
-const BLOCK_MINUTES = 50;
 const FIXED_SLOT_START_MINUTE = 490;
 const FIXED_SLOT_END_MINUTE = 1320;
 const FLEXIBLE_NIGHT_START_MINUTE = 1320;
 const FLEXIBLE_MORNING_END_MINUTE = 480;
-const BOOK_DEADLINE_MS = 2 * 60 * 60 * 1000;
-const CANCEL_DEADLINE_MS = 3 * 60 * 60 * 1000;
 
-const fmt = m => {
-  m = Number(m);
-  return m === 1440 ? '24:00' : pad(Math.floor(m / 60)) + ':' + pad(m % 60);
-};
-const fmtEnd = m => Number(m) === 1440 ? '翌0:00' : fmt(m);
-const jp = s => {
-  const d = new Date(s + 'T00:00:00');
-  return `${d.getMonth() + 1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`;
-};
-const slotRange = m => `${fmt(m)}〜${fmtEnd(Number(m) + USE_MINUTES)}`;
-const full = (d, m) => `${jp(d)} ${slotRange(m)}`;
-const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+let memberCode = localStorage.getItem('gyotoku_member_code') || '';
+let memberPin = localStorage.getItem('gyotoku_member_pin') || '';
+let snapshot = null;
+let week = 0;
+let selectedDay = 0;
+let selectedSlot = null;
 
-function toast(t) {
-  const e = $('#toast');
-  if (!e) return alert(t);
-  e.textContent = t;
-  e.classList.add('show');
-  setTimeout(() => e.classList.remove('show'), 2500);
-}
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+const pad = value => String(value).padStart(2, '0');
+const dateKey = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const monthKey = () => dateKey(new Date()).slice(0, 7);
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+const formatMinute = value => Number(value) === 1440 ? '24:00' : `${pad(Math.floor(Number(value) / 60))}:${pad(Number(value) % 60)}`;
+const formatEnd = value => Number(value) === 1440 ? '翌0:00' : formatMinute(value);
+const japaneseDate = value => { const date = new Date(`${value}T00:00:00`); return `${date.getMonth() + 1}/${date.getDate()}（${'日月火水木金土'[date.getDay()]}）`; };
 
-async function rpc(name, args) {
-  const { data, error } = await fsdb.rpc(name, args);
-  if (error) return { ok: false, error: error.message };
-  return data || { ok: false, error: '応答がありません' };
+function rule() {
+  const code = String(snapshot?.member?.plan || 'free').toLowerCase();
+  return { ...DEFAULT_RULES[code] || DEFAULT_RULES.premium, ...(snapshot?.plan_settings || {}), plan_code: code, label: PLAN_LABELS[code] || 'プレミアムプラン' };
 }
+function slotRange(startMinute) { const duration = Number(rule().use_minutes || 0); return `${formatMinute(startMinute)}〜${formatEnd(Number(startMinute) + duration)}`; }
+function fullRange(date, startMinute) { return `${japaneseDate(date)} ${slotRange(startMinute)}`; }
+function toast(message) { const element = $('#toast'); if (!element) return alert(message); element.textContent = message; element.classList.add('show'); setTimeout(() => element.classList.remove('show'), 2500); }
+async function rpc(name, args) { const { data, error } = await gyotokuDb.rpc(name, args); if (error) return { ok: false, error: error.message }; return data || { ok: false, error: '応答がありません。' }; }
+function startAt(date, startMinute) { const value = new Date(`${date}T00:00:00`); value.setMinutes(Number(startMinute)); return value; }
+function daysFromToday(date) { const target = new Date(`${date}T00:00:00`); const today = new Date(); today.setHours(0, 0, 0, 0); return Math.floor((target - today) / 86400000); }
+function canBook(date, startMinute) { return startAt(date, startMinute).getTime() - Date.now() >= Number(rule().booking_deadline_minutes || 120) * 60000; }
+function canCancel(reservation) { return startAt(reservation.date, reservation.start_minute).getTime() - Date.now() >= Number(rule().cancellation_deadline_minutes || 180) * 60000; }
+function holiday(date) { return HOLIDAYS.includes(date); }
+function scheduleBlocks(date) { const day = new Date(`${date}T00:00:00`).getDay(); if (holiday(date)) return [[510, 820]]; if (day === 1) return [[510, 610], [1080, 1330]]; if (day === 2) return [[510, 610], [720, 820], [1080, 1330]]; if (day === 3) return [[1080, 1330]]; if (day === 4) return [[690, 790], [1215, 1315]]; if (day === 5) return [[1080, 1330]]; if (day === 6 || day === 0) return [[460, 820]]; return []; }
+function scheduleConflict(date, startMinute) { const start = Number(startMinute); return scheduleBlocks(date).some(([from, to]) => start < to && from < start + BLOCK_MINUTES); }
+function overlaps(aStart, aEnd, bStart, bEnd) { return Number(aStart) < Number(bEnd) && Number(bStart) < Number(aEnd); }
+function externalBlock(date, startMinute) { const end = Number(startMinute) + BLOCK_MINUTES; return (snapshot?.external_blocks || []).find(block => block.date === date && overlaps(startMinute, end, block.start_minute, Number(block.block_end_minute ?? Number(block.end_minute) + 10))); }
+function reservationOverlaps(date, startMinute, minutes = BLOCK_MINUTES, reservation) { const a = startAt(date, startMinute); const b = startAt(reservation.date, reservation.start_minute); return a < new Date(b.getTime() + minutes * 60000) && b < new Date(a.getTime() + minutes * 60000); }
+function myReservations() { return [...(snapshot?.reservations || [])].sort((a, b) => startAt(a.date, a.start_minute) - startAt(b.date, b.start_minute)); }
+function futureReservations() { return myReservations().filter(reservation => startAt(reservation.date, reservation.start_minute) > new Date()); }
+function monthReservations() { return myReservations().filter(reservation => String(reservation.date).slice(0, 7) === monthKey()); }
+function dayReservations(date) { return myReservations().filter(reservation => reservation.date === date); }
+function peopleCost(reservationOrValue) { return String(reservationOrValue?.people ?? reservationOrValue).trim() === '2名' ? 2 : 1; }
+function monthlyUsage() { return monthReservations().reduce((sum, reservation) => sum + peopleCost(reservation), 0); }
+function quotaText() { return rule().monthly_quota == null ? '制限なし' : `${snapshot.member.quota}回まで`; }
 
-function starts() { return flexibleStarts().concat(fixedStarts()); }
-function holiday(d) { return HOL.includes(d); }
-function blocks(d) {
-  const w = new Date(d + 'T00:00:00').getDay();
-  if (holiday(d)) return [[510, 820]];
-  if (w === 1) return [[510, 610], [1080, 1330]];
-  if (w === 2) return [[510, 610], [720, 820], [1080, 1330]];
-  if (w === 3) return [[1080, 1330]];
-  if (w === 4) return [[690, 790], [1215, 1315]];
-  if (w === 5) return [[1080, 1330]];
-  if (w === 6 || w === 0) return [[460, 820]];
-  return [];
-}
-function conflict(d, m) {
-  m = Number(m);
-  return blocks(d).some(([s, e]) => m < e && s < m + BLOCK_MINUTES);
-}
-function start(d, m) {
-  const x = new Date(d + 'T00:00:00');
-  x.setMinutes(Number(m));
-  return x;
-}
-function absStartMs(d, m) { return start(d, m).getTime(); }
-function absBlock(d, m, minutes = BLOCK_MINUTES) { const s = absStartMs(d, m); return [s, s + minutes * 60000]; }
-function absBlocksOverlap(aDate, aStart, aMinutes, bDate, bStart, bMinutes) {
-  const [as, ae] = absBlock(aDate, aStart, aMinutes);
-  const [bs, be] = absBlock(bDate, bStart, bMinutes);
-  return as < be && bs < ae;
-}
-function daysFrom(d) {
-  const a = new Date(d + 'T00:00:00');
-  const b = new Date();
-  b.setHours(0, 0, 0, 0);
-  return Math.floor((a - b) / 86400000);
-}
-const canBook = (d, m) => start(d, m) - new Date() >= BOOK_DEADLINE_MS;
-const canCancel = r => start(r.date, r.start_minute) - new Date() >= CANCEL_DEADLINE_MS;
-function sameBlock(a, b) {
-  a = Number(a);
-  b = Number(b);
-  return a < b + BLOCK_MINUTES && b < a + BLOCK_MINUTES;
-}
-function byStartAsc(a, b) { return start(a.date, a.start_minute) - start(b.date, b.start_minute); }
-function byStartDesc(a, b) { return start(b.date, b.start_minute) - start(a.date, a.start_minute); }
-function overlapsRange(aStart, aEnd, bStart, bEnd) { return Number(aStart) < Number(bEnd) && Number(bStart) < Number(aEnd); }
-function externalBlockEnd(x) { return Number(x.block_end_minute ?? Number(x.end_minute) + 10); }
-function externalBlock(d, m) {
-  const s = Number(m), e = s + BLOCK_MINUTES;
-  return (snap?.external_blocks || []).find(x => x.date === d && overlapsRange(s, e, x.start_minute, externalBlockEnd(x)));
-}
-function mine() { return [...(snap?.reservations || [])].sort(byStartAsc); }
-function booked(d, m) {
-  const list = snap?.booked_slots || [];
-  const exact = list.find(x => x.date === d && Number(x.start_minute) === Number(m));
-  return exact || list.find(x => absBlocksOverlap(d, m, BLOCK_MINUTES, x.date, x.start_minute, BLOCK_MINUTES));
-}
-function closed(d, m) {
-  const list = snap?.closed_slots || [];
-  const exact = list.find(x => x.date === d && Number(x.start_minute) === Number(m));
-  return exact || list.find(x => absBlocksOverlap(d, m, BLOCK_MINUTES, x.date, x.start_minute, BLOCK_MINUTES));
-}
-function future() { return mine().filter(r => start(r.date, r.start_minute) > new Date()).sort(byStartAsc); }
-function monthRes() { return mine().filter(r => String(r.date).slice(0, 7) === ym()); }
-function dayRes(d) { return mine().filter(r => r.date === d); }
-function isUnlimitedPlan(plan) { return String(plan || '').includes('通い放題'); }
-function isFamilyPlan(member) { return String(member?.plan || '').includes('ファミリー'); }
-function hasMonthlyLimit(member) { return !isUnlimitedPlan(member?.plan); }
-function canPurchaseExtra(member) {
-  return ['月4回プラン', '月8回プラン', 'ファミリー月4回プラン', 'ファミリー月8回プラン'].includes(String(member?.plan || ''));
-}
-function quotaText(member) { return hasMonthlyLimit(member) ? `${member.quota}回まで` : '制限なし'; }
-function monthUsageText(member) {
-  return hasMonthlyLimit(member) ? `${monthRes().length} / ${member.quota}` : `${monthRes().length}回（月回数制限なし）`;
-}
-
-function familyUserKey(memberCode = code) { return `fs_family_user_names_${memberCode || 'unknown'}`; }
-function familyUserNames() {
-  try {
-    const v = JSON.parse(localStorage.getItem(familyUserKey()) || '[]');
-    return Array.isArray(v) ? v.map(x => String(x || '').trim()).filter(Boolean) : [];
-  } catch {
-    return [];
-  }
-}
-function saveFamilyUserNames(names) {
-  localStorage.setItem(familyUserKey(), JSON.stringify((names || []).map(v => String(v || '').trim()).filter(Boolean)));
-}
-function familyOptions(names) {
-  return '<option value="">選択してください</option>' + names.map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
-}
-function makeFamilyUserRow(value = '') {
-  const row = document.createElement('div');
-  row.className = 'family-user-row row';
-  row.style.alignItems = 'center';
-  row.style.marginTop = '10px';
-  row.innerHTML = `<input class="family-user-name" placeholder="例：山田 太郎" autocomplete="name" value="${esc(value)}"><button type="button" class="ghost family-user-remove" style="min-height:44px">削除</button>`;
-  return row;
-}
-function renderFamilyUsersCard() {
-  const card = $('#familyUsersCard');
-  if (!card || !snap?.member) return;
-  const family = isFamilyPlan(snap.member);
-  card.classList.toggle('hidden', !family);
-  if (!family) return;
-  if (card.dataset.familySetup === '1' && card.dataset.memberCode === code) return;
-  if (card.contains(document.activeElement)) return;
-  card.dataset.familySetup = '1';
-  card.dataset.memberCode = code;
-  card.innerHTML = `<p class="eyebrow">ファミリープラン</p><h2>ご利用者登録</h2><p class="small">予約時に利用する方のお名前を登録できます。</p><div id="familyUserList"></div><button id="addFamilyUser" class="ghost" type="button" style="margin-top:10px;min-height:44px">＋ ご利用者を追加</button><button id="saveFamilyUsers" class="btn" type="button">保存する</button>`;
-  const list = $('#familyUserList');
-  (familyUserNames().length ? familyUserNames() : ['']).forEach(name => list.appendChild(makeFamilyUserRow(name)));
-}
-function currentFamilyRows() {
-  return $$('.family-user-name').map(input => input.value).map(v => String(v || '').trim()).filter(Boolean);
-}
+function flexibleStarts() { const duration = Number(rule().use_minutes || 0); if (!duration) return []; const values = []; for (let minute = FLEXIBLE_NIGHT_START_MINUTE; minute + duration <= 1440; minute += FLEXIBLE_SLOT_STEP_MINUTES) values.push(minute); for (let minute = 0; minute + duration <= FLEXIBLE_MORNING_END_MINUTE; minute += FLEXIBLE_SLOT_STEP_MINUTES) values.push(minute); return values; }
+function fixedStarts() { const duration = Number(rule().use_minutes || 0); if (!duration) return []; const values = []; for (let minute = FIXED_SLOT_START_MINUTE; minute < FIXED_SLOT_END_MINUTE; minute += FIXED_SLOT_STEP_MINUTES) values.push(minute); return values; }
+function booked(date, startMinute) { const list = snapshot?.booked_slots || []; return list.find(item => item.date === date && Number(item.start_minute) === Number(startMinute)) || list.find(item => reservationOverlaps(date, startMinute, BLOCK_MINUTES, item)); }
+function closed(date, startMinute) { const list = snapshot?.closed_slots || []; return list.find(item => item.date === date && Number(item.start_minute) === Number(startMinute)) || list.find(item => reservationOverlaps(date, startMinute, BLOCK_MINUTES, item)); }
+function available(date, startMinute) { const r = rule(); return r.is_configured && !scheduleConflict(date, startMinute) && !booked(date, startMinute) && !closed(date, startMinute) && !externalBlock(date, startMinute) && daysFromToday(date) >= 0 && daysFromToday(date) <= Number(r.booking_days) && canBook(date, startMinute) && futureReservations().length < Number(r.concurrent_limit) && dayReservations(date).length < Number(r.daily_limit) && (r.monthly_quota == null || monthlyUsage() < Number(snapshot.member.quota)); }
 
 async function load() {
-  if (!code || !pin) { renderLogin(); return; }
-  const r = await rpc('fs_member_snapshot', { p_member_code: code, p_pin: pin });
-  if (!r.ok) {
-    localStorage.removeItem('fs_code');
-    localStorage.removeItem('fs_pin');
-    code = '';
-    pin = '';
-    toast(r.error);
-    renderLogin();
-    return;
-  }
-  snap = r;
+  if (!memberCode || !memberPin) return renderLogin();
+  const result = await rpc('fs_member_snapshot', { p_member_code: memberCode, p_pin: memberPin });
+  if (!result.ok) { localStorage.removeItem('gyotoku_member_code'); localStorage.removeItem('gyotoku_member_pin'); memberCode = ''; memberPin = ''; toast(result.error); return renderLogin(); }
+  snapshot = result;
   render();
 }
-function renderLogin() {
-  $('#loginView').classList.remove('hidden');
-  $('#appView').classList.add('hidden');
-}
+function renderLogin() { $('#loginView').classList.remove('hidden'); $('#appView').classList.add('hidden'); }
 function render() {
-  const m = snap.member;
-  const canPurchase = canPurchaseExtra(m), enabled = snap.purchase_enabled !== false;
-  const buy = document.getElementById('buySlot');
-  if (buy) {
-    buy.classList.toggle('hidden', !canPurchase);
-    buy.disabled = !canPurchase || !enabled;
-    buy.textContent = enabled ? '枠を購入する（1枠 3,000円）' : '追加枠購入は停止中です';
-  }
+  const member = snapshot.member;
+  const r = rule();
   $('#loginView').classList.add('hidden');
   $('#appView').classList.remove('hidden');
-  $('#memberName').textContent = m.name;
-  $('#memberPlan').textContent = m.plan;
-  $('#memberQuota').textContent = `月の予約回数：${quotaText(m)}`;
-  $('#extraSlots').textContent = hasMonthlyLimit(m) ? `今月の追加枠：${m.extra_slots}` : '月回数制限なし';
-  $('#usageText').textContent = monthUsageText(m);
-  $('#usageBar').style.width = hasMonthlyLimit(m) ? Math.min(100, Math.round(monthRes().length / Math.max(1, m.quota) * 100)) + '%' : '100%';
-  renderNext();
-  renderFamilyUsersCard();
-  renderUsage();
-  renderDays();
-  renderCalendar();
-  renderMine();
+  $('#memberName').textContent = member.name;
+  $('#memberPlan').textContent = r.label;
+  $('#memberQuota').textContent = r.monthly_quota == null ? '月の予約回数：制限なし' : `月の予約回数：${quotaText()}`;
+  $('#extraSlots').textContent = r.is_configured ? `${r.use_minutes}分利用` : '利用仕様を確認中';
+  $('#usageText').textContent = r.monthly_quota == null ? `${monthlyUsage()}回` : `${monthlyUsage()} / ${member.quota}`;
+  $('#usageBar').style.width = r.monthly_quota == null ? '100%' : `${Math.min(100, Math.round(monthlyUsage() / Math.max(1, Number(member.quota)) * 100))}%`;
+  const rules = $('.rules');
+  if (rules) rules.innerHTML = r.is_configured ? `<p><strong>利用時間</strong>：1回${r.use_minutes}分。</p><p><strong>月の予約</strong>：${r.monthly_quota == null ? '制限なし' : `月${r.monthly_quota}回まで`}。</p><p><strong>同時予約</strong>：${r.concurrent_limit}枠まで。</p><p><strong>同日予約</strong>：${r.daily_limit}枠まで。</p><p><strong>予約</strong>：${r.booking_days}日先まで・開始${Math.round(r.booking_deadline_minutes / 60)}時間前まで。</p><p><strong>キャンセル</strong>：開始${Math.round(r.cancellation_deadline_minutes / 60)}時間前まで。</p>` : '<p><strong>プレミアムプランの利用仕様は未確定です。</strong></p><p>予約開始前に管理者へご確認ください。</p>';
+  renderNext(); renderUsage(); renderDays(); renderCalendar(); renderMine();
 }
-function renderNext() {
-  const r = future()[0];
-  $('#nextReservation').innerHTML = r ? `<h3>${full(r.date, r.start_minute)}</h3><p>利用人数：${esc(r.people)}</p><p>40分利用＋10分入れ替え</p>` : '<p>現在、予約はありません。</p>';
-}
+function renderNext() { const reservation = futureReservations()[0]; $('#nextReservation').innerHTML = reservation ? `<h3>${fullRange(reservation.date, reservation.start_minute)}</h3><p>利用人数：${escapeHtml(reservation.people)}</p><p>${rule().use_minutes}分利用</p>` : '<p>現在、予約はありません。</p>'; }
 function renderUsage() {
-  const done = mine().filter(r => start(r.date, Number(r.start_minute) + USE_MINUTES) <= new Date()).sort(byStartDesc);
-  const last = done[0];
-  const tm = done.filter(r => String(r.date).slice(0, 7) === ym()).length;
-  $('#usageSummary').innerHTML = `<article class='metric'><p>累計利用</p><strong>${done.length}</strong></article><article class='metric'><p>今月利用済み</p><strong>${tm}</strong></article><article class='metric'><p>直近利用</p><strong>${last ? jp(last.date) : '-'}</strong></article>`;
-  const ms = [];
-  for (let i = 0; i < 6; i++) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    ms.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
-  }
-  const max = Math.max(1, ...ms.map(m => done.filter(r => String(r.date).slice(0, 7) === m).length));
-  $('#usageHistory').innerHTML = ms.map(m => {
-    const c = done.filter(r => String(r.date).slice(0, 7) === m).length;
-    return `<div class='history-row'><span>${m.slice(5)}月</span><div class='history-track'><div class='history-fill' style='width:${Math.round(c / max * 100)}%'></div></div><span>${c}回</span></div>`;
-  }).join('');
+  const duration = Number(rule().use_minutes || 0);
+  const completed = myReservations().filter(reservation => startAt(reservation.date, Number(reservation.start_minute) + duration) <= new Date()).sort((a, b) => startAt(b.date, b.start_minute) - startAt(a.date, a.start_minute));
+  const currentMonth = completed.filter(reservation => String(reservation.date).slice(0, 7) === monthKey()).length;
+  $('#usageSummary').innerHTML = `<article class='metric'><p>累計利用</p><strong>${completed.length}</strong></article><article class='metric'><p>今月利用済み</p><strong>${currentMonth}</strong></article><article class='metric'><p>直近利用</p><strong>${completed[0] ? japaneseDate(completed[0].date) : '-'}</strong></article>`;
+  const months = []; for (let i = 0; i < 6; i++) { const date = new Date(); date.setMonth(date.getMonth() - i); months.push(`${date.getFullYear()}-${pad(date.getMonth() + 1)}`); }
+  const max = Math.max(1, ...months.map(month => completed.filter(reservation => String(reservation.date).slice(0, 7) === month).length));
+  $('#usageHistory').innerHTML = months.map(month => { const count = completed.filter(reservation => String(reservation.date).slice(0, 7) === month).length; return `<div class='history-row'><span>${month.slice(5)}月</span><div class='history-track'><div class='history-fill' style='width:${Math.round(count / max * 100)}%'></div></div><span>${count}回</span></div>`; }).join('');
 }
-function weekStart() { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + week * 7); return d; }
-function selectedDate() { const d = weekStart(); d.setDate(d.getDate() + day); return d; }
-function renderDays() {
-  const s = weekStart(), e = new Date(s);
-  e.setDate(s.getDate() + 6);
-  $('#weekLabel').textContent = `${week ? '次の週' : '今週'}：${jp(dk(s))} 〜 ${jp(dk(e))}`;
-  let h = '';
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(s);
-    d.setDate(s.getDate() + i);
-    const key = dk(d);
-    h += `<button class='day ${i === day ? 'active' : ''}' data-i='${i}'><strong>${d.getMonth() + 1}/${d.getDate()}</strong><span>${key === dk(new Date()) ? '今日' : holiday(key) ? '祝' : '日月火水木金土'[d.getDay()]}</span></button>`;
-  }
-  $('#days').innerHTML = h;
-  $('#prevWeek').disabled = week <= 0;
-  $('#nextWeek').disabled = week >= 1;
-}
-function filterHour(m, f) {
-  const h = Math.floor(m / 60);
-  return f === 'all' || (f === 'morning' && h >= 5 && h < 11) || (f === 'day' && h >= 11 && h < 17) || (f === 'night' && h >= 17 && h < 22) || (f === 'midnight' && (h >= 22 || h < 8));
-}
-function flexibleStarts() {
-  const a = [];
-  for (let m = FLEXIBLE_NIGHT_START_MINUTE; m + USE_MINUTES <= 1440; m += FLEXIBLE_SLOT_STEP_MINUTES) a.push(m);
-  for (let m = 0; m + USE_MINUTES <= FLEXIBLE_MORNING_END_MINUTE; m += FLEXIBLE_SLOT_STEP_MINUTES) a.push(m);
-  return a;
-}
-function fixedStarts() {
-  const a = [];
-  for (let m = FIXED_SLOT_START_MINUTE; m < FIXED_SLOT_END_MINUTE; m += FIXED_SLOT_STEP_MINUTES) a.push(m);
-  return a;
-}
-function available(d, s) {
-  return !conflict(d, s) && !booked(d, s) && !closed(d, s) && !externalBlock(d, s) && daysFrom(d) >= 0 && daysFrom(d) < 14 && canBook(d, s) && future().length < 2 && dayRes(d).length < 2 && (!hasMonthlyLimit(snap.member) || monthRes().length < snap.member.quota);
-}
-function renderFlexible(d, f) {
-  if (!(f === 'all' || f === 'midnight')) return '';
-  const opts = flexibleStarts().filter(s => filterHour(s, f) && available(d, s));
-  return `<section class='flex-reserve'><p class='eyebrow'>深夜・早朝の自由予約</p><h4>開始時間を選択</h4><div class='row'><select id='flexStart' ${opts.length ? '' : 'disabled'}>${opts.length ? opts.map(s => `<option value='${s}'>${slotRange(s)}</option>`).join('') : '<option value="">予約できる時間がありません</option>'}</select><button class='btn' data-flex-book ${opts.length ? '' : 'disabled'}>この時間で予約する</button></div></section>`;
-}
-function renderCalendar() {
-  const d = dk(selectedDate()), f = $('#timeFilter')?.value || 'all';
-  const fixed = fixedStarts().filter(x => filterHour(x, f) && !conflict(d, x)).map(x => slot(d, x)).join('');
-  $('#calendar').innerHTML = `<article class='day-card'><div class='day-head'><h3>${jp(d)}</h3><span>${holiday(d) || [0, 6].includes(new Date(d + 'T00:00:00').getDay()) ? '土日祝ルール' : '平日ルール'}</span></div>${renderFlexible(d, f)}<h4 class='slot-section-title'>8:00以降の固定枠</h4><div class='slots'>${fixed || '<p class="small">この時間帯に表示できる固定枠はありません。</p>'}</div></article>`;
-}
-function slot(d, s) {
-  const b = booked(d, s), c = closed(d, s), x = externalBlock(d, s), mineSlot = b?.is_mine && Number(b.start_minute) === Number(s);
-  let klass = '', dis = '', st = '空きあり';
-  if (mineSlot) { klass = 'mine'; st = '自分の予約'; }
-  else if (c || b || x) { klass = 'booked'; dis = 'disabled'; st = '予約不可'; }
-  else if (daysFrom(d) < 0 || daysFrom(d) >= 14) { klass = 'closed'; dis = 'disabled'; st = '受付終了'; }
-  else if (!canBook(d, s)) { klass = 'closed'; dis = 'disabled'; st = '受付終了'; }
-  else if (future().length >= 2) { klass = 'closed'; dis = 'disabled'; st = '同時予約上限'; }
-  else if (dayRes(d).length >= 2) { klass = 'closed'; dis = 'disabled'; st = '同日上限'; }
-  else if (hasMonthlyLimit(snap.member) && monthRes().length >= snap.member.quota) { klass = 'closed'; dis = 'disabled'; st = '回数上限'; }
-  return `<button class='slot ${klass}' ${dis} data-d='${d}' data-s='${s}'><span class='time'>${slotRange(s)}</span><span class='status'>${st}</span></button>`;
-}
-function openDialog(d, s) {
-  const family = isFamilyPlan(snap.member);
-  const names = family ? familyUserNames() : [];
-  if (family && !names.length) {
-    toast('ご利用者登録がありません。先にホーム画面でご利用者を登録してください');
-    return;
-  }
-  selected = { date: d, start: Number(s) };
-  $('#dialogTitle').textContent = full(d, s);
-  $('#dialogSummary').innerHTML = `<p><strong>会員：</strong>${esc(snap.member.name)}</p><p><strong>プラン：</strong>${esc(snap.member.plan)}</p><p><strong>今月の予約：</strong>${monthUsageText(snap.member)}</p>`;
-  $('#bookingForm').reset();
-  const standard = $('#standardPeopleFields'), familyFields = $('#familyPeopleFields'), people = $('[name="people"]'), name1 = $('#familyName1'), name2 = $('#familyName2');
-  if (standard) standard.classList.toggle('hidden', family);
-  if (familyFields) familyFields.classList.toggle('hidden', !family);
-  if (people) people.required = !family;
-  if (name1) { name1.required = family; name1.innerHTML = familyOptions(names); name1.value = ''; }
-  if (name2) { name2.required = false; name2.innerHTML = familyOptions(names); name2.value = ''; }
-  $('#dialog').showModal();
-}
-function reservationItem(r) {
-  const cancelable = canCancel(r), past = start(r.date, Number(r.start_minute) + USE_MINUTES) <= new Date();
-  return `<article class='res'><h3>${full(r.date, r.start_minute)}</h3><p>利用人数：${esc(r.people)}</p>${cancelable ? `<div class='row'><button class='danger' data-cancel='${esc(r.id)}'>キャンセル</button></div>` : `<p class='small'>${past ? '利用済み' : 'キャンセル期限を過ぎています'}</p>`}</article>`;
-}
-function renderMine() {
-  const now = new Date(), upcoming = mine().filter(r => start(r.date, r.start_minute) > now).sort(byStartDesc), past = mine().filter(r => start(r.date, Number(r.start_minute) + USE_MINUTES) <= now).sort(byStartDesc), parts = [];
-  if (upcoming.length) parts.push(`<h3>今後の予約</h3>${upcoming.map(reservationItem).join('')}`);
-  if (past.length) parts.push(`<h3>利用履歴</h3>${past.map(reservationItem).join('')}`);
-  $('#mine').innerHTML = parts.length ? parts.join('') : '<article class="res"><p>現在、予約はありません。</p></article>';
-}
+function weekStart() { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() + week * 7); return date; }
+function selectedDate() { const date = weekStart(); date.setDate(date.getDate() + selectedDay); return date; }
+function renderDays() { const start = weekStart(), end = new Date(start); end.setDate(start.getDate() + 6); $('#weekLabel').textContent = `${week ? '次の週' : '今週'}：${japaneseDate(dateKey(start))} 〜 ${japaneseDate(dateKey(end))}`; $('#days').innerHTML = Array.from({ length: 7 }, (_, index) => { const date = new Date(start); date.setDate(start.getDate() + index); const key = dateKey(date); return `<button class='day ${index === selectedDay ? 'active' : ''}' data-day='${index}'><strong>${date.getMonth() + 1}/${date.getDate()}</strong><span>${key === dateKey(new Date()) ? '今日' : holiday(key) ? '祝' : '日月火水木金土'[date.getDay()]}</span></button>`; }).join(''); $('#prevWeek').disabled = week <= 0; $('#nextWeek').disabled = week >= 1; }
+function filterHour(minute, filter) { const hour = Math.floor(Number(minute) / 60); return filter === 'all' || (filter === 'morning' && hour >= 5 && hour < 11) || (filter === 'day' && hour >= 11 && hour < 17) || (filter === 'night' && hour >= 17 && hour < 22) || (filter === 'midnight' && (hour >= 22 || hour < 8)); }
+function renderCalendar() { const date = dateKey(selectedDate()), filter = $('#timeFilter')?.value || 'all'; const starts = fixedStarts().filter(minute => filterHour(minute, filter) && !scheduleConflict(date, minute)); const flexible = flexibleStarts().filter(minute => filterHour(minute, filter) && available(date, minute)); $('#calendar').innerHTML = `<article class='day-card'><div class='day-head'><h3>${japaneseDate(date)}</h3><span>${holiday(date) || [0, 6].includes(new Date(`${date}T00:00:00`).getDay()) ? '土日祝ルール' : '平日ルール'}</span></div>${filter === 'all' || filter === 'midnight' ? `<section class='flex-reserve'><p class='eyebrow'>深夜・早朝の予約</p><div class='row'><select id='flexStart' ${flexible.length ? '' : 'disabled'}>${flexible.length ? flexible.map(minute => `<option value='${minute}'>${slotRange(minute)}</option>`).join('') : '<option>予約できる時間がありません</option>'}</select><button class='btn' data-flex-book ${flexible.length ? '' : 'disabled'}>この時間で予約する</button></div></section>` : ''}<h4 class='slot-section-title'>8:00以降の固定枠</h4><div class='slots'>${starts.length ? starts.map(minute => slot(date, minute)).join('') : '<p class="small">この時間帯に表示できる固定枠はありません。</p>'}</div></article>`; }
+function slot(date, startMinute) { const mine = booked(date, startMinute)?.is_mine && Number(booked(date, startMinute).start_minute) === Number(startMinute); const unavailable = closed(date, startMinute) || booked(date, startMinute) || externalBlock(date, startMinute); let status = '空きあり', className = '', disabled = ''; if (mine) { className = 'mine'; status = '自分の予約'; } else if (unavailable) { className = 'booked'; disabled = 'disabled'; status = '予約不可'; } else if (!rule().is_configured) { className = 'closed'; disabled = 'disabled'; status = '仕様未確定'; } else if (daysFromToday(date) < 0 || daysFromToday(date) > Number(rule().booking_days) || !canBook(date, startMinute)) { className = 'closed'; disabled = 'disabled'; status = '受付終了'; } else if (futureReservations().length >= Number(rule().concurrent_limit)) { className = 'closed'; disabled = 'disabled'; status = '同時予約上限'; } else if (dayReservations(date).length >= Number(rule().daily_limit)) { className = 'closed'; disabled = 'disabled'; status = '同日上限'; } else if (rule().monthly_quota != null && monthlyUsage() >= Number(snapshot.member.quota)) { className = 'closed'; disabled = 'disabled'; status = '回数上限'; } return `<button class='slot ${className}' ${disabled} data-date='${date}' data-start='${startMinute}'><span class='time'>${slotRange(startMinute)}</span><span class='status'>${status}</span></button>`; }
+function openDialog(date, startMinute) { const r = rule(); if (!r.is_configured) return toast('プレミアムプランの利用仕様が未確定です。'); selectedSlot = { date, start: Number(startMinute) }; $('#dialogTitle').textContent = fullRange(date, startMinute); $('#dialogSummary').innerHTML = `<p><strong>会員：</strong>${escapeHtml(snapshot.member.name)}</p><p><strong>プラン：</strong>${escapeHtml(r.label)}</p><p><strong>今月の予約：</strong>${r.monthly_quota == null ? `${monthlyUsage()}回` : `${monthlyUsage()} / ${snapshot.member.quota}`}</p>`; $('#bookingForm').reset(); const input = $('[name="people"]'); input.max = String(r.adults_allowed); input.value = '1'; input.disabled = r.adults_allowed < 1; if (r.monthly_quota != null && Number(snapshot.member.quota) - monthlyUsage() < 2) input.max = '1'; $('#dialog').showModal(); }
+function reservationItem(reservation) { const duration = Number(rule().use_minutes || 0); const past = startAt(reservation.date, Number(reservation.start_minute) + duration) <= new Date(); return `<article class='res'><h3>${fullRange(reservation.date, reservation.start_minute)}</h3><p>利用人数：${escapeHtml(reservation.people)}</p>${canCancel(reservation) ? `<div class='row'><button class='danger' data-cancel='${escapeHtml(reservation.id)}'>キャンセル</button></div>` : `<p class='small'>${past ? '利用済み' : 'キャンセル期限を過ぎています'}</p>`}</article>`; }
+function renderMine() { const now = new Date(), duration = Number(rule().use_minutes || 0), upcoming = myReservations().filter(reservation => startAt(reservation.date, reservation.start_minute) > now).sort((a, b) => startAt(b.date, b.start_minute) - startAt(a.date, a.start_minute)), past = myReservations().filter(reservation => startAt(reservation.date, Number(reservation.start_minute) + duration) <= now).sort((a, b) => startAt(b.date, b.start_minute) - startAt(a.date, a.start_minute)); const parts = []; if (upcoming.length) parts.push(`<h3>今後の予約</h3>${upcoming.map(reservationItem).join('')}`); if (past.length) parts.push(`<h3>利用履歴</h3>${past.map(reservationItem).join('')}`); $('#mine').innerHTML = parts.length ? parts.join('') : '<article class="res"><p>現在、予約はありません。</p></article>'; }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const p = new URLSearchParams(location.search);
-  if (p.get('mid') && p.get('pin')) {
-    code = p.get('mid');
-    pin = p.get('pin');
-    localStorage.setItem('fs_code', code);
-    localStorage.setItem('fs_pin', pin);
-    history.replaceState(null, '', location.pathname);
-  }
-  $('#loginForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    code = $('#memberId').value.trim();
-    pin = $('#pin').value.trim();
-    localStorage.setItem('fs_code', code);
-    localStorage.setItem('fs_pin', pin);
-    await load();
+  const params = new URLSearchParams(location.search);
+  if (params.get('mid') && params.get('pin')) { memberCode = params.get('mid'); memberPin = params.get('pin'); localStorage.setItem('gyotoku_member_code', memberCode); localStorage.setItem('gyotoku_member_pin', memberPin); history.replaceState(null, '', location.pathname); }
+  $('#loginForm').addEventListener('submit', async event => { event.preventDefault(); memberCode = $('#memberId').value.trim(); memberPin = $('#pin').value.trim(); localStorage.setItem('gyotoku_member_code', memberCode); localStorage.setItem('gyotoku_member_pin', memberPin); await load(); });
+  $('#bookingForm').addEventListener('submit', async event => { event.preventDefault(); if (!selectedSlot) return; const form = new FormData(event.currentTarget); const people = Number(form.get('people') || 1); const r = rule(); if (!Number.isInteger(people) || people < 1 || people > Number(r.adults_allowed)) return toast('このプランで選べる利用人数を確認してください。'); if (r.monthly_quota != null && monthlyUsage() + (people === 2 ? 2 : 1) > Number(snapshot.member.quota)) return toast('今月の予約回数が不足しています。'); const result = await rpc('fs_member_create_reservation', { p_member_code: memberCode, p_pin: memberPin, p_date: selectedSlot.date, p_start_minute: selectedSlot.start, p_people: `${people}名`, p_note: form.get('note') || '' }); if (!result.ok) return toast(result.error || '予約に失敗しました。'); $('#dialog').close(); await load(); toast('予約が完了しました。'); });
+  document.addEventListener('click', async event => { const tab = event.target.closest('.tab[data-tab]'); if (tab) { $$('.tab[data-tab]').forEach(button => button.classList.toggle('active', button.dataset.tab === tab.dataset.tab)); $('#bookingTab').classList.toggle('hidden', tab.dataset.tab !== 'booking'); $('#mineTab').classList.toggle('hidden', tab.dataset.tab !== 'mine'); }
+    const day = event.target.closest('[data-day]'); if (day) { selectedDay = Number(day.dataset.day); renderDays(); renderCalendar(); }
+    const flexible = event.target.closest('[data-flex-book]'); if (flexible && !flexible.disabled) { const select = $('#flexStart'); if (select?.value) openDialog(dateKey(selectedDate()), Number(select.value)); }
+    const slotButton = event.target.closest('.slot'); if (slotButton && !slotButton.disabled) openDialog(slotButton.dataset.date, Number(slotButton.dataset.start));
+    const cancel = event.target.closest('[data-cancel]'); if (cancel) { const result = await rpc('fs_member_cancel_reservation', { p_member_code: memberCode, p_pin: memberPin, p_reservation_id: cancel.dataset.cancel }); if (!result.ok) return toast(result.error); await load(); toast('キャンセルしました。'); }
+    if (event.target.id === 'logout') { localStorage.removeItem('gyotoku_member_code'); localStorage.removeItem('gyotoku_member_pin'); memberCode = ''; memberPin = ''; renderLogin(); }
+    if (event.target.id === 'prevWeek' && !event.target.disabled) { week = 0; selectedDay = 0; renderDays(); renderCalendar(); }
+    if (event.target.id === 'thisWeek') { week = 0; selectedDay = 0; renderDays(); renderCalendar(); }
+    if (event.target.id === 'nextWeek' && !event.target.disabled) { week = 1; selectedDay = 0; renderDays(); renderCalendar(); }
+    if (event.target.classList.contains('close')) event.target.closest('dialog')?.close();
   });
-  $('#bookingForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    let peopleText = '';
-    if (isFamilyPlan(snap.member)) {
-      const names = familyUserNames();
-      const n1 = String(fd.get('familyName1') || '').trim();
-      const n2 = String(fd.get('familyName2') || '').trim();
-      if (!names.length) return toast('ご利用者登録がありません。先にホーム画面でご利用者を登録してください');
-      if (!n1) return toast('利用する方1を選択してください');
-      peopleText = '利用者：' + [n1, n2].filter(Boolean).join('、');
-    } else {
-      peopleText = String(fd.get('people') || '1') + '名';
-    }
-    const r = await rpc('fs_member_create_reservation', { p_member_code: code, p_pin: pin, p_date: selected.date, p_start_minute: selected.start, p_people: peopleText, p_note: fd.get('note') || '' });
-    if (!r.ok) return toast(r.error || '予約に失敗しました');
-    $('#dialog').close();
-    await load();
-    toast('予約が完了しました');
-  });
-  $('#purchaseAgree').addEventListener('change', e => $('#confirmPurchase').disabled = !e.target.checked);
   $('#timeFilter')?.addEventListener('change', renderCalendar);
-  document.addEventListener('click', async e => {
-    const tb = e.target.closest('.tab[data-tab]');
-    if (tb) {
-      $$('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tb.dataset.tab));
-      $('#bookingTab').classList.toggle('hidden', tb.dataset.tab !== 'booking');
-      $('#mineTab').classList.toggle('hidden', tb.dataset.tab !== 'mine');
-    }
-    const dy = e.target.closest('.day');
-    if (dy) { day = Number(dy.dataset.i); renderDays(); renderCalendar(); }
-    const fb = e.target.closest('[data-flex-book]');
-    if (fb && !fb.disabled) { const sel = $('#flexStart'); if (sel && sel.value) openDialog(dk(selectedDate()), Number(sel.value)); }
-    const sl = e.target.closest('.slot');
-    if (sl && !sl.disabled) openDialog(sl.dataset.d, Number(sl.dataset.s));
-    const ca = e.target.closest('[data-cancel]');
-    if (ca) {
-      const r = await rpc('fs_member_cancel_reservation', { p_member_code: code, p_pin: pin, p_reservation_id: ca.dataset.cancel });
-      if (!r.ok) return toast(r.error);
-      await load();
-      toast('キャンセルしました');
-    }
-    if (e.target.id === 'logout') { localStorage.removeItem('fs_code'); localStorage.removeItem('fs_pin'); code = ''; pin = ''; renderLogin(); }
-    if (e.target.id === 'prevWeek' && !e.target.disabled) { week = 0; day = 0; renderDays(); renderCalendar(); }
-    if (e.target.id === 'thisWeek') { week = 0; day = 0; renderDays(); renderCalendar(); }
-    if (e.target.id === 'nextWeek' && !e.target.disabled) { week = 1; day = 0; renderDays(); renderCalendar(); }
-    if (e.target.id === 'addFamilyUser') {
-      const list = $('#familyUserList');
-      if (list) list.appendChild(makeFamilyUserRow(''));
-      setTimeout(() => $$('.family-user-name').at(-1)?.focus(), 30);
-    }
-    if (e.target.closest('.family-user-remove')) {
-      e.preventDefault();
-      const row = e.target.closest('.family-user-row');
-      row?.remove();
-      const list = $('#familyUserList');
-      if (list && !list.querySelector('.family-user-name')) list.appendChild(makeFamilyUserRow(''));
-    }
-    if (e.target.id === 'saveFamilyUsers') {
-      saveFamilyUserNames(currentFamilyRows());
-      const card = $('#familyUsersCard');
-      if (card) card.dataset.familySetup = '0';
-      renderFamilyUsersCard();
-      toast('ご利用者名を保存しました');
-    }
-    if (e.target.id === 'buySlot') {
-      if (snap && !canPurchaseExtra(snap.member)) return;
-      if (snap && snap.purchase_enabled === false) { toast('現在、追加枠の購入は停止中です'); return; }
-      $('#purchaseAgree').checked = false;
-      $('#confirmPurchase').disabled = true;
-      $('#purchaseDialog').showModal();
-    }
-    if (e.target.id === 'confirmPurchase') {
-      if (snap && !canPurchaseExtra(snap.member)) return;
-      const r = await rpc('fs_member_purchase_slot', { p_member_code: code, p_pin: pin });
-      if (!r.ok) return toast(r.error);
-      $('#purchaseDialog').close();
-      await load();
-      $('#purchaseCompleteMessage').textContent = hasMonthlyLimit(snap.member) ? `現在の今月の予約上限は ${snap.member.quota} 回です。` : '通い放題プランのため月回数制限はありません。';
-      $('#purchaseCompleteDialog').showModal();
-    }
-    if (e.target.id === 'closePurchaseComplete') $('#purchaseCompleteDialog').close();
-    if (e.target.classList.contains('close')) e.target.closest('dialog').close();
-  });
-  load();
+  load().catch(error => { console.error(error); toast('予約画面を読み込めませんでした。'); });
 });
-window.load = load;
-window.loadSnapshot = load;
+
+window.gyotokuMemberLoad = load;

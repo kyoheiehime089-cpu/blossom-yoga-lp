@@ -1,6 +1,4 @@
-// friendsセルフ予約アプリ Supabase設定
-// service_role key / secret key は絶対にここに入れないでください。
-
-window.FRIENDS_SUPABASE_URL = 'https://fplvstwmsewpqwrcsqrm.supabase.co';
-window.FRIENDS_SUPABASE_ANON_KEY = 'sb_publishable_tp2GByyzV1A2Ltv52_XBuA_2xbd4Svw';
-window.FRIENDS_SUPABASE_READY = Boolean(window.FRIENDS_SUPABASE_URL && window.FRIENDS_SUPABASE_ANON_KEY);
+// 行徳ジム24の公開クライアント設定。秘密鍵はここに置かない。
+window.GYOTOKU_SUPABASE_URL = 'https://fplvstwmsewpqwrcsqrm.supabase.co';
+window.GYOTOKU_SUPABASE_ANON_KEY = 'sb_publishable_tp2GByyzV1A2Ltv52_XBuA_2xbd4Svw';
+window.GYOTOKU_SUPABASE_READY = Boolean(window.GYOTOKU_SUPABASE_URL && window.GYOTOKU_SUPABASE_ANON_KEY);

@@ -68,6 +68,13 @@ jobs:
             exit 1
           fi
 
+          if [ -d gyotoku-gym24-booking ]; then
+            cp -r gyotoku-gym24-booking _site/gyotoku-gym24-booking
+          else
+            echo "gyotoku-gym24-booking is missing"
+            exit 1
+          fi
+
           if [ -f 404.html ]; then
             cp 404.html _site/
           fi
