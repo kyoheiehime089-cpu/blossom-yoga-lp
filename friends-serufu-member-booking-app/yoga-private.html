@@ -3,69 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ヨガ個別予約登録 | friendsセルフ予約</title>
-<link rel="stylesheet" href="./admin-style.css?v=50">
+<title>ヨガ個別予約登録 | 行徳ジム24</title>
+<link rel="stylesheet" href="./admin-style.css?v=52">
 </head>
 <body>
-<header class="hero"><p class="eyebrow">friends セルフ予約アプリ</p><h1>ヨガ個別予約登録</h1><p>マンツーマンヨガ予約を登録すると、重なるセルフジム枠が自動で予約不可になります。</p></header>
+<header class="hero"><p class="eyebrow">行徳ジム24 予約アプリ</p><h1>ヨガ個別予約登録</h1><p>ヨガ予約の前後30分を含め、行徳ジム24と重ならないよう同じデータベースで管理します。</p></header>
 <main class="wrap">
-  <section id="loginView" class="card">
-    <h2>パスコード確認</h2>
-    <p class="small">パスコードを入力してください。</p>
-    <div class="row">
-      <input id="yogaPass" type="password" autocomplete="current-password" placeholder="パスコード">
-      <button id="yogaOpen" class="btn">開く</button>
-    </div>
-  </section>
-
-  <section id="yogaView" class="hidden">
-    <div class="toolbar">
-      <a class="ghost" href="./admin.html">管理者画面へ</a>
-      <button id="reloadYoga" class="ghost">再読み込み</button>
-      <button id="logoutYoga" class="danger">ログアウト</button>
-    </div>
-
-    <section class="card">
-      <p class="eyebrow">予約登録</p>
-      <h2>ヨガ個別予約</h2>
-      <form id="yogaForm" class="mini">
-        <label>日付<input name="date" type="date" required></label>
-        <div class="two">
-          <label>開始時間<select id="yogaStart" name="start" required></select></label>
-          <label>終了時間<select id="yogaEnd" name="end" required></select></label>
-        </div>
-        <label>会員名（必須）<input name="memberName" required></label>
-        <label>メモ（任意）<textarea name="note" rows="3" placeholder="未入力でも登録できます"></textarea></label>
-        <p id="yogaStatus" class="notice"></p>
-        <button id="yogaSubmit" class="btn">登録する</button>
-      </form>
-      <p class="small">開始・終了は全日10分単位です。開始時間を選ぶと終了時間は自動で40分後になりますが、必要に応じて変更できます。</p>
-    </section>
-
-    <section class="card">
-      <p class="eyebrow">空き状況</p>
-      <h2>その日の予約不可時間</h2>
-      <p class="small">セルフジム予約は画面表示40分でも、重なり判定上の50分ブロックとして表示します。</p>
-      <div id="yogaUnavailable" class="res"></div>
-      <div id="yogaOpenCandidates" class="small"></div>
-    </section>
-
-    <section class="card">
-      <p class="eyebrow">登録済み</p>
-      <h2>ヨガ個別予約一覧</h2>
-      <div id="yogaList" class="list"></div>
-    </section>
-  </section>
-</main>
-
-<div id="toast" class="toast"></div>
+<section id="loginView" class="card"><h2>パスコード確認</h2><p class="small">行徳ジム24の管理者パスコードを入力してください。</p><div class="row"><input id="yogaPass" type="password" placeholder="パスコード"><button id="yogaOpen" class="btn">開く</button></div></section>
+<section id="yogaView" class="hidden"><div class="toolbar"><a class="ghost" href="../gyotoku-gym24-booking/admin.html">管理者画面へ</a><button id="reloadYoga" class="ghost">再読み込み</button><button id="logoutYoga" class="danger">ログアウト</button></div>
+<section class="card"><p class="eyebrow">予約登録</p><h2>ヨガ個別予約</h2><form id="yogaForm" class="mini"><label>日付<input name="date" type="date" required></label><div class="two"><label>開始時間<select id="yogaStart" name="start" required></select></label><label>終了時間<select id="yogaEnd" name="end" required></select></label></div><label>会員名（必須）<input name="memberName" required></label><label>メモ（任意）<textarea name="note" rows="3"></textarea></label><p id="yogaStatus" class="notice"></p><button id="yogaSubmit" class="btn">登録する</button></form><p class="small">登録時間の30分前から終了30分後まで、行徳ジム24では予約できません。</p></section>
+<section class="card"><p class="eyebrow">空き状況</p><h2>その日の予約不可時間</h2><div id="yogaUnavailable" class="res"><p>行徳ジム24との重複は登録時に自動確認します。</p></div></section>
+<section class="card"><p class="eyebrow">登録済み</p><h2>ヨガ個別予約一覧</h2><div id="yogaList" class="list"></div></section></section>
+</main><div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./yoga-select-stability-v50.js?v=50"></script>
-<script src="./supabase-config.js?v=50"></script>
-<script src="./yoga-private-v40-helper.js?v=50"></script>
-<script src="./yoga-private-clean-v39.js?v=50"></script>
-<script src="./yoga-save-v42.js?v=50"></script>
-<script src="./yoga-member-placeholder-clean-v47.js?v=50"></script>
-<script src="./yoga-member-submit-list-v49.js?v=51"></script>
-</body>
-</html>
+<script src="../gyotoku-gym24-booking/supabase-config.js?v=1"></script>
+<script src="./yoga-gym24-central-v1.js?v=1"></script>
+</body></html>
