@@ -2,9 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>行徳ジム24｜管理者画面</title>
-<meta name="theme-color" content="#1f2a24">
+<meta name="theme-color" content="#6b1f1f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ジム24管理">
+<link rel="manifest" href="./manifest-admin.webmanifest">
+<link rel="icon" href="./icon-admin.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-admin.svg">
 <link rel="stylesheet" href="./admin-style.css?v=40">
 </head>
 <body>
@@ -28,5 +34,6 @@
 <script src="./admin-script.js?v=1"></script>
 <script src="./admin-confirmed-rules.js?v=42"></script>
 <script src="./admin-bulk-close-v1.js?v=1"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
 </body>
 </html>
