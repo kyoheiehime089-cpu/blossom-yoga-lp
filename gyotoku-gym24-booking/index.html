@@ -2,9 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>行徳ジム24｜会員予約</title>
 <meta name="theme-color" content="#1f2a24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ジム24予約">
+<link rel="manifest" href="./manifest-member.webmanifest">
+<link rel="icon" href="./icon-member.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-member.svg">
 <link rel="stylesheet" href="./member-style.css?v=43">
 </head>
 <body>
@@ -17,4 +23,5 @@
 </main><footer class="footer">行徳ジム24｜会員専用予約アプリ</footer></div>
 <dialog id="dialog" class="modal"><form id="bookingForm"><button class="close" type="button">×</button><p class="eyebrow">予約内容確認</p><h2 id="dialogTitle"></h2><div id="dialogSummary" class="res"></div><label>利用人数</label><select name="people" id="peopleSelect"><option value="1">1名</option><option value="2">2名</option></select><label>利用者1</label><select name="user1" id="user1Select" required></select><div id="user2Wrap" class="hidden"><label>利用者2</label><select name="user2" id="user2Select"></select></div><label id="childWrap" class="hidden"><input type="checkbox" name="childAccompanied"> 小さなお子様を同伴する</label><label>メモ</label><textarea name="note" rows="3"></textarea><button class="btn">この枠を予約する</button></form></dialog><div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./supabase-config.js?v=1"></script><script src="./fs-member-supabase.js?v=43"></script><script src="./member-companions.js?v=1"></script><script src="./gym24-yoga-blocks-v2.js?v=3"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
 </body></html>
