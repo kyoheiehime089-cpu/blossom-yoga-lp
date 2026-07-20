@@ -40,6 +40,18 @@
   const observer=new MutationObserver(decorateMemberCards);
   document.addEventListener('DOMContentLoaded',()=>{const members=document.querySelector('#members');if(members)observer.observe(members,{childList:true,subtree:true});setTimeout(decorateMemberCards,500);});
   document.addEventListener('click',event=>{const button=event.target.closest('[data-companions]');if(button)toggleCompanions(button.dataset.companions,button);});
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('[data-cancel]');
+    if(!button)return;
+    if(button.dataset.cancelConfirmed==='1'){delete button.dataset.cancelConfirmed;return;}
+    event.preventDefault();event.stopImmediatePropagation();
+    const card=button.closest('.res,.slot-row');
+    const details=(card?.innerText||'').replace(/キャンセル/g,'').trim();
+    const message=details?`以下の予約を本当にキャンセルしますか？\n\n${details}\n\nこの操作は取り消せません。`:'この予約を本当にキャンセルしますか？\n\nこの操作は取り消せません。';
+    if(!window.confirm(message))return;
+    button.dataset.cancelConfirmed='1';
+    button.click();
+  },true);
   document.addEventListener('submit',async event=>{
     const add=event.target.closest('.companion-add'),edit=event.target.closest('.companion-edit');if(!add&&!edit)return;
     event.preventDefault();event.stopImmediatePropagation();
