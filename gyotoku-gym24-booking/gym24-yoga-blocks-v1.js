@@ -1,0 +1,4 @@
+let gym24YogaBlocks=[];
+async function gym24LoadYogaBlocks(){const result=await gyotokuDb.rpc('fs_yoga_public_blocks',{});if(!result.error&&result.data?.ok){gym24YogaBlocks=result.data.blocks||[];if(typeof renderCalendar==='function'&&snapshot)renderCalendar();}}
+function externalBlock(date,start){const a=startAt(date,Number(start)-10),b=startAt(date,Number(start)+Number(rule().use_minutes)+10);return gym24YogaBlocks.find(x=>a<new Date(x.block_end_ts)&&new Date(x.block_start_ts)<b)||(snapshot?.external_blocks||[]).find(x=>x.date===date&&overlaps(Number(start)-10,Number(start)+Number(rule().use_minutes)+10,x.start_minute,Number(x.block_end_minute??x.end_minute)));}
+document.addEventListener('DOMContentLoaded',()=>{gym24LoadYogaBlocks();setInterval(gym24LoadYogaBlocks,5000);});

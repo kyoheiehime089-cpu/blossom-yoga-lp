@@ -5,34 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>行徳ジム24｜会員予約</title>
 <meta name="theme-color" content="#1f2a24">
-<link rel="stylesheet" href="./member-style.css?v=42">
+<link rel="stylesheet" href="./member-style.css?v=43">
 </head>
 <body>
-<div class="wrap">
-<header class="top"><div class="brand"><div class="mark">24</div><div><p>完全予約制・貸切型 24時間セルフジム</p><h1>行徳ジム24</h1></div></div></header>
-<main>
-<section id="loginView" class="hero">
-  <div class="hero-copy"><p class="eyebrow">会員専用予約アプリ</p><h2>空いている時間を選んで、すぐ予約。</h2><p>全時間帯で10分単位の開始時刻を選べます。</p></div>
-  <form id="loginForm" class="login"><h3>会員ログイン</h3><p class="small">LINEで届いた会員IDとログインPINを入力してください。</p><label>会員ID</label><input id="memberId" required><label>ログインPIN</label><input id="pin" inputmode="numeric" required><button class="btn">ログインする</button></form>
-</section>
-<section id="appView" class="hidden">
-  <div class="dashboard">
-    <section class="card"><p class="eyebrow">ログイン中</p><h2 id="memberName"></h2><div class="meta"><span id="memberPlan"></span><span id="memberQuota"></span><span id="extraSlots"></span></div><div style="margin-top:18px"><div style="display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:800"><span>今月の予約回数</span><strong id="usageText"></strong></div><div class="bar"><div id="usageBar"></div></div></div><div class="rules"></div></section>
-    <section class="card"><p class="eyebrow">次回予約</p><div id="nextReservation" class="res"><p>現在、予約はありません。</p></div></section>
-  </div>
-  <section id="companionManager" class="panel hidden"><p class="eyebrow">ホーム</p><h2>同伴者の登録</h2><p class="small">スタンダード・プレミアムプランでは、同伴者を2名まで登録できます。登録後、予約画面の利用者プルダウンに表示されます。</p><div id="companionList" class="list"></div></section>
-  <nav class="tabs"><button class="tab active" data-tab="booking">予約する</button><button class="tab" data-tab="mine">自分の予約</button><button class="tab" id="logout">ログアウト</button></nav>
-  <section id="bookingTab" class="panel"><div class="head"><div><p class="eyebrow">予約カレンダー</p><h2>予約カレンダー</h2><p class="small">日付を選び、開始時刻を10分単位で選択してください。</p></div></div><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn" style="margin:0;min-height:44px">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><div id="calendar"></div></section>
-  <section id="mineTab" class="panel hidden"><p class="eyebrow">マイページ</p><h2>自分の予約</h2><div id="mine" class="list"></div></section>
-</section>
-</main>
-<footer class="footer">行徳ジム24｜会員専用予約アプリ</footer>
-</div>
-<dialog id="dialog" class="modal"><form id="bookingForm"><button class="close" type="button">×</button><p class="eyebrow">予約内容確認</p><h2 id="dialogTitle"></h2><div id="dialogSummary" class="res"></div><label>利用人数</label><select name="people" id="peopleSelect"><option value="1">1名</option><option value="2">2名</option></select><label>利用者1</label><select name="user1" id="user1Select" required></select><div id="user2Wrap" class="hidden"><label>利用者2</label><select name="user2" id="user2Select"></select></div><label id="childWrap" class="hidden"><input type="checkbox" name="childAccompanied"> 小さなお子様を同伴する</label><label>メモ</label><textarea name="note" rows="3"></textarea><button class="btn">この枠を予約する</button></form></dialog>
-<div id="toast" class="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-config.js?v=1"></script>
-<script src="./fs-member-supabase.js?v=42"></script>
-<script src="./member-companions.js?v=1"></script>
-</body>
-</html>
+<div class="wrap"><header class="top"><div class="brand"><div class="mark">24</div><div><p>完全予約制・貸切型 24時間セルフジム</p><h1>行徳ジム24</h1></div></div></header><main>
+<section id="loginView" class="hero"><div class="hero-copy"><p class="eyebrow">会員専用予約アプリ</p><h2>空いている時間を選んで、すぐ予約。</h2><p>全時間帯で10分単位の開始時刻を選べます。</p></div><form id="loginForm" class="login"><h3>会員ログイン</h3><p class="small">LINEで届いた会員IDとログインPINを入力してください。</p><label>会員ID</label><input id="memberId" required><label>ログインPIN</label><input id="pin" inputmode="numeric" required><button class="btn">ログインする</button></form></section>
+<section id="appView" class="hidden"><div class="dashboard"><section class="card"><p class="eyebrow">ログイン中</p><h2 id="memberName"></h2><div class="meta"><span id="memberPlan"></span><span id="memberQuota"></span><span id="extraSlots"></span></div><div style="margin-top:18px"><div style="display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-weight:800"><span>今月の予約回数</span><strong id="usageText"></strong></div><div class="bar"><div id="usageBar"></div></div></div><div class="rules"></div></section><section class="card"><p class="eyebrow">次回予約</p><div id="nextReservation" class="res"><p>現在、予約はありません。</p></div></section></div>
+<section id="companionManager" class="panel hidden"><p class="eyebrow">ホーム</p><h2>同伴者の登録</h2><p class="small">スタンダード・プレミアムプランでは、同伴者を2名まで登録できます。登録後、予約画面の利用者プルダウンに表示されます。</p><div id="companionList" class="list"></div></section>
+<nav class="tabs"><button class="tab active" data-tab="booking">予約する</button><button class="tab" data-tab="mine">自分の予約</button><button class="tab" id="logout">ログアウト</button></nav>
+<section id="bookingTab" class="panel"><div class="head"><div><p class="eyebrow">予約カレンダー</p><h2>予約カレンダー</h2><p class="small">日付を選び、開始時刻を10分単位で選択してください。</p></div></div><div class="week"><button id="prevWeek" class="ghost">前の週</button><button id="thisWeek" class="ghost">今週</button><button id="nextWeek" class="btn" style="margin:0;min-height:44px">次の週</button></div><div id="weekLabel" class="week-label"></div><div id="days" class="days"></div><div id="calendar"></div></section><section id="mineTab" class="panel hidden"><p class="eyebrow">マイページ</p><h2>自分の予約</h2><div id="mine" class="list"></div></section></section>
+</main><footer class="footer">行徳ジム24｜会員専用予約アプリ</footer></div>
+<dialog id="dialog" class="modal"><form id="bookingForm"><button class="close" type="button">×</button><p class="eyebrow">予約内容確認</p><h2 id="dialogTitle"></h2><div id="dialogSummary" class="res"></div><label>利用人数</label><select name="people" id="peopleSelect"><option value="1">1名</option><option value="2">2名</option></select><label>利用者1</label><select name="user1" id="user1Select" required></select><div id="user2Wrap" class="hidden"><label>利用者2</label><select name="user2" id="user2Select"></select></div><label id="childWrap" class="hidden"><input type="checkbox" name="childAccompanied"> 小さなお子様を同伴する</label><label>メモ</label><textarea name="note" rows="3"></textarea><button class="btn">この枠を予約する</button></form></dialog><div id="toast" class="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./supabase-config.js?v=1"></script><script src="./fs-member-supabase.js?v=43"></script><script src="./member-companions.js?v=1"></script><script src="./gym24-yoga-blocks-v1.js?v=1"></script>
+</body></html>
