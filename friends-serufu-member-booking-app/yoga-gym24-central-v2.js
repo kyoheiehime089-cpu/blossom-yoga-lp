@@ -17,7 +17,11 @@ function gyotokuYogaFixedBlocks(date){
   if(day===3)return[[1080,1330,'セミパーソナル']];
   if(day===4)return[[690,790,'通常ヨガ'],[1215,1315,'通常ヨガ']];
   if(day===5)return[[1080,1330,'セミパーソナル']];
-  if(day===6||day===0)return[[460,820,'通常ヨガ／セミパーソナル枠']];
+  if(day===6){
+    if(date>='2026-09-01')return[[570,820,'セミパーソナル枠'],[990,1090,'通常ヨガ']];
+    return[[460,820,'通常ヨガ／セミパーソナル枠']];
+  }
+  if(day===0)return[[460,820,'通常ヨガ／セミパーソナル枠']];
   return[];
 }
 async function gyotokuYogaCall(name,args){const r=await gyotokuYogaDb.rpc(name,args);if(r.error)throw Error(r.error.message);if(!r.data?.ok)throw Error(r.data?.error||'処理に失敗しました');return r.data;}
@@ -27,7 +31,7 @@ function gyotokuYogaUnavailableBlocks(date){
   const fixed=gyotokuYogaFixedBlocks(date).map(([start_minute,end_minute,reason])=>({start_minute,end_minute,reason}));
   const gym=(gyotokuYogaSnapshot.gym_reservations||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute),end_minute:Number(r.end_minute??Number(r.start_minute)+50),reason:'行徳ジム24予約'}));
   const closed=(gyotokuYogaSnapshot.closed_slots||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute),end_minute:Number(r.end_minute??Number(r.start_minute)+Number(r.block_minutes||50)),reason:r.reason?`利用不可枠（${r.reason}）`:'利用不可枠'}));
-  const privateYoga=(gyotokuYogaSnapshot.yoga_reservations||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute)-30,end_minute:Number(r.end_minute)+30,reason:'ヨガ個別予約（前後30分を含む）'}));
+  const privateYoga=(gyotokuYogaSnapshot.yoga_reservations||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute),end_minute:Number(r.end_minute),reason:'ヨガ個別予約'}));
   return[...fixed,...gym,...closed,...privateYoga].sort((a,b)=>a.start_minute-b.start_minute||a.end_minute-b.end_minute);
 }
 function gyotokuYogaRenderUnavailable(){
@@ -46,6 +50,6 @@ async function gyotokuYogaTimes(preferred=''){
   if(preferred&&[...s.options].some(o=>o.value===preferred))s.value=preferred;else if(s.options.length)s.selectedIndex=0;else s.add(new Option('予約できる時間がありません',''));
   s.disabled=!starts.length;gyotokuYogaEnd();gyotokuYogaRenderUnavailable();
 }
-function gyotokuYogaRender(){const l=document.querySelector('#yogaList');l.innerHTML=gyotokuYogaSnapshot.yoga_reservations.length?gyotokuYogaSnapshot.yoga_reservations.map(r=>`<article class="res"><h3>ヨガ個別予約</h3><p>${String(r.date).slice(0,10)} ${gyotokuYogaTime(r.start_minute)}〜${gyotokuYogaTime(r.end_minute)}</p><p>会員名：${gyotokuYogaEsc(r.member_name)}</p><p>前後30分を予約不可</p><button class="danger" data-central-yoga-delete="${r.id}">削除</button></article>`).join(''):'<article class="res"><p>登録済み予約はありません。</p></article>';gyotokuYogaRenderUnavailable();}
+function gyotokuYogaRender(){const l=document.querySelector('#yogaList');l.innerHTML=gyotokuYogaSnapshot.yoga_reservations.length?gyotokuYogaSnapshot.yoga_reservations.map(r=>`<article class="res"><h3>ヨガ個別予約</h3><p>${String(r.date).slice(0,10)} ${gyotokuYogaTime(r.start_minute)}〜${gyotokuYogaTime(r.end_minute)}</p><p>会員名：${gyotokuYogaEsc(r.member_name)}</p><button class="danger" data-central-yoga-delete="${r.id}">削除</button></article>`).join(''):'<article class="res"><p>登録済み予約はありません。</p></article>';gyotokuYogaRenderUnavailable();}
 async function gyotokuYogaLoad(){const prev=document.querySelector('#yogaStart')?.value||'';gyotokuYogaSnapshot=await gyotokuYogaCall('fs_yoga_private_snapshot_central',{p_admin_password:gyotokuYogaPass});gyotokuYogaRender();await gyotokuYogaTimes(prev);}
 document.addEventListener('DOMContentLoaded',()=>{const date=document.querySelector('#yogaForm [name=date]');if(date&&!date.value)date.value=new Date().toISOString().slice(0,10);document.querySelector('#yogaOpen').onclick=async()=>{try{gyotokuYogaPass=document.querySelector('#yogaPass').value.trim();await gyotokuYogaLoad();document.querySelector('#loginView').classList.add('hidden');document.querySelector('#yogaView').classList.remove('hidden');}catch(e){alert(e.message)}};document.querySelector('#reloadYoga').onclick=()=>gyotokuYogaLoad().catch(e=>alert(e.message));document.querySelector('#yogaStart').onchange=gyotokuYogaEnd;date?.addEventListener('change',()=>gyotokuYogaTimes().catch(e=>alert(e.message)));document.querySelector('#yogaForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),start=gyotokuYogaMinute(f.get('start'));try{const fixed=gyotokuYogaFixedBlocks(f.get('date'));if(fixed.some(([blockStart,blockEnd])=>gyotokuYogaOverlap(start,start+40,blockStart,blockEnd)))return alert('通常ヨガまたはセミパーソナルの既存枠と重なるため登録できません。');const latest=await gyotokuYogaCall('fs_yoga_available_starts',{p_admin_password:gyotokuYogaPass,p_date:f.get('date'),p_duration_minutes:40});if(!(latest.starts||[]).map(Number).includes(start)){await gyotokuYogaTimes();return alert('この時間は選択できません。');}await gyotokuYogaCall('fs_yoga_private_create_central',{p_admin_password:gyotokuYogaPass,p_date:f.get('date'),p_start_minute:start,p_end_minute:start+40,p_member_name:f.get('memberName'),p_note:f.get('note')||''});await gyotokuYogaLoad();alert('登録完了しました');}catch(x){await gyotokuYogaTimes().catch(()=>{});alert(x.message)}};document.addEventListener('click',async e=>{const b=e.target.closest('[data-central-yoga-delete]');if(!b)return;try{await gyotokuYogaCall('fs_yoga_private_delete_central',{p_admin_password:gyotokuYogaPass,p_id:b.dataset.centralYogaDelete});await gyotokuYogaLoad();}catch(x){alert(x.message)}});});
