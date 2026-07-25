@@ -5,16 +5,22 @@
     return (snapshot?.reservations||[]).find(r=>r.date===date&&Number(r.start_minute)===Number(startMinute));
   }
 
-  function reservationCovering(date,startMinute){
+  function reservationBlocking(date,startMinute){
     return (snapshot?.reservations||[]).find(r=>{
       if(r.date!==date)return false;
       const start=Number(r.start_minute);
       const use=Number(r.use_minutes_snapshot||40);
-      return start<Number(startMinute)&&Number(startMinute)<start+use;
+      return start-10<Number(startMinute)&&Number(startMinute)<start+use+10;
     });
   }
 
-  const originalSlotRow=window.slotRow;
+  function closedOrExternalRow(date,startMinute){
+    const closed=closedAt(date,startMinute),external=externalAt(date,startMinute);
+    if(closed)return `<article class='slot-row closed'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill closed'>利用不可</span> ${escapeHtml(closed.reason||'理由なし')}</div><button class='danger' data-open='${escapeHtml(closed.id)}'>解除</button></article>`;
+    if(external)return `<article class='slot-row closed'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill closed'>予約不可</span></div></article>`;
+    return '';
+  }
+
   window.slotRow=function(date,startMinute){
     const exact=exactReservation(date,startMinute);
     if(exact){
@@ -23,8 +29,14 @@
       const end=Number(exact.start_minute)+Number(exact.use_minutes_snapshot||40);
       return `<article class='slot-row reserved'><div class='time'>${formatMinute(exact.start_minute)}〜${formatMinute(end)}</div><div><span class='pill reserve'>予約</span> ${escapeHtml(exact.member_name)}<br><strong>利用者：${escapeHtml(users)}</strong>${exact.child_accompanied?'<br><strong>小さなお子様同伴</strong>':''}</div><button class='danger' data-cancel='${escapeHtml(exact.id)}'>キャンセル</button></article>`;
     }
-    if(reservationCovering(date,startMinute))return '';
-    return originalSlotRow(date,startMinute);
+
+    // 予約本体と前後10分の行は「別予約」として表示しない。
+    if(reservationBlocking(date,startMinute))return '';
+
+    const blocked=closedOrExternalRow(date,startMinute);
+    if(blocked)return blocked;
+
+    return `<article class='slot-row open' data-slot-action='${date}_${startMinute}'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill open'>空き</span> タップして予約登録／利用不可</div><span>操作</span></article>`;
   };
 
   window.renderCalendar=function(){
