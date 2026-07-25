@@ -30,11 +30,21 @@ function gyotokuYogaFixedBlocks(date){
 async function gyotokuYogaCall(name,args){const r=await gyotokuYogaDb.rpc(name,args);if(r.error)throw Error(r.error.message);if(!r.data?.ok)throw Error(r.data?.error||'処理に失敗しました');return r.data;}
 function gyotokuYogaDate(){return document.querySelector('#yogaForm [name=date]')?.value||'';}
 function gyotokuYogaEnd(){const s=document.querySelector('#yogaStart'),e=document.querySelector('#yogaEnd');if(!s||!e||!s.value)return;const end=Math.min(1440,gyotokuYogaMinute(s.value)+40);e.innerHTML='';e.add(new Option(gyotokuYogaTime(end),gyotokuYogaTime(end)));}
+function gyotokuYogaDayOffset(baseDate,itemDate){
+  const base=new Date(`${baseDate}T00:00:00`),item=new Date(`${String(itemDate).slice(0,10)}T00:00:00`);
+  return Math.round((item-base)/86400000)*1440;
+}
+function gyotokuYogaProjectedBlock(baseDate,item,startMinute,endMinute,reason){
+  const offset=gyotokuYogaDayOffset(baseDate,item.date);
+  const start=offset+Number(startMinute),end=offset+Number(endMinute);
+  if(end<=0||start>=1440)return null;
+  return{start_minute:Math.max(0,start),end_minute:Math.min(1440,end),reason};
+}
 function gyotokuYogaUnavailableBlocks(date){
   const fixed=gyotokuYogaFixedBlocks(date).map(([start_minute,end_minute,reason])=>({start_minute,end_minute,reason}));
-  const gym=(gyotokuYogaSnapshot.gym_reservations||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute)-30,end_minute:Number(r.start_minute)+Number(r.use_minutes||40)+30,reason:'行徳ジム24予約（前後30分を含む）'}));
-  const closed=(gyotokuYogaSnapshot.closed_slots||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute)-30,end_minute:Number(r.start_minute)+Number(r.block_minutes||50)+30,reason:r.reason?`利用不可枠（${r.reason}）`:'利用不可枠'}));
-  const privateYoga=(gyotokuYogaSnapshot.yoga_reservations||[]).filter(r=>String(r.date).slice(0,10)===date).map(r=>({start_minute:Number(r.start_minute),end_minute:Number(r.end_minute),reason:'ヨガ個別予約'}));
+  const gym=(gyotokuYogaSnapshot.gym_reservations||[]).map(r=>gyotokuYogaProjectedBlock(date,r,Number(r.start_minute)-30,Number(r.start_minute)+Number(r.use_minutes||40)+30,'行徳ジム24予約（前後30分を含む）')).filter(Boolean);
+  const closed=(gyotokuYogaSnapshot.closed_slots||[]).map(r=>gyotokuYogaProjectedBlock(date,r,Number(r.start_minute)-30,Number(r.start_minute)+Number(r.block_minutes||50)+30,r.reason?`利用不可枠（${r.reason}）`:'利用不可枠')).filter(Boolean);
+  const privateYoga=(gyotokuYogaSnapshot.yoga_reservations||[]).map(r=>gyotokuYogaProjectedBlock(date,r,Number(r.start_minute),Number(r.end_minute),'ヨガ個別予約')).filter(Boolean);
   return[...fixed,...gym,...closed,...privateYoga].sort((a,b)=>a.start_minute-b.start_minute||a.end_minute-b.end_minute);
 }
 function gyotokuYogaRenderUnavailable(){
