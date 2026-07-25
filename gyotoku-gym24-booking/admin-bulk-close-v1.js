@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded',()=>{
   // 火曜12:00〜13:40は通常ヨガ。2026年9月以降、火曜8:30〜10:10は廃止。
+  // 2026年9月以降の土曜は8:10枠を廃止し、17:00通常ヨガ枠を反映。
   if(typeof scheduleBlocks==='function'){
     scheduleBlocks=function(date){
       const day=new Date(`${date}T00:00:00`).getDay();
@@ -13,7 +14,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(day===3)return[[1080,1330]];
       if(day===4)return[[690,790],[1215,1315]];
       if(day===5)return[[1080,1330]];
-      if(day===6||day===0)return[[460,820]];
+      if(day===6){
+        if(date>='2026-09-01')return[[570,820],[990,1090]];
+        return[[460,820]];
+      }
+      if(day===0)return[[460,820]];
       return[];
     };
   }
