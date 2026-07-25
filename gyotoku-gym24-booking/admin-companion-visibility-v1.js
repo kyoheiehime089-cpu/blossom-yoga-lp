@@ -5,16 +5,19 @@
     const names=[reservation?.user1_name_snapshot,reservation?.user2_name_snapshot].filter(Boolean);
     return names.length?names.join('・'):(reservation?.people||'利用者未記録');
   }
+  function childLabel(reservation){
+    return reservation?.child_accompanied?'<p><strong>小さなお子様同伴</strong></p>':'';
+  }
 
   const originalReservationCard=window.reservationCard;
   window.reservationCard=function(reservation){
-    return `<article class='res'><h3>${escapeHtml(fullRange(reservation.date,reservation.start_minute))}</h3><p><strong>契約者：</strong>${escapeHtml(reservation.member_name)}</p><p><strong>実際の利用者：</strong>${escapeHtml(reservationUsers(reservation))}</p><p>${escapeHtml(planLabel(reservation.plan))} / ${escapeHtml(reservation.people)}</p><div class='two'><button class='ghost' data-detail='${escapeHtml(reservation.member_id)}'>会員を開く</button><button class='danger' data-cancel='${escapeHtml(reservation.id)}'>キャンセル</button></div></article>`;
+    return `<article class='res'><h3>${escapeHtml(fullRange(reservation.date,reservation.start_minute))}</h3><p><strong>契約者：</strong>${escapeHtml(reservation.member_name)}</p><p><strong>実際の利用者：</strong>${escapeHtml(reservationUsers(reservation))}</p>${childLabel(reservation)}<p>${escapeHtml(planLabel(reservation.plan))} / ${escapeHtml(reservation.people)}</p><div class='two'><button class='ghost' data-detail='${escapeHtml(reservation.member_id)}'>会員を開く</button><button class='danger' data-cancel='${escapeHtml(reservation.id)}'>キャンセル</button></div></article>`;
   };
 
   const originalSlotRow=window.slotRow;
   window.slotRow=function(date,startMinute){
     const reservation=reservationAt(date,startMinute),closed=closedAt(date,startMinute),external=externalAt(date,startMinute);
-    if(reservation)return `<article class='slot-row reserved'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill reserve'>予約</span> ${escapeHtml(reservation.member_name)}<br><strong>利用者：${escapeHtml(reservationUsers(reservation))}</strong></div><button class='danger' data-cancel='${escapeHtml(reservation.id)}'>キャンセル</button></article>`;
+    if(reservation)return `<article class='slot-row reserved'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill reserve'>予約</span> ${escapeHtml(reservation.member_name)}<br><strong>利用者：${escapeHtml(reservationUsers(reservation))}</strong>${reservation.child_accompanied?'<br><strong>小さなお子様同伴</strong>':''}</div><button class='danger' data-cancel='${escapeHtml(reservation.id)}'>キャンセル</button></article>`;
     return originalSlotRow(date,startMinute);
   };
 
