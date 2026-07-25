@@ -1,4 +1,4 @@
-// 会員画面：2026年9月以降の固定枠変更と、全プランの「小さなお子様同伴」表示だけを反映。
+// 会員画面：2026年9月以降の固定枠変更、全プランの「小さなお子様同伴」、予約間10分を反映。
 // 予約回数・利用時間・締切・同伴者ルールなどは変更しない。
 (function(){
   const originalOpenDialog=window.openDialog;
@@ -21,6 +21,16 @@
     }
     if(day===0)return [[460,820]];
     return [];
+  };
+
+  // 既存予約の実利用時間＋前後10分に、候補の実利用時間が重なる場合だけ予約不可。
+  // これにより、例：00:00〜00:25の次は10分インターバル後の00:40〜が候補になる。
+  window.reservationConflict=function(date,start,item){
+    const candidateStart=startAt(date,Number(start));
+    const candidateEnd=new Date(candidateStart.getTime()+Number(rule().use_minutes)*60000);
+    const existingStart=startAt(item.date,Number(item.start_minute)-10);
+    const existingEnd=new Date(startAt(item.date,Number(item.start_minute)).getTime()+(Number(item.use_minutes||40)+10)*60000);
+    return candidateStart<existingEnd&&existingStart<candidateEnd;
   };
 
   if(typeof originalOpenDialog==='function'){
