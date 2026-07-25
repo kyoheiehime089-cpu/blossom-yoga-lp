@@ -10,8 +10,8 @@
     manager.classList.toggle('hidden',!eligible);
     if(!eligible)return;
     const users=companions();
-    const forms=users.map((user,index)=>`<form class="res member-companion-form" data-user-id="${escapeHtml(user.id)}"><h3>同伴者${index+1}</h3><label>氏名<input name="name" value="${escapeHtml(user.name)}" maxlength="80" required></label><label><input type="checkbox" name="active" ${user.is_active?'checked':''}> 予約時に選択できる状態にする</label><button class="btn">この同伴者を保存</button></form>`).join('');
-    const add=users.length<2?`<form class="res member-companion-form"><h3>同伴者${users.length+1}を登録</h3><label>氏名<input name="name" maxlength="80" placeholder="例：山田 花子" required></label><button class="btn">同伴者を登録する</button></form>`:'<article class="res"><p>同伴者は2名登録済みです。</p></article>';
+    const forms=users.map((user,index)=>`<form class="res member-companion-form" data-user-id="${escapeHtml(user.id)}"><h3>登録中の同伴者${index+1}</h3><p class="small">${user.is_active?'予約時に選択できます':'現在は予約時に選択できません'}</p><label>氏名<input name="name" value="${escapeHtml(user.name)}" maxlength="80" required></label><label><input type="checkbox" name="active" ${user.is_active?'checked':''}> 予約時に選択できる状態にする</label><button class="btn">この同伴者を保存</button></form>`).join('');
+    const add=users.length<2?`<form class="res member-companion-form"><h3>同伴者${users.length+1}を登録</h3><p class="small">契約者本人とは別に、同伴者を合計2名まで登録できます。</p><label>氏名<input name="name" maxlength="80" placeholder="例：山田 花子" required></label><button class="btn">同伴者を登録する</button></form>`:'<article class="res"><h3>同伴者は2名登録済みです</h3><p class="small">上に表示されている2名が現在の登録同伴者です。</p></article>';
     list.innerHTML=forms+add;
   }
 
