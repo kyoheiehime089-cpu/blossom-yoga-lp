@@ -3,6 +3,9 @@
 (function(){
   const originalOpenDialog=window.openDialog;
 
+  // スタンダードは同時予約2枠。DB値が取得できる場合はDB値が優先される。
+  if(typeof DEFAULT_RULES==='object'&&DEFAULT_RULES.standard)DEFAULT_RULES.standard.concurrent_limit=2;
+
   window.scheduleBlocks=function(date){
     const day=new Date(`${date}T00:00:00`).getDay();
     if(typeof holiday==='function'&&holiday(date))return [[510,820]];
