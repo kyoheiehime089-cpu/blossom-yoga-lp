@@ -75,6 +75,13 @@ jobs:
             exit 1
           fi
 
+          if [ -d yoga-private-booking ]; then
+            cp -r yoga-private-booking _site/yoga-private-booking
+          else
+            echo "yoga-private-booking is missing"
+            exit 1
+          fi
+
           if [ -f 404.html ]; then
             cp 404.html _site/
           fi
