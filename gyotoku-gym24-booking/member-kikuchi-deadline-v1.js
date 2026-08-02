@@ -1,5 +1,5 @@
-// 無料プラン：予約・キャンセルは利用日前日の22:00締切
-// プレミアムプラン：従来のプラン設定（予約2時間前・キャンセル3時間前）を維持
+// 全プラン共通：予約は利用日前日の22:00締切
+// キャンセル条件は既存仕様を維持（プレミアムは開始3時間前、その他は前日22:00）。
 (function(){
   function isPremium(){
     return String(snapshot?.member?.plan||'').toLowerCase()==='premium';
@@ -12,10 +12,7 @@
     return cutoff;
   }
 
-  canBook=function(date,start){
-    if(isPremium()){
-      return startAt(date,start).getTime()-Date.now()>=Number(rule().booking_deadline_minutes)*60000;
-    }
+  canBook=function(date){
     return Date.now()<previousDayCutoff(date).getTime();
   };
 
@@ -33,12 +30,15 @@
     if(!rules)return;
     rules.querySelectorAll('p').forEach(p=>{
       const text=p.textContent||'';
-      if(isPremium()){
-        if(text.startsWith('予約：'))p.innerHTML=`<strong>予約</strong>：${rule().booking_days}日先まで・開始${Number(rule().booking_deadline_minutes)/60}時間前まで。`;
-        if(text.startsWith('キャンセル：'))p.innerHTML=`<strong>キャンセル</strong>：開始${Number(rule().cancellation_deadline_minutes)/60}時間前まで。`;
-      }else{
-        if(text.startsWith('予約：'))p.innerHTML=`<strong>予約</strong>：${rule().booking_days}日先まで・利用日前日の22:00まで。`;
-        if(text.startsWith('キャンセル：'))p.innerHTML='<strong>キャンセル</strong>：利用日前日の22:00まで。締切後はキャンセルできず、1枠消化となります。';
+      if(text.startsWith('予約：')){
+        p.innerHTML=`<strong>予約</strong>：${rule().booking_days}日先まで・利用日前日の22:00まで。`;
+      }
+      if(text.startsWith('キャンセル：')){
+        if(isPremium()){
+          p.innerHTML=`<strong>キャンセル</strong>：開始${Number(rule().cancellation_deadline_minutes)/60}時間前まで。`;
+        }else{
+          p.innerHTML='<strong>キャンセル</strong>：利用日前日の22:00まで。締切後はキャンセルできず、1枠消化となります。';
+        }
       }
     });
   };
