@@ -1,12 +1,12 @@
-// 菊池様（G24004）・三代川様（G24003）以外は、利用人数を1名に固定し、利用人数・利用者1の入力欄を非表示にする。
+// 無料プランだけ利用人数を1名に固定し、利用人数・利用者1の入力欄を非表示にする。
+// スタンダード・プレミアムは以前の完成版どおり、利用人数と利用者を選択できる。
 (function(){
-  const PREMIUM_MEMBER_CODES=new Set(['G24003','G24004']);
-  const isPremiumException=()=>PREMIUM_MEMBER_CODES.has(String(memberCode||'').trim().toUpperCase());
+  const isFreePlan=()=>String(snapshot?.member?.plan||'free').toLowerCase()==='free';
 
   const originalOpenDialog=openDialog;
   openDialog=function(date,start){
     originalOpenDialog(date,start);
-    if(isPremiumException())return;
+    if(!isFreePlan())return;
 
     const peopleSelect=document.querySelector('#peopleSelect');
     const user1Select=document.querySelector('#user1Select');
