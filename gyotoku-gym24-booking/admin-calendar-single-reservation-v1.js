@@ -14,8 +14,21 @@
     });
   }
 
+  // DB側の予約判定と同じく、手動の利用不可時間は前後10分を含めて表示上も塞ぐ。
+  // 例：10:00〜18:30を利用不可にした場合、18:30開始の40分枠も利用不可表示になり、18:40から空き表示になる。
+  function adminClosedAt(date,startMinute){
+    const candidateStart=Number(startMinute);
+    const candidateEnd=candidateStart+40;
+    return (snapshot?.closed_slots||[]).find(item=>{
+      if(item.date!==date)return false;
+      const closedStart=Number(item.start_minute)-10;
+      const closedEnd=Number(item.start_minute)+Number(item.block_minutes||50)+10;
+      return candidateStart<closedEnd&&closedStart<candidateEnd;
+    });
+  }
+
   function closedOrExternalRow(date,startMinute){
-    const closed=closedAt(date,startMinute),external=externalAt(date,startMinute);
+    const closed=adminClosedAt(date,startMinute),external=externalAt(date,startMinute);
     if(closed)return `<article class='slot-row closed'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill closed'>利用不可</span> ${escapeHtml(closed.reason||'理由なし')}</div><button class='danger' data-open='${escapeHtml(closed.id)}'>解除</button></article>`;
     if(external)return `<article class='slot-row closed'><div class='time'>${slotRange(startMinute)}</div><div><span class='pill closed'>予約不可</span></div></article>`;
     return '';
