@@ -72,7 +72,13 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   if(typeof renderClosed==='function'){
     renderClosed=function(){
-      const items=snapshot.closed_slots||[];
+      const items=[...(snapshot.closed_slots||[])].sort((a,b)=>{
+        const dateCompare=String(b.date||'').localeCompare(String(a.date||''));
+        if(dateCompare!==0)return dateCompare;
+        const startCompare=Number(b.start_minute||0)-Number(a.start_minute||0);
+        if(startCompare!==0)return startCompare;
+        return String(b.created_at||'').localeCompare(String(a.created_at||''));
+      });
       document.querySelector('#closed').innerHTML=items.length?items.map(item=>{
         const endMinute=Number(item.start_minute)+Number(item.block_minutes||50);
         return `<article class='res'><h3>${escapeHtml(japaneseDate(item.date))} ${formatMinute(item.start_minute)}〜${formatMinute(endMinute)}</h3><p>${escapeHtml(item.reason||'理由なし')}</p><button class='danger' data-open='${escapeHtml(item.id)}'>解除</button></article>`;
