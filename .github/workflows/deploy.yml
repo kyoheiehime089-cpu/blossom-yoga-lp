@@ -54,6 +54,10 @@ jobs:
             cp -r assets _site/assets
           fi
 
+          if [ -d corset-relaxation ]; then
+            cp -r corset-relaxation _site/corset-relaxation
+          fi
+
           if [ -d friends-serufu-member-booking-app ]; then
             cp -r friends-serufu-member-booking-app _site/friends-serufu-member-booking-app
           else
