@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>リラクゼーションサロン コルセット｜CORSET</title>
+<meta name="description" content="毎日を、もっと軽やかに。心と体をやさしく整える、リラクゼーションサロン CORSET（コルセット）。">
+<meta name="theme-color" content="#f5f0e5">
+<style>
+:root{
+  --ink:#4c3b31;--sub:#77695e;--green:#64755c;--green2:#87977c;
+  --cream:#f7f3e9;--cream2:#eee7d7;--white:#fffdf8;--line:#d9d0bd;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--cream);font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;line-height:1.9;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{width:min(1080px,calc(100% - 40px));margin:auto}
+.hero{min-height:92svh;display:grid;place-items:center;position:relative;overflow:hidden;background:
+radial-gradient(circle at 9% 12%,rgba(126,149,112,.17),transparent 26%),
+radial-gradient(circle at 92% 76%,rgba(163,139,100,.14),transparent 28%),
+linear-gradient(145deg,#fbf8f1,#f0eadb)}
+.hero:before,.hero:after{content:"";position:absolute;width:310px;height:520px;border:1px solid rgba(100,117,92,.26);border-radius:50%;transform:rotate(38deg)}
+.hero:before{left:-190px;top:-190px}.hero:after{right:-200px;bottom:-250px}
+.hero-inner{text-align:center;position:relative;z-index:2;padding:72px 0}
+.eyebrow{font-family:Georgia,serif;letter-spacing:.28em;color:var(--green);font-size:.75rem;text-transform:uppercase}
+.tagline{margin:22px 0 10px;font-size:clamp(1.05rem,2.7vw,1.35rem);letter-spacing:.18em}
+.rule{width:96px;height:1px;background:var(--green2);margin:22px auto;position:relative}
+.rule:after{content:"◆";position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);background:var(--cream);padding:0 10px;color:var(--green2);font-size:.5rem}
+.kicker{font-size:.9rem;letter-spacing:.15em;margin:0 0 6px}
+h1{font-size:clamp(3.25rem,12vw,7.5rem);font-weight:500;line-height:1.05;letter-spacing:.04em;margin:8px 0 10px}
+.en{font-family:Georgia,serif;color:var(--green);font-size:.82rem;letter-spacing:.32em}
+.lead{max-width:680px;margin:38px auto 0;font-size:clamp(1rem,2.4vw,1.16rem)}
+.scroll{display:inline-flex;align-items:center;gap:10px;margin-top:44px;color:var(--sub);font-size:.78rem;letter-spacing:.13em;text-decoration:none}
+.scroll i{display:block;width:1px;height:42px;background:var(--green2)}
+section{padding:92px 0}
+.section-head{text-align:center;margin-bottom:46px}
+.section-head .enhead{font:italic .85rem Georgia,serif;color:var(--green);letter-spacing:.16em}
+h2{font-size:clamp(1.65rem,4.6vw,2.55rem);font-weight:500;line-height:1.55;margin:8px 0}
+.intro{background:var(--white)}
+.intro-copy{max-width:760px;margin:0 auto;text-align:center;color:var(--sub)}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:46px}
+.card{border:1px solid var(--line);background:rgba(255,253,248,.78);padding:38px 28px;text-align:center;border-radius:999px 999px 28px 28px;min-height:310px}
+.icon{width:78px;height:78px;border:1px solid var(--green2);border-radius:50%;display:grid;place-items:center;margin:0 auto 24px;color:var(--green)}
+.icon svg{width:42px;height:42px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.card h3{font-size:1.28rem;letter-spacing:.08em;margin:0 0 10px;font-weight:500}
+.card p{margin:0;color:var(--sub);font-size:.94rem}
+.concept{background:var(--green);color:#fbf7ee}
+.concept .section-head .enhead{color:#d9e0d2}
+.concept-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:60px;align-items:center}
+.bigword{font:italic clamp(3rem,8vw,7rem) Georgia,serif;color:rgba(255,255,255,.13);line-height:.9}
+.concept-copy h2{text-align:left;margin-top:0}
+.concept-copy p{color:#e9e6dc;margin:0 0 18px}
+.flow{background:#f2ecdf}
+.steps{max-width:850px;margin:0 auto;display:grid;gap:13px}
+.step{display:grid;grid-template-columns:76px 1fr;gap:20px;align-items:center;padding:24px 26px;background:rgba(255,253,248,.72);border:1px solid var(--line)}
+.num{font:italic 2rem Georgia,serif;color:var(--green2);text-align:center}
+.step h3{margin:0 0 4px;font-size:1.1rem;font-weight:500}
+.step p{margin:0;color:var(--sub);font-size:.92rem}
+.message{background:var(--white);text-align:center}
+.message blockquote{margin:0 auto;max-width:760px;font-size:clamp(1.25rem,3.8vw,2rem);line-height:1.9;font-weight:500}
+.message p{max-width:700px;margin:28px auto 0;color:var(--sub)}
+.notice{padding:28px 0 36px;border-top:1px solid var(--line);background:var(--white)}
+.notice p{max-width:860px;margin:auto;color:#7c746c;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-size:.76rem;line-height:1.75}
+footer{background:#3f4e3a;color:#f3efe4;padding:54px 0;text-align:center}
+footer .name{font-size:1.55rem;letter-spacing:.12em}
+footer .small{font: .72rem Georgia,serif;letter-spacing:.23em;color:#cbd4c5;margin-top:5px}
+footer .closing{margin-top:28px;font-size:.9rem;color:#e4e9df}
+@media(max-width:760px){
+  .wrap{width:min(100% - 28px,1080px)}
+  section{padding:68px 0}
+  .hero{min-height:88svh}
+  .hero-inner{padding:56px 0}
+  .tagline{letter-spacing:.1em}
+  h1{font-size:clamp(3.2rem,18vw,5rem)}
+  .en{font-size:.67rem;letter-spacing:.2em}
+  .features{grid-template-columns:1fr;gap:18px}
+  .card{min-height:auto;border-radius:110px 110px 26px 26px;padding:34px 26px}
+  .concept-grid{grid-template-columns:1fr;gap:24px}
+  .bigword{text-align:center}
+  .concept-copy h2{text-align:center}
+  .step{grid-template-columns:54px 1fr;padding:20px 16px;gap:12px}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="eyebrow">Relaxation Salon Corset</div>
+    <p class="tagline">毎日を、もっと軽やかに。</p>
+    <div class="rule"></div>
+    <p class="kicker">リラクゼーションサロン</p>
+    <h1>コルセット</h1>
+    <div class="en">RELAXATION SALON CORSET</div>
+    <p class="lead">心と体をやさしくゆるめ、整える時間を。<br>忙しい日常から少し離れて、自分のためのひとときを。</p>
+    <a class="scroll" href="#about"><i></i>SCROLL</a>
+  </div>
+</header>
+
+<section class="intro" id="about">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="enhead">About CORSET</div>
+      <h2>ただほぐすだけではなく、<br>今のあなたに丁寧に向き合う。</h2>
+    </div>
+    <p class="intro-copy">CORSETは、落ち着いた空間で心身の緊張をゆるめながら、腰まわり・臀部・股関節などを中心にコンディションを確認し、一人ひとりに合わせたリラクゼーションを提供するサロンを目指しています。</p>
+
+    <div class="features">
+      <article class="card">
+        <div class="icon">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 31c5-8 9-11 13-8 2 2 0 6-2 8m21 0c-5-8-9-11-13-8-2 2 0 6 2 8"/><path d="M11 34c4 5 8 7 13 7s9-2 13-7M16 19c1-6 4-10 8-12 4 2 7 6 8 12"/></svg>
+        </div>
+        <h3>リラックス</h3>
+        <p>心と体をゆるめる。<br>慌ただしい毎日に、静かに休める時間を。</p>
+      </article>
+      <article class="card">
+        <div class="icon">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M19 7c-3 5-4 10-3 16l2 17m11-33c3 5 4 10 3 16l-2 17"/><path d="M17 20c5 3 9 3 14 0M17 30c5-3 9-3 14 0"/><path d="M11 23l5 4m21-4-5 4"/></svg>
+        </div>
+        <h3>整える</h3>
+        <p>腰まわり・臀部・股関節などを中心に、<br>その日の状態に合わせて丁寧に。</p>
+      </article>
+      <article class="card">
+        <div class="icon">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 32h27c4 0 6 2 6 6H13c-3 0-5-2-5-6Z"/><path d="M12 30c2-7 7-10 14-9 4 1 7 3 9 7"/><path d="M31 18c2-5 5-8 10-9-1 5-4 9-9 11"/></svg>
+        </div>
+        <h3>癒しの時間</h3>
+        <p>自分をいたわるひととき。<br>明日を少し軽やかに迎えるために。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="concept">
+  <div class="wrap concept-grid">
+    <div class="bigword">Care<br>& Rest</div>
+    <div class="concept-copy">
+      <div class="section-head" style="text-align:left;margin-bottom:22px">
+        <div class="enhead">Our Concept</div>
+        <h2>施術だけで終わらせない、<br>日常につながるケアを。</h2>
+      </div>
+      <p>一人ひとりの状態を確認し、リラクゼーション施術に加えて、ご自身で取り入れやすいセルフケアや日常の動きも考えていきます。</p>
+      <p>短い時間だけ楽になることを目的にするのではなく、ご自身の体と向き合うきっかけになる時間を大切にします。</p>
+    </div>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="enhead">Session Flow</div>
+      <h2>CORSETが大切にする流れ</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="num">01</div><div><h3>今の状態を確認</h3><p>気になる部位や日常で感じている疲れ・張りなどを伺います。</p></div></div>
+      <div class="step"><div class="num">02</div><div><h3>一人ひとりに合わせたリラクゼーション</h3><p>その日のコンディションに合わせ、無理のない範囲で丁寧に行います。</p></div></div>
+      <div class="step"><div class="num">03</div><div><h3>セルフケア</h3><p>日常に取り入れやすいケアの考え方や方法をご案内します。</p></div></div>
+      <div class="step"><div class="num">04</div><div><h3>日常の動きへつなげる</h3><p>普段の姿勢や運動など、自分の体をいたわる習慣につなげていきます。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="message">
+  <div class="wrap">
+    <div class="section-head"><div class="enhead">A Time for Yourself</div></div>
+    <blockquote>心と体をやさしく整える時間を。<br>頑張る毎日の中に、<br>自分をいたわる余白を。</blockquote>
+    <p>リラクゼーションサロン CORSETは、安心してゆっくり過ごせる時間と空間を大切にします。</p>
+  </div>
+</section>
+
+<div class="notice">
+  <div class="wrap">
+    <p>※当サービスは医療行為・診断・治療を目的としたものではありません。強い痛み、しびれ・麻痺、発熱、外傷、排尿・排便の異常などがある場合は、施術を受ける前に医療機関へご相談ください。</p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="name">リラクゼーションサロン コルセット</div>
+    <div class="small">RELAXATION SALON CORSET</div>
+    <div class="closing">毎日を、もっと軽やかに。</div>
+  </div>
+</footer>
+</body>
+</html>
