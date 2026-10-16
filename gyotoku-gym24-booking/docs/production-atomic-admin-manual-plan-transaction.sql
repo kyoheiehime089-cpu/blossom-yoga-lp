@@ -110,6 +110,9 @@ begin
  if encode(sha256(convert_to(pg_get_functiondef(f.oid),'UTF8')),'hex')<>'bb5f507567f7b106466132f489cbbd5edb4b5a21f024a16dc0b8b490c740bd1a'
  or pg_get_userbyid(f.proowner)<>'postgres'
  or f.proconfig is distinct from array['search_path=pg_catalog, public, pg_temp']::text[]
+ or exists(select 1 from aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+ where a.grantee not in ((select oid from pg_roles where rolname='postgres'),(select oid from pg_roles where rolname='authenticated'))
+ or a.grantor<>(select oid from pg_roles where rolname='postgres') or a.privilege_type<>'EXECUTE' or a.is_grantable)
  or has_function_privilege('anon',f.oid,'EXECUTE') or has_function_privilege('service_role',f.oid,'EXECUTE')
  or not has_function_privilege('authenticated',f.oid,'EXECUTE') then
  raise exception 'Approved admin helper receipt mismatch'; end if;
@@ -138,6 +141,12 @@ begin
  and tgname in ('fs_reservations_yoga_guard_trg','fs_yoga_private_reservations_gym_guard_trg')
  and tgrelid in ('public.fs_reservations'::regclass,'public.fs_yoga_private_reservations'::regclass))<>2 then
  raise exception 'Both active buffer triggers required'; end if;
+ if exists(select 1 from pg_trigger t where t.tgrelid in ('public.fs_reservations'::regclass,'public.fs_yoga_private_reservations'::regclass)
+ and t.tgname in ('fs_reservations_yoga_guard_trg','fs_yoga_private_reservations_gym_guard_trg')
+ and pg_get_triggerdef(t.oid,true) is distinct from case t.tgname
+ when 'fs_reservations_yoga_guard_trg' then 'CREATE TRIGGER fs_reservations_yoga_guard_trg BEFORE INSERT OR UPDATE OF date, start_minute, cancelled, use_minutes_snapshot ON fs_reservations FOR EACH ROW EXECUTE FUNCTION fs_reservations_yoga_guard()'
+ else 'CREATE TRIGGER fs_yoga_private_reservations_gym_guard_trg BEFORE INSERT OR UPDATE OF date, start_minute, end_minute, cancelled ON fs_yoga_private_reservations FOR EACH ROW EXECUTE FUNCTION fs_yoga_private_reservations_gym_guard()' end) then
+ raise exception 'Installed buffer trigger definition mismatch'; end if;
 end $release_preflight$;
 create function pg_temp.gym24_buffer_data_digest()
 returns jsonb language plpgsql as $digest$
