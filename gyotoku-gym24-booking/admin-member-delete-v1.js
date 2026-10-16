@@ -1,31 +1,20 @@
 (() => {
-  const db = window.supabase.createClient(window.GYOTOKU_SUPABASE_URL, window.GYOTOKU_SUPABASE_ANON_KEY);
-  const ADMIN_PASSWORD = '0519';
-
   async function deleteMember(memberId, memberName, button) {
-    const confirmed = window.confirm(`本当に「${memberName}」さんの会員情報を削除しますか？\n\n削除すると、この会員はログインできなくなり、今後の予約も取り消されます。`);
-    if (!confirmed) return;
-
+    if (!window.confirm(`本当に「${memberName}」さんの会員情報を削除しますか？\n\n削除すると、この会員はログインできなくなり、今後の予約も取り消されます。`)) return;
     button.disabled = true;
     button.textContent = '削除中…';
     try {
-      const { data, error } = await db.rpc('fs_admin_delete_member', {
-        p_admin_password: ADMIN_PASSWORD,
-        p_member_id: memberId
-      });
-      if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || '削除に失敗しました。');
-
-      alert('会員情報を削除しました。');
+      if (!window.gyotokuAdminSecureRpc) throw new Error('管理者ログインを確認してください。');
+      await window.gyotokuAdminSecureRpc('fs_admin_delete_member', { p_member_id: memberId });
+      window.alert('会員情報を削除しました。');
       document.querySelector(`[data-member-detail="${CSS.escape(memberId)}"]`)?.remove();
-      if (typeof window.loadSnapshot === 'function') await window.loadSnapshot();
-    } catch (error) {
-      alert(error?.message || '会員情報を削除できませんでした。');
+      await window.loadSnapshot?.();
+    } catch {
+      window.alert('会員情報を削除できませんでした。管理者ログインと会員の状態を確認してください。');
       button.disabled = false;
       button.textContent = '会員情報を削除';
     }
   }
-
   function attachDeleteButtons() {
     document.querySelectorAll('[data-member-detail]').forEach(detail => {
       if (detail.querySelector('[data-delete-member-v1]')) return;
@@ -42,10 +31,9 @@
       detail.appendChild(button);
     });
   }
-
   document.addEventListener('DOMContentLoaded', () => {
     attachDeleteButtons();
-    const target = document.querySelector('#customersTab') || document.body;
-    new MutationObserver(attachDeleteButtons).observe(target, { childList: true, subtree: true });
+    new MutationObserver(attachDeleteButtons).observe(document.querySelector('#customersTab') || document.body,
+      { childList: true, subtree: true });
   });
 })();

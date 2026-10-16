@@ -9,7 +9,7 @@
 <body>
 <header class="hero"><p class="eyebrow">行徳ジム24 予約アプリ</p><h1>ヨガ個別予約登録</h1><p>ヨガ予約の前後30分を含め、行徳ジム24と重ならないよう同じデータベースで管理します。</p></header>
 <main class="wrap">
-<section id="loginView" class="card"><h2>パスコード確認</h2><p class="small">行徳ジム24の管理者パスコードを入力してください。</p><div class="row"><input id="yogaPass" type="password" placeholder="パスコード"><button id="yogaOpen" class="btn">開く</button></div></section>
+<section id="loginView" class="card"><h2>管理者ログイン</h2><label>メールアドレス<input id="adminEmail" type="email" autocomplete="username"></label><label>パスワード<input id="adminAccountPassword" type="password" autocomplete="current-password"></label><div id="adminMfaFields" hidden><label>認証アプリのコード<input id="adminMfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label></div><input id="yogaPass" type="hidden" value="authenticated-session"><button id="yogaOpen" class="btn" type="button">ログイン</button></section>
 <section id="yogaView" class="hidden"><div class="toolbar"><a class="ghost" href="../gyotoku-gym24-booking/admin.html">管理者画面へ</a><button id="reloadYoga" class="ghost">再読み込み</button><button id="logoutYoga" class="danger">ログアウト</button></div>
 <section class="card"><p class="eyebrow">予約登録</p><h2>ヨガ個別予約</h2><form id="yogaForm" class="mini"><label>日付<input name="date" type="date" required></label><div class="two"><label>開始時間<select id="yogaStart" name="start" required></select></label><label>終了時間<select id="yogaEnd" name="end" required></select></label></div><label>会員名（必須）<input name="memberName" required></label><label>メモ（任意）<textarea name="note" rows="3"></textarea></label><p id="yogaStatus" class="notice"></p><button id="yogaSubmit" class="btn">登録する</button></form><p class="small">行徳ジム24の予約・利用不可時間と、その前後30分に重なる時間は開始時間の選択肢に表示されません。</p></section>
 <section class="card"><p class="eyebrow">空き状況</p><h2>その日の予約不可時間</h2><div id="yogaUnavailable" class="res"><p>予約できない時間は開始時間のプルダウンから自動で除外されます。</p></div></section>
@@ -17,5 +17,6 @@
 </main><div id="toast" class="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../gyotoku-gym24-booking/supabase-config.js?v=1"></script>
-<script src="./yoga-gym24-central-v2.js?v=7"></script>
+<script src="./yoga-gym24-central-v2.js?v=8"></script>
+<script type="module" src="../gyotoku-gym24-booking/admin-auth-ui.mjs?v=1"></script>
 </body></html>

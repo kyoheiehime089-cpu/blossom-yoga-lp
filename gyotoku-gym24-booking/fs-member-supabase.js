@@ -24,6 +24,9 @@ function slotRange(start){return `${formatMinute(start)}〜${formatMinute(Number
 function fullRange(date,start){return `${japaneseDate(date)} ${slotRange(start)}`;}
 function toast(message){const e=$('#toast');if(!e)return alert(message);e.textContent=message;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500);}
 async function rpc(name,args){const {data,error}=await gyotokuDb.rpc(name,args);if(error)return {ok:false,error:error.message};return data||{ok:false,error:'応答がありません。'};}
+window.gyotokuMemberV7CreateReservation=args=>rpc('fs_v7_member_create_reservation',{...args,p_member_code:memberCode,p_pin:memberPin});
+window.gyotokuMemberV7CancelReservation=reservationId=>rpc('fs_v7_member_cancel_reservation',{p_member_code:memberCode,p_pin:memberPin,p_reservation_id:reservationId});
+window.gyotokuMemberV7AddCompanion=name=>rpc('fs_v7_member_add_companion',{p_member_code:memberCode,p_pin:memberPin,p_name:name});
 function daysFromToday(date){const t=new Date(`${date}T00:00:00`),n=new Date();n.setHours(0,0,0,0);return Math.floor((t-n)/86400000);}
 function canBook(date,start){return startAt(date,start).getTime()-Date.now()>=Number(rule().booking_deadline_minutes)*60000;}
 function canCancel(r){return startAt(r.date,r.start_minute).getTime()-Date.now()>=Number(rule().cancellation_deadline_minutes)*60000;}
@@ -42,7 +45,37 @@ function dayReservations(date){return myReservations().filter(r=>r.date===date);
 function monthlyUsage(){return monthReservations().length;}
 function allStarts(){const values=[];for(let m=0;m+Number(rule().use_minutes)<=1440;m+=10)values.push(m);return values;}
 function available(date,start){const r=rule();return r.is_configured&&!scheduleConflict(date,start)&&!booked(date,start)&&!closed(date,start)&&!externalBlock(date,start)&&daysFromToday(date)>=0&&daysFromToday(date)<=Number(r.booking_days)&&canBook(date,start)&&futureReservations().length<Number(r.concurrent_limit)&&dayReservations(date).length<Number(r.daily_limit)&&(r.monthly_quota==null||monthlyUsage()<Number(r.monthly_quota));}
-async function load(){if(!memberCode||!memberPin)return renderLogin();const result=await rpc('fs_member_snapshot',{p_member_code:memberCode,p_pin:memberPin});if(!result.ok){localStorage.removeItem('gyotoku_member_code');localStorage.removeItem('gyotoku_member_pin');memberCode='';memberPin='';toast(result.error);return renderLogin();}snapshot=result;render();}
+function v7SnapshotRpcMissing(result){return /PGRST202|Could not find the function|schema cache/i.test(result?.error||'');}
+async function load(){
+  if(window.gyotokuMemberPolicyReady)await window.gyotokuMemberPolicyReady;
+  if(!memberCode||!memberPin)return renderLogin();
+  const v7=await rpc('fs_v7_member_snapshot',{p_member_code:memberCode,p_pin:memberPin});
+  if(v7?.code==='v7_pending_activation'){
+    toast(v7.error||'会員有効化の確認中です。公式LINEへお問い合わせください。');
+    return renderLogin();
+  }
+  if(v7?.ok){
+    const taggedV7=v7.member?.membership_cohort==='paid_v7'&&v7.member?.agreement_version==='agreement-2026-10-13-paid-v7';
+    if(!taggedV7||!window.gyotokuMemberPolicy){
+      toast('同意書v7の予約条件を確認できないため、予約画面を開けません。公式LINEへお問い合わせください。');
+      return renderLogin();
+    }
+    snapshot=v7;window.gyotokuMemberSnapshot=snapshot;render();return;
+  }
+  if(v7?.code==='invalid_login'){
+    localStorage.removeItem('gyotoku_member_code');localStorage.removeItem('gyotoku_member_pin');memberCode='';memberPin='';
+    toast(v7.error||'ログイン情報が違います。');return renderLogin();
+  }
+  if(v7?.code!=='not_v7'&&!v7SnapshotRpcMissing(v7)){
+    toast(v7?.error||'予約サーバーを確認できません。時間をおいて再度お試しください。');return renderLogin();
+  }
+  const result=await rpc('fs_member_snapshot',{p_member_code:memberCode,p_pin:memberPin});
+  if(!result.ok){localStorage.removeItem('gyotoku_member_code');localStorage.removeItem('gyotoku_member_pin');memberCode='';memberPin='';toast(result.error);return renderLogin();}
+  snapshot=result;window.gyotokuMemberSnapshot=snapshot;
+  const taggedV7=snapshot.member?.membership_cohort==='paid_v7'||snapshot.member?.agreement_version==='agreement-2026-10-13-paid-v7';
+  if(taggedV7){toast('同意書v7の予約サーバーが未対応です。予約を停止しています。公式LINEへお問い合わせください。');return renderLogin();}
+  render();
+}
 function renderLogin(){$('#loginView').classList.remove('hidden');$('#appView').classList.add('hidden');}
 function render(){const m=snapshot.member,r=rule();$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');$('#memberName').textContent=m.name;$('#memberPlan').textContent=r.label;$('#memberQuota').textContent=r.monthly_quota==null?'月の予約回数：制限なし':`月の予約回数：${r.monthly_quota}回まで`;$('#extraSlots').textContent=`${r.use_minutes}分利用`;$('#usageText').textContent=r.monthly_quota==null?`${monthlyUsage()}回`:`${monthlyUsage()} / ${r.monthly_quota}`;$('#usageBar').style.width=r.monthly_quota==null?'100%':`${Math.min(100,Math.round(monthlyUsage()/Math.max(1,r.monthly_quota)*100))}%`;$('.rules').innerHTML=`<p><strong>利用時間</strong>：1回${r.use_minutes}分。</p><p><strong>前後の空き時間</strong>：利用時間の前後10分を確保します。入室は5分前以降、退出は終了後5分以内です。</p><p><strong>月の予約</strong>：${r.monthly_quota==null?'制限なし':`月${r.monthly_quota}枠まで`}。</p><p><strong>同時予約</strong>：${r.concurrent_limit}枠まで。</p><p><strong>同日予約</strong>：1枠まで。</p><p><strong>予約</strong>：${r.booking_days}日先まで・開始2時間前まで。</p><p><strong>キャンセル</strong>：開始3時間前まで。</p>`;renderNext();renderDays();renderCalendar();renderMine();}
 function renderNext(){const r=futureReservations()[0];$('#nextReservation').innerHTML=r?`<h3>${fullRange(r.date,r.start_minute)}</h3><p>利用者：${escapeHtml([r.user1_name_snapshot,r.user2_name_snapshot].filter(Boolean).join('・'))}</p><p>${r.use_minutes_snapshot||rule().use_minutes}分利用</p>`:'<p>現在、予約はありません。</p>';}
@@ -56,3 +89,5 @@ function reservationItem(r){const names=[r.user1_name_snapshot,r.user2_name_snap
 function renderMine(){const list=myReservations();$('#mine').innerHTML=list.length?list.map(reservationItem).join(''):'<article class="res"><p>現在、予約はありません。</p></article>';}
 document.addEventListener('DOMContentLoaded',()=>{const params=new URLSearchParams(location.search);if(params.get('mid')&&params.get('pin')){memberCode=params.get('mid');memberPin=params.get('pin');localStorage.setItem('gyotoku_member_code',memberCode);localStorage.setItem('gyotoku_member_pin',memberPin);history.replaceState(null,'',location.pathname);}$('#loginForm').addEventListener('submit',async e=>{e.preventDefault();memberCode=$('#memberId').value.trim();memberPin=$('#pin').value.trim();localStorage.setItem('gyotoku_member_code',memberCode);localStorage.setItem('gyotoku_member_pin',memberPin);await load();});$('#peopleSelect').addEventListener('change',()=>$('#user2Wrap').classList.toggle('hidden',$('#peopleSelect').value!=='2'));$('#bookingForm').addEventListener('submit',async e=>{e.preventDefault();if(!selectedSlot)return;const people=Number($('#peopleSelect').value||1),user1=$('#user1Select').value,user2=people===2?$('#user2Select').value:null;const r=rule(),holder=(snapshot.registered_users||[]).find(u=>u.is_contract_holder);if(people===2&&(!user2||user1===user2))return toast('異なる利用者を2名選択してください。');if(r.plan_code!=='premium'&&holder&&user1!==holder.id&&user2!==holder.id)return toast('契約者本人を含めてください。');const result=await rpc('fs_member_create_reservation_v2',{p_member_code:memberCode,p_pin:memberPin,p_date:selectedSlot.date,p_start_minute:selectedSlot.start,p_people:people,p_user1_id:user1,p_user2_id:user2,p_child_accompanied:Boolean(e.currentTarget.childAccompanied?.checked),p_note:e.currentTarget.note.value||''});if(!result.ok)return toast(result.error||'予約に失敗しました。');$('#dialog').close();await load();toast('予約が完了しました。');});document.addEventListener('click',async e=>{const tab=e.target.closest('.tab[data-tab]');if(tab){$$('.tab[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab.dataset.tab));$('#bookingTab').classList.toggle('hidden',tab.dataset.tab!=='booking');$('#mineTab').classList.toggle('hidden',tab.dataset.tab!=='mine');}const day=e.target.closest('[data-day]');if(day&&!day.disabled){selectedDay=Number(day.dataset.day);renderDays();renderCalendar();}if(e.target.closest('[data-book]')){const select=$('#startSelect');if(select?.value)openDialog(dateKey(selectedDate()),Number(select.value));}const cancel=e.target.closest('[data-cancel]');if(cancel){const result=await rpc('fs_member_cancel_reservation',{p_member_code:memberCode,p_pin:memberPin,p_reservation_id:cancel.dataset.cancel});if(!result.ok)return toast(result.error);await load();toast('キャンセルしました。');}if(e.target.id==='logout'){localStorage.clear();memberCode='';memberPin='';renderLogin();}if(e.target.id==='prevWeek'&&!e.target.disabled){week=0;selectedDay=0;renderDays();renderCalendar();}if(e.target.id==='thisWeek'){week=0;selectedDay=0;renderDays();renderCalendar();}if(e.target.id==='nextWeek'&&!e.target.disabled){week=1;selectedDay=0;renderDays();renderCalendar();}if(e.target.classList.contains('close'))e.target.closest('dialog')?.close();});load().catch(err=>{console.error(err);toast('予約画面を読み込めませんでした。');});});
 window.gyotokuMemberLoad=load;
+document.addEventListener('submit',event=>{if(event.target?.id!=='bookingForm')return;const member=window.gyotokuMemberSnapshot?.member||{};const taggedV7=member.membership_cohort==='paid_v7'||member.agreement_version==='agreement-2026-10-13-paid-v7';if(!taggedV7)return;if(window.gyotokuMemberV7ServerReady===true)return;event.preventDefault();event.stopImmediatePropagation();toast('同意書v7の予約条件が予約サーバーに反映されるまで、予約受付を停止しています。公式LINEへお問い合わせください。');},true);
+document.addEventListener('click',event=>{const cancel=event.target.closest('[data-cancel]');if(!cancel)return;const member=window.gyotokuMemberSnapshot?.member||{};const taggedV7=member.membership_cohort==='paid_v7'||member.agreement_version==='agreement-2026-10-13-paid-v7';if(!taggedV7||window.gyotokuMemberV7ServerReady===true)return;event.preventDefault();event.stopImmediatePropagation();toast('同意書v7のキャンセル処理が予約サーバーに反映されるまで、変更を受け付けていません。公式LINEへお問い合わせください。');},true);

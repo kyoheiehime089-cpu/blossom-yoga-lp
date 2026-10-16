@@ -31,6 +31,7 @@
   function decorateMemberCards(){
     if(!window.snapshot?.members)return;
     snapshot.members.forEach(member=>{
+      if(member.membership_cohort==='paid_v7'||member.agreement_version==='agreement-2026-10-13-paid-v7')return;
       if(!['standard','premium'].includes(member.plan))return;
       const card=document.querySelector(`[data-member-card='${CSS.escape(member.id)}']`);
       if(!card||card.querySelector('[data-companions]'))return;
