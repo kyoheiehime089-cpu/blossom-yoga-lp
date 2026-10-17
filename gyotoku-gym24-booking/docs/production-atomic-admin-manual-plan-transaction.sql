@@ -329,14 +329,13 @@ create table if not exists public.fs_v7_resource_scope (
   note text not null default ''
 );
 
-insert into public.fs_v7_resource_scope(source_key,integration_status,note) values
-  ('fs_reservations','ready','Gym reservation store'),
-  ('fs_yoga_private_reservations','ready','Central confirmed individual Yoga reservations'),
-  ('fs_closed_slots','ready','Facility closed slots'),
-  ('fs_yoga_admin_fixed_blocks','ready','Fixed Yoga and semi-personal lesson schedule'),
-  ('fs_external_blocks','unsupported','Legacy external blocks; physical resource not verified'),
-  ('blossom_private_bookings','unsupported','Separate Blossom store; physical resource not verified'),
-  ('g24_reservations','unsupported','Separate G24 store; physical resource not verified')
+insert into public.fs_v7_resource_scope(source_key,scope_status,integration_status,confirmed_at,confirmed_by,note) values
+ ('fs_reservations','shared','ready',now(),'existing-fpl-routing','Current Gym24 reservation store'),
+ ('fs_yoga_private_reservations','shared','ready',now(),'existing-fpl-routing','Current central individual Yoga store; existing mutual guard retained'),
+ ('fs_closed_slots','shared','ready',now(),'existing-fpl-routing','Current Gym24 unavailable slots'),
+ ('fs_external_blocks','unconfirmed','unsupported',null,null,'Legacy source outside this scoped release; no separate-facility assumption'),
+ ('blossom_private_bookings','unconfirmed','unsupported',null,null,'Existing Blossom restriction remains in the captured Gym guard'),
+ ('g24_reservations','unconfirmed','unsupported',null,null,'Unselected source; no automatic store merge')
 on conflict (source_key) do nothing;
 
 create table public.fs_v7_membership_links (
@@ -401,24 +400,22 @@ revoke all on public.fs_v7_resource_scope, public.fs_v7_membership_links,
 
 create or replace function public.fs_v7_scope_snapshot()
 returns jsonb language sql stable security definer set search_path=pg_catalog,public,pg_temp as $$
-  with required(source_key) as (values
-    ('fs_reservations'),('fs_yoga_private_reservations'),('fs_closed_slots'),
-    ('fs_yoga_admin_fixed_blocks'),('fs_external_blocks'),
-    ('blossom_private_bookings'),('g24_reservations')
-  )
-  select jsonb_build_object(
-    'complete',not exists(
-      select 1 from required r left join public.fs_v7_resource_scope s using(source_key)
-      where s.source_key is null
-         or s.scope_status='unconfirmed'
-         or (s.scope_status='shared' and (
-           s.integration_status<>'ready'
-           or r.source_key in ('fs_external_blocks','blossom_private_bookings','g24_reservations')
-         ))
-    ),
-    'sources',coalesce((select jsonb_agg(to_jsonb(s) order by s.source_key)
-      from public.fs_v7_resource_scope s),'[]'::jsonb)
-  );
+ with required(source_key) as (values
+ ('fs_reservations'),('fs_yoga_private_reservations'),('fs_closed_slots'))
+ select jsonb_build_object(
+ 'coverage','fpl-gym24-central-yoga-v1',
+ 'complete',not exists(
+  select 1 from required r left join public.fs_v7_resource_scope s using(source_key)
+  where s.source_key is null or s.scope_status<>'shared' or s.integration_status<>'ready')
+ and not exists(
+  select 1 from public.fs_v7_resource_scope s
+  where s.scope_status='shared' and not exists(select 1 from required r where r.source_key=s.source_key))
+ and to_regprocedure('public.fs_business_conflicts(date,integer,integer)') is not null
+ and to_regprocedure('public.blossom_gym_conflicts_yoga(date,integer,integer)') is not null
+ and exists(select 1 from pg_proc where oid=to_regprocedure('public.fs_reservations_yoga_guard()')
+  and position('blossom_gym_conflicts_yoga' in prosrc)>0),
+ 'sources',coalesce((select jsonb_agg(to_jsonb(s) order by source_key)
+ from public.fs_v7_resource_scope s),'[]'::jsonb));
 $$;
 
 -- Administrator performs this after offline identity checks. No consent-store lookup.
@@ -810,7 +807,7 @@ begin
       from public.fs_reservations r where not r.cancelled),'[]'::jsonb),
     'closed_slots',availability->'closed_slots','external_blocks','[]'::jsonb,
     'booking_policy',jsonb_build_object('cohort','paid_v7','agreement_version',l.agreement_version,
-      'rpc_contract_version','paid-v7-booking-v1','member_snapshot_rpc','fs_v7_member_snapshot',
+      'rpc_contract_version','paid-v7-booking-v1','reservation_scope','fpl-gym24-central-yoga-v1','member_snapshot_rpc','fs_v7_member_snapshot',
       'admin_snapshot_rpc','fs_v7_admin_snapshot','admin_create_member_rpc','fs_v7_admin_create_member','admin_update_plan_rpc','fs_v7_admin_update_plan',
       'admin_confirm_companion_safety_rpc','fs_v7_admin_confirm_companion_safety',
       'member_add_companion_rpc','fs_v7_member_add_companion',
@@ -867,7 +864,7 @@ begin
     'external_blocks','[]'::jsonb,'scope_sources',scope->'sources') into availability;
   return jsonb_build_object('ok',true,'members',members,'reservations',reservations,'registered_users',users,
     'booking_policy',jsonb_build_object('cohort','paid_v7','agreement_version','agreement-2026-10-13-paid-v7',
-      'rpc_contract_version','paid-v7-booking-v1','member_snapshot_rpc','fs_v7_member_snapshot',
+      'rpc_contract_version','paid-v7-booking-v1','reservation_scope','fpl-gym24-central-yoga-v1','member_snapshot_rpc','fs_v7_member_snapshot',
       'admin_snapshot_rpc','fs_v7_admin_snapshot','admin_create_member_rpc','fs_v7_admin_create_member','admin_update_plan_rpc','fs_v7_admin_update_plan',
       'admin_confirm_companion_safety_rpc','fs_v7_admin_confirm_companion_safety',
       'member_add_companion_rpc','fs_v7_member_add_companion',

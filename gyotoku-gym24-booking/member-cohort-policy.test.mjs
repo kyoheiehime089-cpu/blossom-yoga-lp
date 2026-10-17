@@ -228,25 +228,16 @@ test("manual membership contains no consent lookup or payment data", () => {
  assert.throws(()=>createManualV7Membership({memberId:"m",agreementVersion:V7_AGREEMENT_VERSION,planCode:"free",operatorApproved:false}),/Explicit administrator/);
 });
 
-test("unknown booking resource scopes stay closed until each source is explicitly resolved", () => {
-  const resolved = V7_REQUIRED_RESOURCE_SOURCES.map((source_key) => ({
-    source_key,
-    scope_status: "separate",
-    integration_status: "unsupported",
-  }));
-  assert.deepEqual(resolveV7ResourceScope([]).complete, false);
-  assert.deepEqual(resolveV7ResourceScope(resolved).unresolved, []);
-  assert.equal(resolveV7ResourceScope(resolved).complete, true);
-  assert.equal(resolveV7ResourceScope(resolved.map((row) => row.source_key === "blossom_private_bookings"
-    ? { ...row, scope_status: "unconfirmed" }
-    : row)).complete, false);
-  assert.equal(resolveV7ResourceScope(resolved.map((row) => row.source_key === "blossom_private_bookings"
-    ? { ...row, scope_status: "shared" }
-    : row)).complete, false);
-  assert.equal(resolveV7ResourceScope(resolved.map((row) => row.source_key === "blossom_private_bookings"
-    ? { ...row, scope_status: "shared", integration_status: "ready" }
-    : row)).complete, false);
-  assert.equal(resolveV7ResourceScope(resolved.slice(1)).complete, false);
+test("confirmed central scope is ready without claiming unrelated stores are separate", () => {
+ const selected=V7_REQUIRED_RESOURCE_SOURCES.map(source_key=>({source_key,scope_status:"shared",integration_status:"ready"}));
+ assert.equal(resolveV7ResourceScope([]).complete,false);
+ assert.equal(resolveV7ResourceScope(selected).complete,true);
+ const outside={source_key:"blossom_private_bookings",scope_status:"unconfirmed",integration_status:"unsupported"};
+ assert.equal(resolveV7ResourceScope([...selected,outside]).complete,true);
+ assert.equal(resolveV7ResourceScope([...selected,{...outside,scope_status:"shared"}]).complete,false);
+ assert.equal(resolveV7ResourceScope([...selected,{...outside,scope_status:"shared",integration_status:"ready"}]).complete,false);
+ assert.equal(resolveV7ResourceScope(selected.slice(1)).complete,false);
+ assert.equal(resolveV7ResourceScope(selected.map((r,i)=>i===0?{...r,scope_status:"separate"}:r)).complete,false);
 });
 
 test("v7 reservation outcomes preserve one 50-minute use and cannot be double counted", () => {
@@ -305,6 +296,7 @@ test("v7 booking stays disabled until the server attests policy, gates, one shar
       cohort: "paid_v7",
       agreement_version: V7_AGREEMENT_VERSION,
       rpc_contract_version: V7_RPC_CONTRACT.version,
+      reservation_scope: "fpl-gym24-central-yoga-v1",
       member_snapshot_rpc: V7_RPC_CONTRACT.memberSnapshot,
       admin_snapshot_rpc: V7_RPC_CONTRACT.adminSnapshot,
       admin_create_member_rpc: V7_RPC_CONTRACT.adminCreateMember,
@@ -351,6 +343,7 @@ test("v7 booking stays disabled until the server attests policy, gates, one shar
       cohort: "paid_v7",
       agreement_version: V7_AGREEMENT_VERSION,
       rpc_contract_version: V7_RPC_CONTRACT.version,
+      reservation_scope: "fpl-gym24-central-yoga-v1",
       member_snapshot_rpc: V7_RPC_CONTRACT.memberSnapshot,
       admin_snapshot_rpc: V7_RPC_CONTRACT.adminSnapshot,
       admin_create_member_rpc: V7_RPC_CONTRACT.adminCreateMember,
@@ -377,6 +370,7 @@ test("admin proxy bookings stay disabled until server usage and companion checks
       cohort: "paid_v7",
       agreement_version: V7_AGREEMENT_VERSION,
       rpc_contract_version: V7_RPC_CONTRACT.version,
+      reservation_scope: "fpl-gym24-central-yoga-v1",
       member_snapshot_rpc: V7_RPC_CONTRACT.memberSnapshot,
       admin_snapshot_rpc: V7_RPC_CONTRACT.adminSnapshot,
       admin_create_member_rpc: V7_RPC_CONTRACT.adminCreateMember,
@@ -716,15 +710,16 @@ test("synthetic shared-lock model admits only one conflicting Gym-Yoga write in 
   }
 });
 
-test("all non-central resource stores are guarded by explicit shared/separate confirmations", () => {
-  for (const name of ["fs_external_blocks", "blossom_private_bookings", "g24_reservations"]) {
-    assert.match(v7CandidateSql, new RegExp(`\\('${name}','unsupported'`));
-  }
-  assert.match(v7CandidateSql, /scope_status='unconfirmed'/);
-  assert.match(v7CandidateSql, /resource_scope_unconfirmed/);
-  assert.match(v7CandidateSql, /with required\(source_key\) as \(values[\s\S]*\('fs_reservations'\)[\s\S]*\('g24_reservations'\)/);
-  assert.match(v7CandidateSql, /r\.source_key in \('fs_external_blocks','blossom_private_bookings','g24_reservations'\)/);
-  assert.doesNotMatch(exactYogaBufferSql, /blossom_private_bookings/);
+test("SQL limits coverage to existing FPL central routes and retains real conflict guards", () => {
+ assert.ok(v7CandidateSql.includes("'coverage','fpl-gym24-central-yoga-v1'"));
+ assert.ok(v7CandidateSql.includes("('fs_reservations'),('fs_yoga_private_reservations'),('fs_closed_slots')"));
+ assert.ok(v7CandidateSql.includes("scope_status<>'shared'"));
+ assert.ok(v7CandidateSql.includes("resource_scope_unconfirmed"));
+ assert.ok(v7CandidateSql.includes("public.fs_business_conflicts(p_date,p_start_minute,50)"));
+ assert.ok(v7CandidateSql.includes("position('blossom_gym_conflicts_yoga' in prosrc)>0"));
+ for(const name of ["fs_external_blocks","blossom_private_bookings","g24_reservations"])
+  assert.ok(v7CandidateSql.includes("('"+name+"','unconfirmed','unsupported'"));
+ assert.ok(!v7CandidateSql.includes("('fs_yoga_admin_fixed_blocks','ready'"));
 });
 
 test("V7 companions require member attendance and one registered safety-cleared adult", () => {

@@ -1,5 +1,9 @@
 export const V7_AGREEMENT_VERSION = "agreement-2026-10-13-paid-v7";
 export const V7_AGREEMENT_URL = "https://gyotoku-gym24-agreement.vercel.app/";
+export const V7_BOOKING_SCOPE = "fpl-gym24-central-yoga-v1";
+export const V7_BOOKING_SOURCES = Object.freeze([
+  "fs_reservations", "fs_yoga_private_reservations", "fs_closed_slots",
+]);
 export const V7_RPC_CONTRACT = Object.freeze({
   version: "paid-v7-booking-v1",
   memberSnapshot: "fs_v7_member_snapshot",
@@ -141,6 +145,7 @@ export function isV7ServerEnforcementReady(snapshot) {
   return policy?.cohort === "paid_v7"
     && policy?.agreement_version === V7_AGREEMENT_VERSION
     && policy?.rpc_contract_version === V7_RPC_CONTRACT.version
+    && policy?.reservation_scope === V7_BOOKING_SCOPE
     && policy?.member_snapshot_rpc === V7_RPC_CONTRACT.memberSnapshot
     && policy?.admin_snapshot_rpc === V7_RPC_CONTRACT.adminSnapshot
     && policy?.admin_create_member_rpc === V7_RPC_CONTRACT.adminCreateMember

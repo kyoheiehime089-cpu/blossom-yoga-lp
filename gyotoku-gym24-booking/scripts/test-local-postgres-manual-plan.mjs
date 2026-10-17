@@ -21,7 +21,12 @@ assert.equal(rpc("fs_v7_admin_update_plan(null,'10000000-0000-0000-0000-00000000
 assert.equal(db.sql("select encode(sha256(convert_to(to_jsonb(m)::text,'UTF8')),'hex') from fs_members m where member_code='LEGACY0001';"),oldHash);
 assert.equal(db.sql("select rule_snapshot->>'use_minutes' from fs_member_rule_overrides where member_id='10000000-0000-0000-0000-000000000001';"),"33");
 pass("legacy member cannot be silently converted; its profile, override and old 40/50/NULL history remain unchanged");
-db.sql("update fs_v7_resource_scope set scope_status=case when source_key in ('fs_external_blocks','blossom_private_bookings','g24_reservations') then 'separate' else 'shared' end;");
+assert.equal(db.sql("select (fs_v7_scope_snapshot()->>'complete')::boolean;"),"t");
+assert.equal(db.sql("select scope_status from fs_v7_resource_scope where source_key='blossom_private_bookings';"),"unconfirmed");
+db.sql("update fs_v7_resource_scope set scope_status='shared' where source_key='g24_reservations';");
+assert.equal(db.sql("select (fs_v7_scope_snapshot()->>'complete')::boolean;"),"f");
+db.sql("update fs_v7_resource_scope set scope_status='unconfirmed' where source_key='g24_reservations';");
+pass("confirmed central scope is usable; unselected unknown stores are not called separate, but unsupported shared integration closes booking");
 for(const [plan,m] of Object.entries(members)){
  const snapshot=rpc(`fs_v7_member_snapshot('${m.member_code}','${m.pin}')`,false);assert.equal(snapshot.ok,true);assert.equal(snapshot.plan_settings.use_minutes,50);
  assert.equal(snapshot.plan_settings.monthly_quota,{free:4,standard:8,premium:12}[plan]);
@@ -29,6 +34,10 @@ for(const [plan,m] of Object.entries(members)){
 pass("member snapshots use manually selected 50-minute/month4-8-12 rules with only operator approval");
 const standard=members.standard;const holder=db.sql(`select id from fs_registered_users where member_id='${standard.id}' and is_contract_holder;`);
 const date=db.sql("select ((now() at time zone 'Asia/Tokyo')::date+3)::text;");
+db.sql("create or replace function fs_business_conflicts(p_date date,p_start_minute integer,p_use_minutes integer) returns boolean language sql stable security definer set search_path=public as $$ select p_start_minute=600 $$;");
+assert.equal(rpc(`fs_v7_member_create_reservation('${standard.member_code}','${standard.pin}','${date}',600,array['${holder}'::uuid],false,false,'fixed program',gen_random_uuid())`,false).error,'fixed_program_conflict');
+db.sql("create or replace function fs_business_conflicts(p_date date,p_start_minute integer,p_use_minutes integer) returns boolean language sql stable security definer set search_path=public as $$ select false $$;");
+pass("existing fixed-program conflict function remains authoritative without a phantom fixed-block table");
 let result=rpc(`fs_v7_member_create_reservation('${standard.member_code}','${standard.pin}','${date}',600,array['${holder}'::uuid],false,false,'manual workflow',gen_random_uuid())`,false);
 assert.equal(result.ok,true);const reservation=result.id;
 assert.equal(db.sql(`select use_minutes_snapshot from fs_reservations where id='${reservation}';`),"50");

@@ -1,4 +1,4 @@
-import { V7_AGREEMENT_VERSION, V7_PLANS } from "./member-cohort-policy.mjs";
+import { V7_AGREEMENT_VERSION, V7_PLANS, V7_BOOKING_SOURCES } from "./member-cohort-policy.mjs";
 
 export const V7_STORAGE_CANDIDATE = Object.freeze({
   membershipTable: "fs_v7_membership_links",
@@ -13,21 +13,7 @@ export const V7_STORAGE_CANDIDATE = Object.freeze({
   storesMemberProfileFields: false,
 });
 
-export const V7_REQUIRED_RESOURCE_SOURCES = Object.freeze([
-  "fs_reservations",
-  "fs_yoga_private_reservations",
-  "fs_closed_slots",
-  "fs_yoga_admin_fixed_blocks",
-  "fs_external_blocks",
-  "blossom_private_bookings",
-  "g24_reservations",
-]);
-
-const V7_UNSUPPORTED_SHARED_SOURCES = new Set([
-  "fs_external_blocks",
-  "blossom_private_bookings",
-  "g24_reservations",
-]);
+export const V7_REQUIRED_RESOURCE_SOURCES = V7_BOOKING_SOURCES;
 
 const TERMINAL_OUTCOMES = new Set([
   "attended",
@@ -60,12 +46,14 @@ export function resolveV7ResourceScope(sourceRows) {
   const unresolved = V7_REQUIRED_RESOURCE_SOURCES.filter((source) => {
     const row = byName.get(source);
     return !row
-      || !["shared", "separate"].includes(row.scope_status)
-      || (row.scope_status === "shared" && (
-        row.integration_status !== "ready"
-        || V7_UNSUPPORTED_SHARED_SOURCES.has(source)
-      ));
+      || row.scope_status !== "shared"
+      || row.integration_status !== "ready";
   });
+  for (const row of sourceRows) {
+    if (!V7_REQUIRED_RESOURCE_SOURCES.includes(row.source_key) && row.scope_status === "shared") {
+      unresolved.push(row.source_key);
+    }
+  }
   return { complete: unresolved.length === 0, unresolved };
 }
 

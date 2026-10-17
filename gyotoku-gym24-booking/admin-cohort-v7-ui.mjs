@@ -99,7 +99,9 @@ function renderPanel(target) {
     status.classList.toggle("ok", ready && canCreate);
     status.classList.toggle("danger", !(ready && canCreate));
     const unresolved = (snapshot?.booking_policy?.availability?.scope_sources || [])
-      .filter((source) => source.scope_status === "unconfirmed" || (source.scope_status === "shared" && source.integration_status !== "ready"))
+      .filter((source) => policy.V7_BOOKING_SOURCES.includes(source.source_key)
+        ? source.scope_status !== "shared" || source.integration_status !== "ready"
+        : source.scope_status === "shared")
       .map((source) => source.source_key);
     status.textContent = unresolved.length
       ? `施設予約資源の共有範囲が未確認のためv7予約を停止中です：${unresolved.join("、")}`
