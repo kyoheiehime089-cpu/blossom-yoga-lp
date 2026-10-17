@@ -38,6 +38,18 @@ import {
   validateV7Companions,
 } from "./member-cohort-policy.mjs";
 
+test("store cancellation releases usage and is immutable without changing legacy reservations", () => {
+  const row = createV7ReservationOutcome({ reservationId: "synthetic-store", memberId: "synthetic-member", agreementVersion: V7_AGREEMENT_VERSION });
+  const cancelled = recordV7VisitOutcome(row, "store_cancelled");
+  assert.equal(cancelled.consumes_visit, false);
+  assert.equal(recordV7VisitOutcome(cancelled, "store_cancelled"), cancelled);
+  assert.throws(() => recordV7VisitOutcome(cancelled, "no_show"));
+  const history = setVisitOutcomeOnce([{ id: row.reservation_id, date: "2026-11-08", start_minute: 610, use_minutes_snapshot: 50, visit_outcome: "reserved" }], row.reservation_id, "store_cancelled");
+  assert.equal(history[0].cancelled, true);
+  assert.equal(countMonthlyConsumedVisits(history, "2026-11-01"), 0);
+  assert.equal(countActiveReservations(history, "2026-10-25T03:00:00Z"), 0);
+});
+
 const legacyStandard = Object.freeze({
   monthlyPriceYen: 4800,
   durationMinutes: 40,

@@ -366,7 +366,7 @@ create table if not exists public.fs_v7_reservation_details (
   request_id uuid not null unique,
   duration_minutes integer not null default 50 check (duration_minutes=50),
   visit_outcome text not null default 'reserved'
-    check (visit_outcome in ('reserved','attended','late_cancelled','no_show','on_time_cancelled')),
+    check (visit_outcome in ('reserved','attended','late_cancelled','no_show','on_time_cancelled','store_cancelled')),
   consumes_visit boolean generated always as
     (visit_outcome in ('reserved','attended','late_cancelled','no_show')) stored,
   created_at timestamptz not null default now()
@@ -758,6 +758,18 @@ begin
 end;
 $$;
 
+create function public.fs_v7_fixed_schedule()
+returns jsonb language sql stable security definer set search_path=pg_catalog,public,pg_temp as $schedule$
+ with days as (select (now() at time zone 'Asia/Tokyo')::date+i as day from generate_series(0,14) i)
+ select jsonb_build_object(
+ 'fixed_schedule_days',(select jsonb_agg(day order by day) from days),
+ 'fixed_blocks',coalesce((select jsonb_agg(jsonb_build_object('date',d.day,
+ 'start_minute',(extract(epoch from (b.block_start-d.day::timestamp))/60)::integer,
+ 'end_minute',(extract(epoch from (b.block_end-d.day::timestamp))/60)::integer)
+ order by d.day,b.block_start) from days d cross join lateral public.fs_business_blocks(d.day) b),'[]'::jsonb))
+$schedule$;
+revoke all on function public.fs_v7_fixed_schedule() from public,anon,authenticated,service_role;
+
 create or replace function public.fs_v7_member_snapshot(p_member_code text,p_pin text)
 returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
 declare m public.fs_members; l public.fs_v7_membership_links; scope jsonb; availability jsonb;
@@ -781,7 +793,7 @@ begin
   select coalesce(jsonb_agg(jsonb_build_object('id',r.id,'date',r.date,'start_minute',r.start_minute,
     'people',r.people,'note',r.note,'created_at',r.created_at,'user1_id',r.user1_id,
     'user1_name_snapshot',r.user1_name_snapshot,'user2_id',r.user2_id,'user2_name_snapshot',r.user2_name_snapshot,
-    'child_accompanied',r.child_accompanied,'use_minutes_snapshot',50,'visit_outcome',d.visit_outcome)
+    'child_accompanied',r.child_accompanied,'cancelled',r.cancelled,'use_minutes_snapshot',50,'visit_outcome',d.visit_outcome)
     order by r.date,r.start_minute),'[]'::jsonb) into reservations
     from public.fs_reservations r join public.fs_v7_reservation_details d on d.reservation_id=r.id
     where r.member_id=m.id;
@@ -823,7 +835,7 @@ begin
             and t.tgfoid='public.fs_yoga_private_reservations_gym_guard()'::regprocedure)
         )),
       'admin_proxy_server_enforced',true,'member_usage_complete',true,'companion_safety_enforced',true,
-      'availability',availability));
+      'availability',availability||public.fs_v7_fixed_schedule()));
 end;
 $$;
 
@@ -880,7 +892,7 @@ begin
             and t.tgfoid='public.fs_yoga_private_reservations_gym_guard()'::regprocedure)
         )),
       'admin_proxy_server_enforced',true,'member_usage_complete',true,'companion_safety_enforced',true,
-      'member_creation_server_enforced',true,'availability',availability));
+      'member_creation_server_enforced',true,'availability',availability||public.fs_v7_fixed_schedule()));
 end;
 $$;
 
@@ -934,6 +946,25 @@ begin
   return public.fs_v7_cancel_reservation_internal(target_member,p_reservation_id);
 end;
 $$;
+
+create function public.fs_v7_admin_cancel_store_reservation(p_admin_password text,p_reservation_id uuid)
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $store_cancel$
+declare d public.fs_v7_reservation_details;
+begin
+ if public.gym24_admin_authorized() is distinct from true then return jsonb_build_object('ok',false,'error','管理者認証を確認できません。'); end if;
+ perform pg_advisory_xact_lock(hashtextextended('shared-booking:global',0));
+ select * into d from public.fs_v7_reservation_details where reservation_id=p_reservation_id for update;
+ if d.reservation_id is null then return jsonb_build_object('ok',false,'error','reservation_not_found'); end if;
+ if d.visit_outcome='store_cancelled' then return jsonb_build_object('ok',true,'outcome','store_cancelled','consumes_visit',false); end if;
+ if d.visit_outcome<>'reserved' then return jsonb_build_object('ok',false,'error','reservation_already_finalized'); end if;
+ insert into public.fs_v7_write_permits values(pg_backend_pid(),txid_current(),d.member_id);
+ update public.fs_reservations set cancelled=true,cancelled_at=now() where id=d.reservation_id;
+ update public.fs_v7_reservation_details set visit_outcome='store_cancelled' where reservation_id=d.reservation_id;
+ delete from public.fs_v7_write_permits where backend_pid=pg_backend_pid() and transaction_id=txid_current() and member_id=d.member_id;
+ return jsonb_build_object('ok',true,'outcome','store_cancelled','consumes_visit',false);
+end $store_cancel$;
+revoke all on function public.fs_v7_admin_cancel_store_reservation(text,uuid) from public,anon,authenticated,service_role;
+grant execute on function public.fs_v7_admin_cancel_store_reservation(text,uuid) to authenticated;
 
 create or replace function public.fs_v7_resource_scope_snapshot(p_admin_password text)
 returns jsonb language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
@@ -1004,6 +1035,29 @@ begin
 end
 $acl$;
 
+
+-- Preserve the old proxy's permissions/deadline behavior; resolve existing per-member limits.
+do $legacy_proxy$
+declare fn oid; source text; definition text; anchor text:='select * into s from fs_plan_settings where plan_code=m.plan;'; replacement text;
+begin
+ fn:=to_regprocedure('public.fs_admin_create_reservation_v2(text,uuid,date,integer,integer,uuid,uuid,boolean,text)');
+ if fn is null then raise exception 'Reviewed legacy proxy signature missing'; end if;
+ select prosrc,pg_get_functiondef(oid) into strict source,definition from pg_proc where oid=fn;
+ if (length(source)-length(replace(source,anchor,'')))/length(anchor)<>1
+ or position('gym24_admin_authorized' in source)=0
+ or (length(definition)-length(replace(definition,source,'')))<>length(source) then
+ raise exception 'Legacy proxy effective-rule anchor or authorization changed'; end if;
+ replacement:=anchor||$rules$
+ select coalesce((to_jsonb(o)->>'use_minutes')::integer,s.use_minutes),
+ coalesce((to_jsonb(o)->>'monthly_quota')::integer,s.monthly_quota),
+ coalesce((to_jsonb(o)->>'concurrent_limit')::integer,s.concurrent_limit),
+ coalesce((to_jsonb(o)->>'daily_limit')::integer,s.daily_limit),
+ coalesce((to_jsonb(o)->>'booking_days')::integer,s.booking_days)
+ into s.use_minutes,s.monthly_quota,s.concurrent_limit,s.daily_limit,s.booking_days
+ from (values(1)) seed(n) left join public.fs_member_rule_overrides o on o.member_id=m.id;
+$rules$;
+ execute replace(definition,source,replace(source,anchor,replacement));
+end $legacy_proxy$;
 
 do $release_unchanged$
 begin

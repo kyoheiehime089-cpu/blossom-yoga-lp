@@ -20,6 +20,7 @@ const TERMINAL_OUTCOMES = new Set([
   "late_cancelled",
   "no_show",
   "on_time_cancelled",
+  "store_cancelled",
 ]);
 
 function requiredId(value, label) {
@@ -79,7 +80,7 @@ export function recordV7VisitOutcome(record, outcome) {
     if (record.visit_outcome === outcome) return record;
     throw new Error("A V7 reservation outcome is immutable after it is recorded");
   }
-  const consumesVisit = outcome !== "on_time_cancelled";
+  const consumesVisit = !["on_time_cancelled", "store_cancelled"].includes(outcome);
   return Object.freeze({ ...record, visit_outcome: outcome, consumes_visit: consumesVisit });
 }
 

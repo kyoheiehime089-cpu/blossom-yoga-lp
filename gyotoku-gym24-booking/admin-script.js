@@ -90,7 +90,7 @@ async function loadSnapshot() {
   renderAll();
 }
 window.gyotokuAdminV7Rpc = (name, args) => {
-  const allowed = new Set(['fs_v7_admin_create_reservation', 'fs_v7_admin_cancel_reservation', 'fs_v7_admin_create_member', 'fs_v7_admin_update_plan', 'fs_v7_admin_confirm_companion_safety']);
+  const allowed = new Set(['fs_v7_admin_create_reservation', 'fs_v7_admin_cancel_reservation', 'fs_v7_admin_cancel_store_reservation', 'fs_v7_admin_create_member', 'fs_v7_admin_update_plan', 'fs_v7_admin_confirm_companion_safety']);
   if (!allowed.has(name)) throw new Error('許可されていないv7管理操作です。');
   return v7AdminRpc(name, args);
 };

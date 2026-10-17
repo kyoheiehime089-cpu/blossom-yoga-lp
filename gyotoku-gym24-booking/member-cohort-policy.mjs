@@ -98,6 +98,7 @@ const VISIT_OUTCOMES = new Set([
   "late_cancelled",
   "no_show",
   "on_time_cancelled",
+  "store_cancelled",
 ]);
 
 export function resolveBookingPolicy({ membershipCohort, agreementVersion, planCode, legacyPolicy }) {
@@ -300,7 +301,7 @@ export function setVisitOutcomeOnce(reservations, reservationId, outcome) {
     ? {
       ...reservation,
       visitOutcome: outcome,
-      ...(outcome === "late_cancelled" || outcome === "on_time_cancelled" ? { cancelled: true } : {}),
+      ...(["late_cancelled", "on_time_cancelled", "store_cancelled"].includes(outcome) ? { cancelled: true } : {}),
     }
     : reservation
   );
@@ -447,13 +448,13 @@ function visitOutcome(reservation) {
 }
 
 function consumesVisit(reservation) {
-  return visitOutcome(reservation) !== "on_time_cancelled";
+  return !["on_time_cancelled", "store_cancelled"].includes(visitOutcome(reservation));
 }
 
 function isActiveReservation(reservation) {
   if (reservation.cancelled === true) return false;
   const outcome = reservation.visitOutcome ?? reservation.visit_outcome;
-  return !["attended", "late_cancelled", "no_show", "on_time_cancelled"].includes(outcome);
+  return !["attended", "late_cancelled", "no_show", "on_time_cancelled", "store_cancelled"].includes(outcome);
 }
 
 function overlapsBufferedReservations(dateKey, start, duration, reservation) {

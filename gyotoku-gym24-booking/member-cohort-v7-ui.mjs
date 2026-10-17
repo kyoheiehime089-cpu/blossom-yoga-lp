@@ -1,4 +1,4 @@
-import * as policy from "./member-cohort-policy.mjs?v=2";
+import * as policy from "./member-cohort-policy.mjs?v=3";
 
 const AGREEMENT_VERSION = policy.V7_AGREEMENT_VERSION;
 const AGREEMENT_URL = policy.V7_AGREEMENT_URL;
@@ -84,9 +84,7 @@ function evaluateSlot(target, context, date, startMinute, companions) {
   const snapshot = target.gyotokuMemberSnapshot;
   const member = snapshot.member;
   const availability = snapshot.booking_policy.availability;
-  const staticBlocks = typeof target.scheduleBlocks === "function"
-    ? target.scheduleBlocks(date).map(([startMinute, endMinute]) => ({ date, startMinute, endMinute }))
-    : [];
+  if (!availability.fixed_schedule_days?.includes(date)) return { allowed: false, reason: "fixed_schedule_unavailable" };
   return policy.evaluateV7Booking({
     membershipCohort: context.membershipCohort,
     agreementVersion: context.agreementVersion,
@@ -100,7 +98,7 @@ function evaluateSlot(target, context, date, startMinute, companions) {
     reservations: snapshot.reservations,
     conflictReservations: availability.all_reservations,
     yogaBlocks: availability.yoga_blocks,
-    closedSlots: [...availability.closed_slots, ...staticBlocks],
+    closedSlots: [...availability.closed_slots, ...(availability.fixed_blocks || [])],
     externalBlocks: availability.external_blocks,
     companions: companions ?? {
       planCode: member.plan,
@@ -213,7 +211,6 @@ export function initMemberCohortV7(target = window) {
     const status = target.document.querySelector("#v7BookingStatus");
     if (!needsPolicyReview(state)) {
       target.gyotokuMemberV7ServerReady = false;
-      target.document.querySelector("#companionManager")?.classList.remove("hidden");
       if (status) status.classList.add("hidden");
       return;
     }
@@ -228,10 +225,13 @@ export function initMemberCohortV7(target = window) {
         : `<p>会員区分または同意書バージョンを確認できないため、予約条件を決められません。</p>`;
     }
     if (plan && target.gyotokuMemberSnapshot?.reservations) {
-      const usage = policy.countMonthlyConsumedVisits(target.gyotokuMemberSnapshot.reservations, new Date());
+      const bookingDate = typeof target.selectedDate === "function" ? target.dateKey(target.selectedDate()) : policy.tokyoDateKey(new Date());
+      const usage = policy.countMonthlyConsumedVisits(target.gyotokuMemberSnapshot.reservations, bookingDate);
       const usageText = target.document.querySelector("#usageText");
       const usageBar = target.document.querySelector("#usageBar");
-      if (usageText) usageText.textContent = `${usage} / ${plan.monthly_quota}`;
+      if (usageText) usageText.textContent = `${bookingDate.slice(0, 7)}：${usage} / ${plan.monthly_quota}`;
+      const usageLabel = usageBar?.parentElement?.previousElementSibling?.querySelector("span");
+      if (usageLabel) usageLabel.textContent = "予約対象月の予約回数";
       if (usageBar) usageBar.style.width = `${Math.min(100, Math.round((usage / Math.max(1, plan.monthly_quota)) * 100))}%`;
     }
     if (status) {
@@ -248,6 +248,7 @@ export function initMemberCohortV7(target = window) {
     const result = baseRender.apply(this, arguments);
     renderGuide();
     renderV7Details();
+    if (v7Ready(target, context())) target.renderDays();
     return result;
   };
   target.renderLogin = function () {
@@ -273,8 +274,8 @@ export function initMemberCohortV7(target = window) {
     const state = context();
     if (!needsPolicyReview(state)) return baseCanCancel.call(this, reservation);
     if (!state.isPaidV7 || !state.valid || !v7Ready(target, state)) return false;
-    return typeof target.startAt === "function"
-      && target.startAt(reservation.date, reservation.start_minute) > new Date();
+    return !reservation.cancelled && new Date(`${reservation.date}T00:00:00+09:00`).getTime()
+      + Number(reservation.start_minute) * 60000 > Date.now();
   };
   target.renderDays = function () {
     const result = baseRenderDays.apply(this, arguments);
@@ -286,8 +287,19 @@ export function initMemberCohortV7(target = window) {
       day.setDate(start.getDate() + Number(button.dataset.day));
       button.disabled = !policy.isWithinV7BookingWindow({ now: new Date(), bookingDate: target.dateKey(day) });
     });
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    const next = target.document.querySelector("#nextWeek");
+    if (next) next.disabled = policy.bookingDayOffset(new Date(), target.dateKey(end)) >= 14;
     return result;
   };
+  target.document.addEventListener("click", (event) => {
+    const button = event.target.closest("#nextWeek,#prevWeek");
+    if (!button || button.disabled || !v7Ready(target, context())) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    target.gyotokuMemberMoveV7Week(button.id === "nextWeek" ? 1 : -1);
+  }, true);
   target.renderCalendar = function () {
     const state = context();
     if (needsPolicyReview(state)) {
@@ -335,7 +347,11 @@ export function initMemberCohortV7(target = window) {
     const state = context();
     if (!needsPolicyReview(state)) return baseReservationItem.call(this, reservation);
     const ready = state.isPaidV7 && state.valid && v7Ready(target, state);
-    if (ready) return baseReservationItem.call(this, reservation);
+    if (ready && !reservation.cancelled) return baseReservationItem.call(this, reservation);
+    if (ready && reservation.cancelled) {
+      const outcome = reservation.visit_outcome;
+      return `<article class="res"><h3>${escape(target.fullRange(reservation.date, reservation.start_minute))}</h3><p>${outcome === "store_cancelled" ? "店舗都合で取消済み（回数消化なし）" : outcome === "late_cancelled" ? "期限後キャンセル済み（1回分消化）" : "キャンセル済み（回数消化なし）"}</p></article>`;
+    }
     const names = [reservation.user1_name_snapshot, reservation.user2_name_snapshot].filter(Boolean).join("・");
     const end = Number(reservation.start_minute) + Number(reservation.use_minutes_snapshot || 50);
     return `<article class="res"><h3>${escape(target.fullRange(reservation.date, reservation.start_minute))}</h3><p>利用者：${escape(names || reservation.people)}</p><p>${escape(reservation.use_minutes_snapshot || 50)}分利用</p>${reservation.child_accompanied ? "<p>小さなお子様同伴</p>" : ""}<p class="small">v7予約・キャンセルのサーバー処理が未確認のため、変更操作を停止しています。</p><span hidden>${end}</span></article>`;

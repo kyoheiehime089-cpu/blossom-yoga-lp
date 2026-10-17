@@ -1,4 +1,4 @@
-import * as policy from "./member-cohort-policy.mjs?v=2";
+import * as policy from "./member-cohort-policy.mjs?v=3";
 
 const AGREEMENT_URL = policy.V7_AGREEMENT_URL;
 
@@ -152,6 +152,15 @@ function v7LineMessage(member) {
 
 export function initAdminCohortV7(target = window) {
   target.gyotokuAdminPolicy = policy;
+  const baseScheduleBlocks = target.scheduleBlocks;
+  target.scheduleBlocks = function (date) {
+    const availability = target.gyotokuAdminSnapshot?.booking_policy?.availability;
+    if (availability?.fixed_schedule_days?.includes(date)) {
+      return (availability.fixed_blocks || []).filter(block => block.date === date)
+        .map(block => [Number(block.start_minute), Number(block.end_minute)]);
+    }
+    return baseScheduleBlocks(date);
+  };
   const customers = target.document.querySelector("#customersTab");
   const dashboard = target.document.querySelector("#dashboardTab");
   const addForm = target.document.querySelector("#addMember");
@@ -177,6 +186,9 @@ export function initAdminCohortV7(target = window) {
   const baseSlotRow = target.slotRow;
   if (typeof baseSlotRow === "function") {
     target.slotRow = function (date, startMinute) {
+      const reservation = target.gyotokuAdminSnapshot?.reservations?.find(item => item.date === date && Number(item.start_minute) === Number(startMinute));
+      const member = target.gyotokuAdminSnapshot?.members?.find(item => String(item.id) === String(reservation?.member_id));
+      if (reservation && isPaidV7(member)) return target.reservationCard(reservation);
       if (sharedYogaConflict(target.gyotokuAdminSnapshot, date, startMinute)) {
         return `<article class='slot-row closed'><div class='time'>${escape(paidV7Range(date, Number(startMinute), 40).split(" ").at(-1))}</div><div><span class='pill closed'>予約不可</span> 個別Yoga予約の前後30分間隔</div><span>Yoga</span></article>`;
       }
@@ -191,7 +203,7 @@ export function initAdminCohortV7(target = window) {
       if (!isPaidV7(member)) return baseReservationCard.apply(this, arguments);
       const names = [reservation.user1_name_snapshot, reservation.user2_name_snapshot].filter(Boolean).join("・");
       const duration = Number(reservation.use_minutes_snapshot) || 50;
-      return `<article class='res'><h3>${escape(paidV7Range(reservation.date, Number(reservation.start_minute), duration))}</h3><p>${escape(reservation.member_name)} / ${escape(planName(member))} / ${escape(names || reservation.people)}</p>${reservation.child_accompanied ? "<p>小さなお子様同伴</p>" : ""}<div class='two'><button class='ghost' data-detail='${escape(reservation.member_id)}'>会員を開く</button><button class='danger' data-cancel='${escape(reservation.id)}'>キャンセル</button></div></article>`;
+      return `<article class='res'><h3>${escape(paidV7Range(reservation.date, Number(reservation.start_minute), duration))}</h3><p>${escape(reservation.member_name)} / ${escape(planName(member))} / ${escape(names || reservation.people)}</p>${reservation.child_accompanied ? "<p>小さなお子様同伴</p>" : ""}<div class='two'><button class='ghost' data-detail='${escape(reservation.member_id)}'>会員を開く</button><button class='danger' data-cancel='${escape(reservation.id)}'>キャンセル</button></div><button class='ghost' data-v7-store-cancel='${escape(reservation.id)}'>店舗都合で取消（回数を戻す）</button></article>`;
     };
   }
 
@@ -238,6 +250,8 @@ export function initAdminCohortV7(target = window) {
       detail.className = "res";
       detail.dataset.memberDetail = String(id);
       detail.innerHTML = `<p class="eyebrow">手動登録した新プラン会員</p><h2>${escape(member.name)}</h2><p>${escape(member.member_code || "ID未設定")} / ${escape(planName(member))}</p><p>適用ルール版：${escape(member.agreement_version || "未確認")}</p>${gateRows}<form class="mini" id="editV7Plan" data-v7-edit-member="${escape(id)}"><label>加入プラン<select name="plan"><option value="free" ${member.plan === "free" ? "selected" : ""}>ライトプラン</option><option value="standard" ${member.plan === "standard" ? "selected" : ""}>スタンダードプラン</option><option value="premium" ${member.plan === "premium" ? "selected" : ""}>プレミアムプラン</option></select></label><label>利用状態<select name="status"><option value="active" ${member.status === "active" ? "selected" : ""}>利用可</option><option value="suspended" ${member.status === "suspended" ? "selected" : ""}>利用停止</option></select></label><button class="btn">プラン・利用状態を保存</button></form><p><a href="${AGREEMENT_URL}" target="_blank" rel="noopener noreferrer">同意書v7の全文を確認する</a></p><button class="ghost" type="button" data-close-detail>閉じる</button>`;
+      const bookings = (snapshot?.reservations || []).filter(item => String(item.member_id) === String(id));
+      detail.insertAdjacentHTML("beforeend", `<h3>この会員の予約</h3><div class="list">${bookings.length ? bookings.map(item => target.reservationCard(item)).join("") : "<p>予約はありません。</p>"}</div>`);
       card.insertAdjacentElement("afterend", detail);
     };
   }
@@ -315,6 +329,18 @@ export function initAdminCohortV7(target = window) {
   });
 
   target.document.addEventListener("click", async (event) => {
+    const storeButton = event.target.closest("[data-v7-store-cancel]");
+    if (storeButton) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!target.confirm("店舗都合で取り消し、会員の利用回数を消化しない状態にしますか？")) return;
+      try {
+        const result = await target.gyotokuAdminV7Rpc("fs_v7_admin_cancel_store_reservation", { p_reservation_id: storeButton.dataset.v7StoreCancel });
+        if (!result?.ok) throw new Error(result?.error || "取消に失敗しました。");
+        await target.gyotokuAdminReloadSnapshot?.();
+      } catch (error) { target.alert(error.message); }
+      return;
+    }
     const button = event.target.closest("[data-cancel]");
     if (!button) return;
     const snapshot = target.gyotokuAdminSnapshot;

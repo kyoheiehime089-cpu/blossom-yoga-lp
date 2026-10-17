@@ -113,10 +113,11 @@ insert into public.fs_plan_settings values
   ('standard',4800,6,40,2,1,2,1,14,120,180,true),
   ('premium',0,null,40,2,1,2,1,14,120,180,true);
 
--- Fixture-only representation of a per-member override; the candidate must leave it untouched.
+-- Fixture-only representation; production uses nullable individual columns.
 create table public.fs_member_rule_overrides (
   member_id uuid primary key references public.fs_members(id),
-  rule_snapshot jsonb not null
+  rule_snapshot jsonb not null,
+  use_minutes integer,monthly_quota integer,concurrent_limit integer,daily_limit integer,booking_days integer
 );
 
 create table public.fs_app_settings (key text primary key, value text not null);
@@ -132,12 +133,27 @@ create function public.fs_business_conflicts(p_date date,p_start_minute integer,
 returns boolean language sql stable security definer set search_path=public as $$
   select false
 $$;
+create function public.fs_business_blocks(p_date date)
+returns table(block_start timestamp,block_end timestamp) language sql stable as $$
+ select p_date::timestamp+interval '8 hours',p_date::timestamp+interval '10 hours'
+$$;
 create function public.fs_admin_snapshot(p_admin_password text)
 returns jsonb language plpgsql security definer set search_path=public as $$
 begin
   if not public.fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false); end if;
   return jsonb_build_object('ok',true,'members',(select jsonb_agg(to_jsonb(m)) from public.fs_members m));
 end $$;
+create function public.fs_admin_create_reservation_v2(p_admin_password text,p_member_id uuid,p_date date,p_start_minute integer,p_people integer,p_user1_id uuid,p_user2_id uuid default null,p_child_accompanied boolean default false,p_note text default '')
+returns jsonb language plpgsql security definer set search_path=public as $proxy$
+declare m fs_members;s fs_plan_settings;rid uuid;
+begin
+ if not public.fs_is_admin(p_admin_password) then return jsonb_build_object('ok',false); end if;
+ select * into m from fs_members where id=p_member_id;
+ select * into s from fs_plan_settings where plan_code=m.plan;
+ insert into fs_reservations(member_id,date,start_minute,use_minutes_snapshot,user1_id,people)
+ values(m.id,p_date,p_start_minute,s.use_minutes,p_user1_id,p_people::text||'名') returning id into rid;
+ return jsonb_build_object('ok',true,'id',rid);
+end $proxy$;
 create function public.fs_admin_delete_member(p_admin_password text,p_member_id uuid)
 returns jsonb language plpgsql security definer set search_path=public as $$
 begin

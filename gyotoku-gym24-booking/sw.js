@@ -1,5 +1,5 @@
-const CACHE='gyotoku-gym24-pwa-v4';
-const ASSETS=['./','./index.html','./admin.html','./member-style.css?v=43','./admin-style.css?v=40','./member-cohort-policy.mjs?v=2','./member-cohort-v7-ui.mjs?v=2','./admin-cohort-v7-ui.mjs?v=2','./admin-auth-controller.mjs','./admin-auth-ui.mjs?v=1','./icon-member.svg','./icon-admin.svg'];
+const CACHE='gyotoku-gym24-pwa-v5';
+const ASSETS=['./','./index.html','./admin.html','./member-style.css?v=43','./admin-style.css?v=40','./member-cohort-policy.mjs?v=3','./member-cohort-v7-ui.mjs?v=3','./admin-cohort-v7-ui.mjs?v=3','./admin-auth-controller.mjs','./admin-auth-ui.mjs?v=1','./icon-member.svg','./icon-admin.svg'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).catch(()=>{}));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))));self.clients.claim();});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;event.respondWith(fetch(event.request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});return response;}).catch(()=>caches.match(event.request).then(hit=>hit||caches.match('./'))));});

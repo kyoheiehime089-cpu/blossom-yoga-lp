@@ -9,8 +9,10 @@ approved production SQL. No account, key, MFA, password or email changes are nee
 - Booking project: `fplvstwmsewpqwrcsqrm`, `gyotoku-gym24-booking`, healthy.
 - Consent project: `ukpzqjhkajdsfrfozcvl`; excluded from this release.
 - Main: `577f1790e7e27784031265b1b649f357ae7bd826`.
-- Candidate code: `9baea2c454b95bdaf66b994bb9a5d4d33c4ce294`.
-- Enabled administrators: zero. V7 relations/functions: zero.
+- Candidate base: `9baea2c454b95bdaf66b994bb9a5d4d33c4ce294`; this branch additionally
+  contains the reviewed day14/month/JST/fixed-block/store-cancel corrections.
+- Enabled administrators: one, enrolled by the cloud operator after explicit owner approval.
+  V7 relations/functions: zero. Do not rerun enrollment.
 - Existing intended Email identity: exactly one, confirmed, Email provider.
   Identity existence is NOT owner designation or real-login evidence.
 - Both Gym/central-Yoga mutual guard triggers are enabled (`O`).
@@ -19,20 +21,19 @@ approved production SQL. No account, key, MFA, password or email changes are nee
 - Member/admin/two central-Yoga entry pages return HTTP200, but no new modules
   or Email Auth fields are published. HTTP200 is not a live booking test.
 
-## One Owner Approval Needed First
+## Owner Approval Recorded
 
-Approve ONLY the one privately confirmed existing Email Auth identity as a
+The owner approved ONLY the one privately confirmed existing Email Auth identity as a
 reservation-app administrator in the booking project, until explicitly revoked.
 The purpose is manual member/plan management and reservation/individual-Yoga
 administration. It grants no Dashboard/organization, consent DB, payment,
 Vercel, secret-management or automatic-sync access.
 
-The owner must positively identify the intended account. A matching email alone
-must not trigger enrollment. The cloud operator privately checks the exact UUID,
-verified email and Email provider, then fills the four deliberately empty/false
-inputs in `production-enroll-one-admin.sql`. Never paste IDs or credentials into
-public documents. No upsert, other account enrollment or account creation.
-This single approval does not authorize the later cutover/deployment.
+The cloud operator verified the exact existing account and completed its one-row
+enrollment at 16:33 JST. Original business-table hashes were unchanged. Never paste
+IDs or credentials into public documents. No additional account enrollment or
+account creation. At 16:54 JST the owner separately authorized the rule release,
+preserving all existing members and applying new rules only to newly created members.
 
 ## Real Login Check Before Cutover
 
@@ -50,7 +51,7 @@ credentials do not establish actual owner authorization.
 
 ## Coordinated Release Still Pending
 
-After real authorization evidence and separate release approval, pause/drain
+After real authorization evidence under the recorded release approval, pause/drain
 the current Gym and central-Yoga writers. Recheck live metadata, helper/guard
 fingerprints and old data invariants. Execute ONLY the current guarded atomic
 manual-plan transaction, then publish its matching member/admin/Yoga assets.
@@ -70,6 +71,11 @@ Its payload stays in the protected DB; do not export bodies or legacy secrets.
 Verified SHA256: `2f30f36cbfae93b97dc209cb0c7e2448fc0a9c77157c109661c0be0bb9277449`.
 This is a catalog baseline, NOT a full member/reservation data backup.
 Retain an owner-controlled current data recovery point before release as well.
+The reviewed backup candidate `production-private-data-backup-20261017.sql`
+copies current fs tables only into an owner-only private schema, verifies counts
+and hashes, and rejects reuse. It never returns row contents or copies the admin
+allowlist. Its three synthetic protection/repeat tests passed. The cloud operator
+alone executes production backup after checking the exact project connection.
 
 1. Before COMMIT: an SQL error aborts the atomic release; explicitly ROLLBACK
    and verify catalog/old-row invariants. If the COMMIT response is lost, inspect
