@@ -79,6 +79,10 @@ jobs:
             exit 1
           fi
 
+          if [ -d gyotoku-gym24-recovery ]; then
+            cp -r gyotoku-gym24-recovery _site/gyotoku-gym24-recovery
+          fi
+
           if [ -d yoga-private-booking ]; then
             cp -r yoga-private-booking _site/yoga-private-booking
           else
